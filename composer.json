@@ -26,7 +26,8 @@
         "psr/container": "^2.0",
         "psr/log": "^2.0 || ^3.0",
         "ramsey/uuid": "^4.7",
-        "symfony/polyfill-php84": "^1.33"
+        "symfony/polyfill-php84": "^1.33",
+        "symfony/polyfill-php85": "^1.33"
     },
     "require-dev": {
         "deptrac/deptrac": "^4.4",

@@ -20,6 +20,12 @@ use Throwable;
 
 final class FakeUnitOfWork implements UnitOfWork
 {
+    public int $attempts = 0;
+
+    public int $commits = 0;
+
+    public int $rollbacks = 0;
+
     /**
      * @var list<string>
      */
@@ -38,11 +44,14 @@ final class FakeUnitOfWork implements UnitOfWork
         for ($i = 1; $i <= $attempts; $i++) {
             try {
                 $this->sequence[] = 'attempt:' . $i;
+                $this->attempts++;
                 $result = $callback();
                 $this->sequence[] = 'commit:' . $i;
+                $this->commits++;
                 return $result;
             } catch (Throwable $ex) {
                 $this->sequence[] = 'rollback:' . $i;
+                $this->rollbacks++;
                 $this->exceptions->report($ex);
 
                 if ($i === $attempts) {

@@ -16,6 +16,7 @@ use CloudCreativity\Modules\Contracts\Application\Bus\CommandHandler as ICommand
 use CloudCreativity\Modules\Contracts\Application\Messages\DispatchThroughMiddleware;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
+use ReflectionClass;
 
 final readonly class CommandHandler implements ICommandHandler
 {
@@ -40,10 +41,22 @@ final readonly class CommandHandler implements ICommandHandler
 
     public function middleware(): array
     {
-        if ($this->handler instanceof DispatchThroughMiddleware) {
-            return $this->handler->middleware();
+        $middleware = [];
+
+        $reflection = new ReflectionClass($this->handler);
+
+        foreach ($reflection->getAttributes(Through::class) as $attribute) {
+            $instance = $attribute->newInstance();
+            $middleware[] = $instance->pipe;
         }
 
-        return [];
+        if ($this->handler instanceof DispatchThroughMiddleware) {
+            $middleware = [
+                ...$middleware,
+                ...$this->handler->middleware(),
+            ];
+        }
+
+        return $middleware;
     }
 }

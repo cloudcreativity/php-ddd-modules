@@ -7,10 +7,17 @@ All notable changes to this project will be documented in this file. This projec
 
 ### Added
 
+- New command bus features:
+    - Can now use a PSR container for the command bus to resolve both handlers and middleware. Inject the service
+      container via the first constructor argument.
+    - Commands can now be mapped to handlers on a command bus class via the `WithCommand` attribute.
+    - Middleware can now be added to a command bus via the `Through` attribute.
 - The `QueryHandlerContainer` and `CommandHandlerContainer` classes can now fallback to resolving handlers from a PSR
   service container. Inject the service container via the handler container's only constructor argument.
 - The pipeline `PipeContainer` class can now fallback to resolving pipes from a PSR service container. Inject the
   service container via the pipe container's only constructor argument.
+- The `FakeUnitOfWork` class now has integer properties for the number of attempts, commits and rollbacks.
+- New `FakeContainer` class for faking a PSR container in tests.
 
 ## [5.0.0] - 2025-12-09
 
