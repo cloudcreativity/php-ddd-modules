@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus;
 
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\ClosurePublisher;
 use PHPUnit\Framework\TestCase;

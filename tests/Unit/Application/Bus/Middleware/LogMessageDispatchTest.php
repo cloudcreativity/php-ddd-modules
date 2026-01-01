@@ -13,10 +13,10 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus\Middleware;
 
 use CloudCreativity\Modules\Bus\Middleware\LogMessageDispatch;
-use CloudCreativity\Modules\Contracts\Bus\Command;
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextFactory;
-use CloudCreativity\Modules\Contracts\Bus\Message;
-use CloudCreativity\Modules\Contracts\Bus\Query;
+use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messages\Message;
+use CloudCreativity\Modules\Contracts\Messages\Query;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 use LogicException;
 use PHPUnit\Framework\MockObject\MockObject;

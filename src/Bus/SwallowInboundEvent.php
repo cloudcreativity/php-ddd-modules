@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Bus;
 
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;

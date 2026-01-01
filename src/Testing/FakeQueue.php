@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Testing;
 
 use ArrayAccess;
 use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
-use CloudCreativity\Modules\Contracts\Bus\Command;
+use CloudCreativity\Modules\Contracts\Messages\Command;
 use Countable;
 use Generator;
 use IteratorAggregate;

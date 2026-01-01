@@ -61,7 +61,7 @@ specific closures to specific events, and add middleware to the publisher. Here'
 ```php
 namespace App\Modules\EventManagement\Infrastructure\OutboundEventBus;
 
-use App\Modules\EventManagement\Application\Ports\Driven\OutboundEventBus\OutboundEventBus;use App\Modules\EventManagement\Infrastructure\GooglePubSub\EventSerializer;use App\Modules\EventManagement\Infrastructure\GooglePubSub\SecureTopicFactory;use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Middleware\LogOutboundEvent;use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;use Psr\Log\LoggerInterface;use VendorName\EventManagement\Shared\IntegrationEvents\V1\AttendeeTicketWasCancelled;
+use App\Modules\EventManagement\Application\Ports\Driven\OutboundEventBus\OutboundEventBus;use App\Modules\EventManagement\Infrastructure\GooglePubSub\EventSerializer;use App\Modules\EventManagement\Infrastructure\GooglePubSub\SecureTopicFactory;use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Middleware\LogOutboundEvent;use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;use Psr\Log\LoggerInterface;use VendorName\EventManagement\Shared\IntegrationEvents\V1\AttendeeTicketWasCancelled;
 
 final readonly class OutboundEventBusAdapterProvider
 {
@@ -255,7 +255,7 @@ implement the following interface that was extended by the driven port:
 ```php
 namespace CloudCreativity\Modules\Application\Ports\Driven\OutboundEventBus;
 
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 
 interface EventPublisher
 {
@@ -313,7 +313,7 @@ following signature:
 ```php
 namespace App\Modules\EventManagement\Application\Adapters\Middleware;
 
-use Closure;use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\OutboundEventMiddleware;
+use Closure;use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\OutboundEventMiddleware;use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 
 final class MyMiddleware implements OutboundEventMiddleware
 {

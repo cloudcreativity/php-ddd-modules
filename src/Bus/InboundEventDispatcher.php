@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus;
 
 use CloudCreativity\Modules\Contracts\Bus\EventHandlerContainer as IEventHandlerContainer;
-use CloudCreativity\Modules\Contracts\Bus\InboundEventDispatcher as IInboundEventDispatcher;
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messages\InboundEventDispatcher as IInboundEventDispatcher;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;

@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus;
 
 use CloudCreativity\Modules\Contracts\Bus\EventHandler as IEventHandler;
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 
 final readonly class EventHandler implements IEventHandler
 {

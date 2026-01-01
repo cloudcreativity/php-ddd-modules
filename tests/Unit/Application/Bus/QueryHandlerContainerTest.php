@@ -15,7 +15,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 use CloudCreativity\Modules\Bus\BusException;
 use CloudCreativity\Modules\Bus\QueryHandler;
 use CloudCreativity\Modules\Bus\QueryHandlerContainer;
-use CloudCreativity\Modules\Contracts\Bus\Query;
+use CloudCreativity\Modules\Contracts\Messages\Query;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 

@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus\Middleware;
 
 use Closure;
-use CloudCreativity\Modules\Contracts\Bus\Message;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;
+use CloudCreativity\Modules\Contracts\Messages\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 final readonly class TearDownAfterDispatch implements BusMiddleware

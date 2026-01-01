@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Integration\Bus;
 
-use CloudCreativity\Modules\Contracts\Bus\Query;
+use CloudCreativity\Modules\Contracts\Messages\Query;
 
 final readonly class DivideQuery implements Query
 {

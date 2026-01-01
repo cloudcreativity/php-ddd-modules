@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Contracts\Bus;
 
+use CloudCreativity\Modules\Contracts\Messages\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 interface QueryHandler extends DispatchThroughMiddleware

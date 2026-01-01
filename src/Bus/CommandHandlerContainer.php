@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus;
 
 use Closure;
-use CloudCreativity\Modules\Contracts\Bus\Command;
 use CloudCreativity\Modules\Contracts\Bus\CommandHandlerContainer as ICommandHandlerContainer;
+use CloudCreativity\Modules\Contracts\Messages\Command;
 use Psr\Container\ContainerInterface;
 
 final class CommandHandlerContainer implements ICommandHandlerContainer

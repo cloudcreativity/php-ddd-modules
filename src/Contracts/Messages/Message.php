@@ -10,12 +10,8 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Contracts\Bus;
+namespace CloudCreativity\Modules\Contracts\Messages;
 
-interface InboundEventDispatcher
+interface Message
 {
-    /**
-     * Dispatch an inbound integration event.
-     */
-    public function dispatch(IntegrationEvent $event): void;
 }

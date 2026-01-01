@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Contracts\Infrastructure\Queue;
 
 use Closure;
-use CloudCreativity\Modules\Contracts\Bus\Command;
+use CloudCreativity\Modules\Contracts\Messages\Command;
 
 interface QueueMiddleware
 {

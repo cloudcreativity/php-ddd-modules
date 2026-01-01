@@ -14,10 +14,10 @@ namespace CloudCreativity\Modules\Bus\Middleware;
 
 use Closure;
 use CloudCreativity\Modules\Bus\Loggable\SimpleContextFactory;
-use CloudCreativity\Modules\Contracts\Bus\Command;
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextFactory;
-use CloudCreativity\Modules\Contracts\Bus\Message;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;
+use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messages\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
 use Psr\Log\LoggerInterface;

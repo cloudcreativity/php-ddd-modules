@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Contracts\Bus\Loggable;
 
-use CloudCreativity\Modules\Contracts\Bus\Message;
+use CloudCreativity\Modules\Contracts\Messages\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 interface ContextFactory

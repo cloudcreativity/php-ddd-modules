@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Infrastructure\Queue;
 
 use Closure;
-use CloudCreativity\Modules\Contracts\Bus\Command;
 use CloudCreativity\Modules\Contracts\Infrastructure\Queue\EnqueuerContainer as IEnqueuerContainer;
+use CloudCreativity\Modules\Contracts\Messages\Command;
 use CloudCreativity\Modules\Infrastructure\InfrastructureException;
 use Psr\Container\ContainerInterface;
 

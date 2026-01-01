@@ -16,7 +16,7 @@ use CloudCreativity\Modules\Bus\Loggable\ObjectDecorator;
 use CloudCreativity\Modules\Bus\Loggable\Sensitive;
 use CloudCreativity\Modules\Bus\Loggable\SimpleContextFactory;
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextProvider;
-use CloudCreativity\Modules\Contracts\Bus\Message;
+use CloudCreativity\Modules\Contracts\Messages\Message;
 use CloudCreativity\Modules\Tests\TestBackedEnum;
 use CloudCreativity\Modules\Tests\TestBackedIntEnum;
 use CloudCreativity\Modules\Tests\TestUnitEnum;

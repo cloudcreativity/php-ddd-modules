@@ -36,7 +36,7 @@ For example:
 ```php
 namespace VendorName\EventManagement\Shared\IntegrationEvents\V1;
 
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;use VendorName\EventManagement\Shared\Enums\CancellationReasonEnum;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;use VendorName\EventManagement\Shared\Enums\CancellationReasonEnum;
 
 final readonly class AttendeeTicketWasCancelled implements
     IntegrationEvent
@@ -94,7 +94,7 @@ This can be expressed via an interface. To illustrate the point, a JSON serializ
 ```php
 namespace VendorName\Ordering\Shared\IntegrationEvents\V1\Serializers;
 
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 
 interface JsonSerializer
 {
@@ -396,7 +396,7 @@ We do this by defining an interface in our application's driving ports:
 ```php
 namespace App\Modules\EventManagement\Application\Ports\Driving;
 
-use CloudCreativity\Modules\Contracts\Bus\InboundEventDispatcher;
+use CloudCreativity\Modules\Contracts\Messages\InboundEventDispatcher;
 
 interface InboundEventBus extends InboundEventDispatcher
 {
@@ -523,7 +523,7 @@ Here is an example controller from a Laravel application to demonstrate the patt
 ```php
 namespace App\Http\Controllers\Api\PubSub;
 
-use App\Modules\EventManagement\Application\Ports\Driving\InboundEventBus;use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;use VendorName\Ordering\Shared\IntegrationEvents\V1\Serializers\JsonSerializer;
+use App\Modules\EventManagement\Application\Ports\Driving\InboundEventBus;use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;use VendorName\Ordering\Shared\IntegrationEvents\V1\Serializers\JsonSerializer;
 
 class InboundEventController extends Controller
 {
@@ -627,7 +627,7 @@ example:
 ```php
 namespace App\Modules\EventManagement\Application\Ports\Driving;
 
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 
 interface Inbox
 {
@@ -642,7 +642,7 @@ might look like this:
 ```php
 namespace App\Modules\EventManagement\Application\Ports\Driven\Inbox;
 
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 
 interface InboxRepository
 {
@@ -661,7 +661,7 @@ This means we can now update the previous controller example to use the inbox in
 ```php
 namespace App\Http\Controllers\Api\PubSub;
 
-use App\Modules\EventManagement\Application\Ports\Driving\InboundEvents\Inbox;use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;use VendorName\Ordering\Shared\IntegrationEvents\V1\Serializers\JsonSerializer;
+use App\Modules\EventManagement\Application\Ports\Driving\InboundEvents\Inbox;use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;use VendorName\Ordering\Shared\IntegrationEvents\V1\Serializers\JsonSerializer;
 
 class InboundEventController extends Controller
 {
@@ -865,7 +865,7 @@ following signature:
 ```php
 namespace App\Modules\EventManagement\Application\Bus\Middleware;
 
-use Closure;use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;use CloudCreativity\Modules\Contracts\Bus\Middleware\InboundEventMiddleware;
+use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\InboundEventMiddleware;use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 
 final class MyMiddleware implements InboundEventMiddleware
 {

@@ -14,9 +14,9 @@ namespace CloudCreativity\Modules\Infrastructure\OutboundEventBus\Middleware;
 
 use Closure;
 use CloudCreativity\Modules\Bus\Loggable\SimpleContextFactory;
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextFactory;
 use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\OutboundEventMiddleware;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;

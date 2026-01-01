@@ -15,8 +15,8 @@ namespace CloudCreativity\Modules\Application\Bus\Middleware;
 use Closure;
 use CloudCreativity\Modules\Application\Bus\AbortOnFailureException;
 use CloudCreativity\Modules\Contracts\Application\UnitOfWork\UnitOfWorkManager;
-use CloudCreativity\Modules\Contracts\Bus\Message;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;
+use CloudCreativity\Modules\Contracts\Messages\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 final readonly class ExecuteInUnitOfWork implements BusMiddleware

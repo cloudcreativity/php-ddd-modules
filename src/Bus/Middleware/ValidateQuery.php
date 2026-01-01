@@ -14,9 +14,9 @@ namespace CloudCreativity\Modules\Bus\Middleware;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\QueryMiddleware;
-use CloudCreativity\Modules\Contracts\Bus\Query;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Bail;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Validator;
+use CloudCreativity\Modules\Contracts\Messages\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result as IResult;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 

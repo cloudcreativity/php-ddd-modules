@@ -12,9 +12,9 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Bus\Validation;
 
-use CloudCreativity\Modules\Contracts\Bus\Command;
-use CloudCreativity\Modules\Contracts\Bus\Query;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Validator as IValidator;
+use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messages\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Pipeline;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\ListOfErrors as IListOfErrors;

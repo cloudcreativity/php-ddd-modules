@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Contracts\Bus;
 
+use CloudCreativity\Modules\Contracts\Messages\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 interface CommandHandler extends DispatchThroughMiddleware

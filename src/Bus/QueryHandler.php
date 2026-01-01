@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Bus;
 
-use CloudCreativity\Modules\Contracts\Bus\Query;
 use CloudCreativity\Modules\Contracts\Bus\QueryHandler as IQueryHandler;
+use CloudCreativity\Modules\Contracts\Messages\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 final readonly class QueryHandler implements IQueryHandler

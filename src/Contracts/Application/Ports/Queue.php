@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Contracts\Application\Ports;
 
-use CloudCreativity\Modules\Contracts\Bus\Command;
+use CloudCreativity\Modules\Contracts\Messages\Command;
 
 interface Queue
 {

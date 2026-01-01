@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Contracts\Bus;
 
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
+
 interface EventHandler extends DispatchThroughMiddleware
 {
     /**

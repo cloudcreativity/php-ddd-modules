@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Application\Bus;
 
 use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
-use CloudCreativity\Modules\Contracts\Bus\Command;
 use CloudCreativity\Modules\Contracts\Bus\CommandQueuer as ICommandQueuer;
+use CloudCreativity\Modules\Contracts\Messages\Command;
 
 class CommandQueuer implements ICommandQueuer
 {

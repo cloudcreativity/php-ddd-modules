@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus\Middleware;
 
 use Closure;
-use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\InboundEventMiddleware;
+use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
 
 final readonly class SetupBeforeEvent implements InboundEventMiddleware
 {
