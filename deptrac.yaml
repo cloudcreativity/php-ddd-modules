@@ -28,6 +28,10 @@ deptrac:
           value: CloudCreativity\\Modules\\Contracts\\Infrastructure\\*
         - type: classLike
           value: CloudCreativity\\Modules\\Infrastructure\\*
+    - name: PSR Container
+      collectors:
+        - type: classLike
+          value: Psr\\Container\\*
     - name: PSR Log
       collectors:
         - type: classLike
@@ -39,6 +43,7 @@ deptrac:
   ruleset:
     Toolkit:
       - Attributes
+      - PSR Container
     Domain:
       - Toolkit
       - Attributes
