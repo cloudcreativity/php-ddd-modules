@@ -10,11 +10,11 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Tests\Integration\Application;
+namespace CloudCreativity\Modules\Tests\Integration\Application\Bus;
 
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
+use CloudCreativity\Modules\Contracts\Toolkit\Messages\Query;
 
-final readonly class AddCommand implements Command
+final readonly class SubtractQuery implements Query
 {
     public function __construct(public int $a, public int $b)
     {

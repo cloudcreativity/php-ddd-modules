@@ -12,14 +12,15 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Application\Bus;
 
+use CloudCreativity\Modules\Application\Messages\HandlesMessages;
 use CloudCreativity\Modules\Contracts\Application\Bus\CommandHandler as ICommandHandler;
-use CloudCreativity\Modules\Contracts\Application\Messages\DispatchThroughMiddleware;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
-use ReflectionClass;
 
 final readonly class CommandHandler implements ICommandHandler
 {
+    use HandlesMessages;
+
     public function __construct(private object $handler)
     {
     }
@@ -37,26 +38,5 @@ final readonly class CommandHandler implements ICommandHandler
         assert($result instanceof Result, 'Expecting command handler to return a result.');
 
         return $result;
-    }
-
-    public function middleware(): array
-    {
-        $middleware = [];
-
-        $reflection = new ReflectionClass($this->handler);
-
-        foreach ($reflection->getAttributes(Through::class) as $attribute) {
-            $instance = $attribute->newInstance();
-            $middleware[] = $instance->pipe;
-        }
-
-        if ($this->handler instanceof DispatchThroughMiddleware) {
-            $middleware = [
-                ...$middleware,
-                ...$this->handler->middleware(),
-            ];
-        }
-
-        return $middleware;
     }
 }

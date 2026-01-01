@@ -10,7 +10,7 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Tests\Integration\Application;
+namespace CloudCreativity\Modules\Tests\Integration\Application\Bus;
 
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
 use CloudCreativity\Modules\Application\Bus\Middleware\LogMessageDispatch;

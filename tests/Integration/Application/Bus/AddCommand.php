@@ -10,11 +10,11 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Tests\Integration\Application;
+namespace CloudCreativity\Modules\Tests\Integration\Application\Bus;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
 
-final readonly class MultiplyCommand implements Command
+final readonly class AddCommand implements Command
 {
     public function __construct(public int $a, public int $b)
     {

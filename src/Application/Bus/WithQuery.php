@@ -13,14 +13,16 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Application\Bus;
 
 use Attribute;
+use CloudCreativity\Modules\Contracts\Toolkit\Messages\Query;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
-final readonly class Through
+final readonly class WithQuery
 {
     /**
-     * @param non-empty-string $pipe
+     * @param class-string<Query> $query
+     * @param class-string $handler
      */
-    public function __construct(public string $pipe)
+    public function __construct(public string $query, public string $handler)
     {
     }
 }

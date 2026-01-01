@@ -10,23 +10,23 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Tests\Integration\Application;
+namespace CloudCreativity\Modules\Tests\Integration\Application\Bus;
 
 use CloudCreativity\Modules\Toolkit\Result\Result;
 
-final readonly class AddCommandHandler
+final readonly class SubtractQueryHandler
 {
     public function __construct(private int $c = 0)
     {
     }
 
     /**
-     * Execute the command.
+     * Execute the query.
      *
      * @return Result<int>
      */
-    public function execute(AddCommand $command): Result
+    public function execute(SubtractQuery $query): Result
     {
-        return Result::ok($command->a + $command->b + $this->c);
+        return Result::ok($query->a - $query->b - $this->c);
     }
 }

@@ -12,25 +12,42 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Application\Bus;
 
-use CloudCreativity\Modules\Contracts\Application\Bus\QueryHandlerContainer;
+use CloudCreativity\Modules\Application\Messages\Through;
+use CloudCreativity\Modules\Contracts\Application\Bus\QueryHandlerContainer as IQueryHandlerContainer;
 use CloudCreativity\Modules\Contracts\Application\Ports\Driving\QueryDispatcher as IQueryDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Query;
-use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
+use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use Psr\Container\ContainerInterface;
+use ReflectionClass;
 
 class QueryDispatcher implements IQueryDispatcher
 {
+    private readonly IQueryHandlerContainer $handlers;
+
+    private readonly ?IPipeContainer $middleware;
+
     /**
      * @var array<callable|string>
      */
     private array $pipes = [];
 
     public function __construct(
-        private readonly QueryHandlerContainer $handlers,
-        private readonly ?PipeContainer $middleware = null,
+        ContainerInterface|IQueryHandlerContainer $handlers,
+        ?IPipeContainer $middleware = null,
     ) {
+        $this->handlers = $handlers instanceof ContainerInterface ?
+            new QueryHandlerContainer($handlers) :
+            $handlers;
+
+        $this->middleware = $middleware === null && $handlers instanceof ContainerInterface
+            ? new PipeContainer($handlers)
+            : $middleware;
+
+        $this->autowire();
     }
 
     /**
@@ -76,5 +93,23 @@ class QueryDispatcher implements IQueryDispatcher
         assert($result instanceof Result, 'Expecting pipeline to return a result object.');
 
         return $result;
+    }
+
+
+    private function autowire(): void
+    {
+        $reflection = new ReflectionClass($this);
+
+        if ($this->handlers instanceof QueryHandlerContainer) {
+            foreach ($reflection->getAttributes(WithQuery::class) as $attribute) {
+                $instance = $attribute->newInstance();
+                $this->handlers->bind($instance->query, $instance->handler);
+            }
+        }
+
+        foreach ($reflection->getAttributes(Through::class) as $attribute) {
+            $instance = $attribute->newInstance();
+            $this->pipes[] = $instance->pipe;
+        }
     }
 }

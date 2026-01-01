@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Application\Bus;
 
+use CloudCreativity\Modules\Application\Messages\Through;
 use CloudCreativity\Modules\Contracts\Application\Bus\CommandHandlerContainer as ICommandHandlerContainer;
 use CloudCreativity\Modules\Contracts\Application\Ports\Driving\CommandDispatcher as ICommandDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
