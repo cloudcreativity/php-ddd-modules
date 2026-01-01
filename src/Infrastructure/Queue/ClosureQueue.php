@@ -18,6 +18,9 @@ use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
+use Psr\Container\ContainerInterface;
+use ReflectionClass;
 
 class ClosureQueue implements Queue
 {
@@ -33,8 +36,9 @@ class ClosureQueue implements Queue
 
     public function __construct(
         private readonly Closure $fn,
-        private readonly ?PipeContainer $middleware = null,
+        private readonly ContainerInterface|PipeContainer|null $middleware = null,
     ) {
+        $this->autowire();
     }
 
     /**
@@ -66,5 +70,14 @@ class ClosureQueue implements Queue
             ->build(new MiddlewareProcessor($enqueuer));
 
         $pipeline->process($command);
+    }
+
+    private function autowire(): void
+    {
+        $reflection = new ReflectionClass($this);
+
+        foreach ($reflection->getAttributes(Through::class) as $attribute) {
+            $this->pipes = $attribute->newInstance()->pipes;
+        }
     }
 }

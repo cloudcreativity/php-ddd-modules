@@ -80,11 +80,11 @@ class ComponentPublisher implements OutboundEventPublisher
         if ($this->handlers instanceof PublisherHandlerContainer) {
             foreach ($reflection->getAttributes(Publishes::class) as $attribute) {
                 $instance = $attribute->newInstance();
-                $this->handlers->bind($instance->event, $instance->handler);
+                $this->handlers->bind($instance->event, $instance->publisher);
             }
 
-            foreach ($reflection->getAttributes(WithDefault::class) as $attribute) {
-                $this->handlers->withDefault($attribute->newInstance()->handler);
+            foreach ($reflection->getAttributes(DefaultPublisher::class) as $attribute) {
+                $this->handlers->withDefault($attribute->newInstance()->publisher);
             }
         }
 

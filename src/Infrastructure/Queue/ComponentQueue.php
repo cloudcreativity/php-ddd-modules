@@ -13,23 +13,40 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Infrastructure\Queue;
 
 use CloudCreativity\Modules\Contracts\Application\Ports\Driven\Queue;
-use CloudCreativity\Modules\Contracts\Infrastructure\Queue\EnqueuerContainer;
+use CloudCreativity\Modules\Contracts\Infrastructure\Queue\EnqueuerContainer as IEnqueuerContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
-use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
+use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
+use Psr\Container\ContainerInterface;
+use ReflectionClass;
 
 class ComponentQueue implements Queue
 {
+    private readonly IEnqueuerContainer $enqueuers;
+
+    private readonly ?IPipeContainer $middleware;
+
     /**
      * @var list<callable|string>
      */
     private array $pipes = [];
 
     public function __construct(
-        private readonly EnqueuerContainer $enqueuers,
-        private readonly ?PipeContainer $middleware = null,
+        ContainerInterface|IEnqueuerContainer $enqueuers,
+        ?IPipeContainer $middleware = null,
     ) {
+        $this->enqueuers = $enqueuers instanceof ContainerInterface ?
+            new EnqueuerContainer(container: $enqueuers) :
+            $enqueuers;
+
+        $this->middleware = $middleware === null && $enqueuers instanceof ContainerInterface
+            ? new PipeContainer($enqueuers)
+            : $middleware;
+
+        $this->autowire();
     }
 
     /**
@@ -52,5 +69,25 @@ class ComponentQueue implements Queue
             }));
 
         $pipeline->process($command);
+    }
+
+    private function autowire(): void
+    {
+        $reflection = new ReflectionClass($this);
+
+        if ($this->enqueuers instanceof EnqueuerContainer) {
+            foreach ($reflection->getAttributes(Queues::class) as $attribute) {
+                $instance = $attribute->newInstance();
+                $this->enqueuers->bind($instance->command, $instance->enqueuer);
+            }
+
+            foreach ($reflection->getAttributes(DefaultEnqueuer::class) as $attribute) {
+                $this->enqueuers->withDefault($attribute->newInstance()->enqueuer);
+            }
+        }
+
+        foreach ($reflection->getAttributes(Through::class) as $attribute) {
+            $this->pipes = $attribute->newInstance()->pipes;
+        }
     }
 }

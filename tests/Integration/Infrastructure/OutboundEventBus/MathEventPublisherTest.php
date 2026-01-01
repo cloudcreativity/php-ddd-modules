@@ -25,12 +25,12 @@ class MathEventPublisherTest extends TestCase
     {
         $a = new NumbersAddedPublisher();
         $b = new NumbersSubtractedPublisher();
-        $c = new DefaultPublisher();
+        $c = new TestDefaultPublisher();
 
         $container = new FakeContainer();
         $container->bind(NumbersAddedPublisher::class, fn () => $a);
         $container->bind(NumbersSubtractedPublisher::class, fn () => $b);
-        $container->bind(DefaultPublisher::class, fn () => $c);
+        $container->bind(TestDefaultPublisher::class, fn () => $c);
         $container->bind(LogOutboundEvent::class, fn () => new LogOutboundEvent($container->logger));
 
         $publisher = new MathEventPublisher($container);

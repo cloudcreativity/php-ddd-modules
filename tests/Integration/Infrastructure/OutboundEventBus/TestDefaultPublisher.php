@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Tests\Integration\Infrastructure\OutboundEvent
 
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
 
-final class DefaultPublisher
+final class TestDefaultPublisher
 {
     /**
      * @var array<IntegrationEvent>

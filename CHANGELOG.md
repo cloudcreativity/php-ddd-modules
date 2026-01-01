@@ -23,22 +23,28 @@ All notable changes to this project will be documented in this file. This projec
     - Integration events can now be mapped to handlers on an inbound event bus class via the `WithEvent` attribute.
     - The default handler can be set on the inbound event bus via the `WithDefault` attribute.
     - Middleware can now be added to an inbound event bus via the `Through` attribute.
-- New outbound event bus features, when using the publisher handler container:
-    - Can now use a PSR container for the outbound event bus to resolve both handlers and middleware. Inject the service
-      container via the first constructor argument.
-    - Integration events can now be mapped to handlers on a publisher handler container class via the `Publishes`
+- New outbound event bus features, when using the component publisher:
+    - Can now use a PSR container for the outbound event bus to resolve both publishers and middleware. Inject the
+      service container via the constructor.
+    - Integration events can now be mapped to publishers on a publisher handler container class via the `Publishes`
       attribute.
-    - The default handler can be set on the outbound event publisher via the `WithDefault` attribute.
-    - Middleware can now be added to a publisher handler container via the `Through` attribute.
+    - The default publisher can be set on the outbound event publisher via the `DefaultPublisher` attribute.
+    - Middleware can now be added to an outbound event publisher via the `Through` attribute.
+- New queue features, when using the component queue:
+    - Can now use a PSR container for the queue to resolve both enqueuers and middleware. Inject the service container
+      via the constructor.
+    - Commands can now be mapped to enqueuers on a publisher handler container class via the `Queues` attribute.
+    - The default enqueuer can be set on the outbound event publisher via the `DefaultEnqueuer` attribute.
+    - Middleware can now be added to the queue via the `Through` attribute.
 - In the Application layer, the `QueryHandlerContainer`, `CommandHandlerContainer` and `EventHandlerContainer` classes
   can now fallback to resolving handlers from a PSR service container. Inject the service container via their
   constructors.
-- In the Infrastructure layer, the `PublisherHandlerContainer` can now fallback to resolving handlers from a PSR service
-  container. Inject the service container via the constructor.
+- In the Infrastructure layer, the `PublisherHandlerContainer` and `EnqueuerContainer` can now fallback to resolving
+  handlers/enqueuers from a PSR service container. Inject the service container via the constructor.
+- The outbound event bus `ClosurePublisher` and the `ClosureQueue` classes now both accept a PSR container for their
+  middleware. Additionally, middleware can be set on instances of closure publishers via the `Through` attribute.
 - The pipeline `PipeContainer` class can now fallback to resolving pipes from a PSR service container. Inject the
   service container via the pipe container's only constructor argument.
-- The outbound event bus `ClosurePublisher` class now accepts a PSR container for its middleware. Additionally,
-  middleware can be set on instances of closure publishers via the `Through` attribute.
 - The `FakeUnitOfWork` class now has integer properties for the number of attempts, commits and rollbacks.
 - New `FakeContainer` class for faking a PSR container in tests.
 

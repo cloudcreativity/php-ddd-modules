@@ -15,40 +15,72 @@ namespace CloudCreativity\Modules\Infrastructure\Queue;
 use Closure;
 use CloudCreativity\Modules\Contracts\Infrastructure\Queue\EnqueuerContainer as IEnqueuerContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
+use CloudCreativity\Modules\Infrastructure\InfrastructureException;
+use Psr\Container\ContainerInterface;
 
 final class EnqueuerContainer implements IEnqueuerContainer
 {
     /**
-     * @var array<class-string<Command>, Closure>
+     * @var array<class-string<Command>, Closure|string>
      */
     private array $bindings = [];
 
     /**
-     * @param Closure(): object $default
+     * @param (Closure(): object)|string|null $default
      */
-    public function __construct(private readonly Closure $default)
-    {
+    public function __construct(
+        private Closure|string|null $default = null,
+        private readonly ?ContainerInterface $container = null,
+    ) {
+        if (is_string($this->default) && $this->container === null) {
+            throw new InfrastructureException(
+                'Cannot bind default enqueuer as a string without a PSR container.',
+            );
+        }
     }
 
     /**
      * Bind an enqueuer factory into the container.
      *
      * @param class-string<Command> $queueableName
-     * @param Closure(): object $binding
+     * @param (Closure(): object)|string $binding
      */
-    public function bind(string $queueableName, Closure $binding): void
+    public function bind(string $queueableName, Closure|string $binding): void
     {
         $this->bindings[$queueableName] = $binding;
     }
 
+    public function withDefault(Closure|string $binding): void
+    {
+        if ($this->default !== null) {
+            throw new InfrastructureException('Default enqueuer is already set.');
+        }
+
+        if (is_string($binding) && $this->container === null) {
+            throw new InfrastructureException(
+                'Cannot bind default enqueuer as a string without a PSR container.',
+            );
+        }
+
+        $this->default = $binding;
+    }
+
     public function get(string $command): Enqueuer
     {
-        $factory = $this->bindings[$command] ?? $this->default;
+        $binding = $this->bindings[$command] ?? $this->default;
 
-        $enqueuer = $factory();
+        if ($binding instanceof Closure) {
+            $instance = $binding();
+            assert(is_object($instance), "Enqueuer binding for command {$command} must return an object.");
+            return new Enqueuer($instance);
+        }
 
-        assert(is_object($enqueuer), "Enqueuer binding for {$command} must return an object.");
+        if (is_string($binding)) {
+            $instance = $this->container?->get($binding);
+            assert(is_object($instance), "PSR container enqueuer binding {$binding} is not an object.");
+            return new Enqueuer($instance);
+        }
 
-        return new Enqueuer($enqueuer);
+        throw new InfrastructureException('No enqueuer bound for command: ' . $command);
     }
 }

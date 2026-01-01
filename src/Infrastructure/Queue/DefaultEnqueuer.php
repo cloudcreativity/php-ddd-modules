@@ -10,17 +10,17 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Infrastructure\OutboundEventBus;
+namespace CloudCreativity\Modules\Infrastructure\Queue;
 
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-final readonly class WithDefault
+final readonly class DefaultEnqueuer
 {
     /**
-     * @param class-string $handler
+     * @param non-empty-string $enqueuer
      */
-    public function __construct(public string $handler)
+    public function __construct(public string $enqueuer)
     {
     }
 }

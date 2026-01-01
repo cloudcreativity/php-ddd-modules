@@ -13,16 +13,14 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Infrastructure\OutboundEventBus;
 
 use Attribute;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
 
-#[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
-final readonly class Publishes
+#[Attribute(Attribute::TARGET_CLASS)]
+final readonly class DefaultPublisher
 {
     /**
-     * @param class-string<IntegrationEvent> $event
-     * @param class-string $publisher
+     * @param non-empty-string $publisher
      */
-    public function __construct(public string $event, public string $publisher)
+    public function __construct(public string $publisher)
     {
     }
 }

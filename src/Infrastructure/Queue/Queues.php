@@ -10,19 +10,19 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Infrastructure\OutboundEventBus;
+namespace CloudCreativity\Modules\Infrastructure\Queue;
 
 use Attribute;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
-final readonly class Publishes
+final readonly class Queues
 {
     /**
-     * @param class-string<IntegrationEvent> $event
-     * @param class-string $publisher
+     * @param class-string<Command> $command
+     * @param class-string $enqueuer
      */
-    public function __construct(public string $event, public string $publisher)
+    public function __construct(public string $command, public string $enqueuer)
     {
     }
 }
