@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2025 Cloud Creativity Limited
+ * Copyright 2026 Cloud Creativity Limited
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file or at
@@ -14,10 +14,11 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Pipeline;
 
 use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 
 class PipeContainerTest extends TestCase
 {
-    public function test(): void
+    public function testItResolvesBoundPipes(): void
     {
         $a = fn () => 1;
         $b = fn () => 2;
@@ -33,5 +34,28 @@ class PipeContainerTest extends TestCase
         $this->expectExceptionMessage('Unrecognised pipe name: PipeC');
 
         $container->get('PipeC');
+    }
+
+    public function testItFallsBackToPsrContainer(): void
+    {
+        $psrContainer = $this->createMock(ContainerInterface::class);
+
+        $a = fn () => 1;
+        $b = fn () => 2;
+        $c = fn () => 3;
+
+        $container = new PipeContainer($psrContainer);
+        $container->bind('PipeA', fn () => $a);
+        $container->bind('PipeB', fn () => $b);
+
+        $psrContainer
+            ->expects($this->once())
+            ->method('get')
+            ->with('PipeC')
+            ->willReturn($c);
+
+        $this->assertSame($a, $container->get('PipeA'));
+        $this->assertSame($b, $container->get('PipeB'));
+        $this->assertSame($c, $container->get('PipeC'));
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2025 Cloud Creativity Limited
+ * Copyright 2026 Cloud Creativity Limited
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file or at
@@ -16,33 +16,48 @@ use Closure;
 use CloudCreativity\Modules\Application\ApplicationException;
 use CloudCreativity\Modules\Contracts\Application\Bus\QueryHandlerContainer as IQueryHandlerContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Query;
+use Psr\Container\ContainerInterface;
 
 final class QueryHandlerContainer implements IQueryHandlerContainer
 {
     /**
-     * @var array<class-string<Query>,Closure>
+     * @var array<class-string<Query>, class-string|Closure>
      */
     private array $bindings = [];
+
+    public function __construct(private readonly ?ContainerInterface $container = null)
+    {
+    }
 
     /**
      * Bind a query handler into the container.
      *
      * @param class-string<Query> $queryClass
-     * @param Closure(): object $binding
+     * @param class-string|(Closure(): object) $binding
      */
-    public function bind(string $queryClass, Closure $binding): void
+    public function bind(string $queryClass, Closure|string $binding): void
     {
+        if (is_string($binding) && !$this->container) {
+            throw new ApplicationException('Cannot use a string query handler binding without a PSR container.');
+        }
+
         $this->bindings[$queryClass] = $binding;
     }
 
     public function get(string $queryClass): QueryHandler
     {
-        $factory = $this->bindings[$queryClass] ?? null;
+        $binding = $this->bindings[$queryClass] ?? null;
 
-        if ($factory) {
-            $innerHandler = $factory();
-            assert(is_object($innerHandler), "Query handler binding for {$queryClass} must return an object.");
-            return new QueryHandler($innerHandler);
+        if ($binding instanceof Closure) {
+            $instance = $binding();
+            assert(is_object($instance), "Query handler binding for {$queryClass} must return an object.");
+            return new QueryHandler($instance);
+        }
+
+        if (is_string($binding)) {
+            $instance = $this->container?->get($binding);
+            assert(is_object($instance), "PSR container query handler binding {$binding} is not an object.");
+            return new QueryHandler($instance);
         }
 
         throw new ApplicationException('No query handler bound for query class: ' . $queryClass);

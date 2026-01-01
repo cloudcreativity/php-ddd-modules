@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2025 Cloud Creativity Limited
+ * Copyright 2026 Cloud Creativity Limited
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file or at
@@ -12,9 +12,10 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Toolkit\Pipeline;
 
-use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipelineBuilder as IPipelineBuilder;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Processor;
+use Psr\Container\ContainerInterface;
 use RuntimeException;
 
 final class PipelineBuilder implements IPipelineBuilder
@@ -24,12 +25,16 @@ final class PipelineBuilder implements IPipelineBuilder
      */
     private array $stages = [];
 
-    public static function make(?PipeContainer $container = null): self
+    public static function make(ContainerInterface|IPipeContainer|null $container = null): self
     {
+        if ($container instanceof ContainerInterface) {
+            return new self(new PipeContainer($container));
+        }
+
         return new self($container);
     }
 
-    public function __construct(private readonly ?PipeContainer $container = null)
+    public function __construct(private readonly ?IPipeContainer $container = null)
     {
     }
 

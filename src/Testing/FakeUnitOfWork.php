@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2025 Cloud Creativity Limited
+ * Copyright 2026 Cloud Creativity Limited
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file or at
@@ -20,6 +20,12 @@ use Throwable;
 
 final class FakeUnitOfWork implements UnitOfWork
 {
+    public int $attempts = 0;
+
+    public int $commits = 0;
+
+    public int $rollbacks = 0;
+
     /**
      * @var list<string>
      */
@@ -38,11 +44,14 @@ final class FakeUnitOfWork implements UnitOfWork
         for ($i = 1; $i <= $attempts; $i++) {
             try {
                 $this->sequence[] = 'attempt:' . $i;
+                $this->attempts++;
                 $result = $callback();
                 $this->sequence[] = 'commit:' . $i;
+                $this->commits++;
                 return $result;
             } catch (Throwable $ex) {
                 $this->sequence[] = 'rollback:' . $i;
+                $this->rollbacks++;
                 $this->exceptions->report($ex);
 
                 if ($i === $attempts) {

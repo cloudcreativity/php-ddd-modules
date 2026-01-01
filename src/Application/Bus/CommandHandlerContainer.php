@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2025 Cloud Creativity Limited
+ * Copyright 2026 Cloud Creativity Limited
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file or at
@@ -16,33 +16,48 @@ use Closure;
 use CloudCreativity\Modules\Application\ApplicationException;
 use CloudCreativity\Modules\Contracts\Application\Bus\CommandHandlerContainer as ICommandHandlerContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
+use Psr\Container\ContainerInterface;
 
 final class CommandHandlerContainer implements ICommandHandlerContainer
 {
     /**
-     * @var array<class-string<Command>, Closure>
+     * @var array<class-string<Command>, class-string|Closure>
      */
     private array $bindings = [];
+
+    public function __construct(private readonly ?ContainerInterface $container = null)
+    {
+    }
 
     /**
      * Bind a command handler into the container.
      *
      * @param class-string<Command> $commandClass
-     * @param Closure(): object $binding
+     * @param class-string|(Closure(): object) $binding
      */
-    public function bind(string $commandClass, Closure $binding): void
+    public function bind(string $commandClass, Closure|string $binding): void
     {
+        if (is_string($binding) && $this->container === null) {
+            throw new ApplicationException('Cannot use a string command handler binding without a PSR container.');
+        }
+
         $this->bindings[$commandClass] = $binding;
     }
 
     public function get(string $commandClass): CommandHandler
     {
-        $factory = $this->bindings[$commandClass] ?? null;
+        $binding = $this->bindings[$commandClass] ?? null;
 
-        if ($factory) {
-            $innerHandler = $factory();
-            assert(is_object($innerHandler), "Command handler binding for {$commandClass} must return an object.");
-            return new CommandHandler($innerHandler);
+        if ($binding instanceof Closure) {
+            $instance = $binding();
+            assert(is_object($instance), "Command handler binding for {$commandClass} must return an object.");
+            return new CommandHandler($instance);
+        }
+
+        if (is_string($binding)) {
+            $instance = $this->container?->get($binding);
+            assert(is_object($instance), "PSR container command handler binding {$binding} is not an object.");
+            return new CommandHandler($instance);
         }
 
         throw new ApplicationException('No command handler bound for command class: ' . $commandClass);

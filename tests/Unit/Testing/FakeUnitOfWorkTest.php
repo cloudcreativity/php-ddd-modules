@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2025 Cloud Creativity Limited
+ * Copyright 2026 Cloud Creativity Limited
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file or at
@@ -28,6 +28,9 @@ class FakeUnitOfWorkTest extends TestCase
         $this->assertSame('result', $result);
         $this->assertSame(['attempt:1', 'commit:1'], $unitOfWork->sequence);
         $this->assertEmpty($unitOfWork->exceptions->reported);
+        $this->assertSame(1, $unitOfWork->attempts);
+        $this->assertSame(1, $unitOfWork->commits);
+        $this->assertSame(0, $unitOfWork->rollbacks);
     }
 
     public function testItIsSuccessfulBeforeMaxAttempts(): void
@@ -56,6 +59,9 @@ class FakeUnitOfWorkTest extends TestCase
             'commit:3',
         ], $unitOfWork->sequence);
         $this->assertSame($unitOfWork->exceptions->reported, [$ex1, $ex2]);
+        $this->assertSame(3, $unitOfWork->attempts);
+        $this->assertSame(1, $unitOfWork->commits);
+        $this->assertSame(2, $unitOfWork->rollbacks);
     }
 
     public function testItIsSuccessfulOnMaxAttempts(): void
@@ -84,6 +90,9 @@ class FakeUnitOfWorkTest extends TestCase
             'commit:3',
         ], $unitOfWork->sequence);
         $this->assertSame($unitOfWork->exceptions->reported, [$ex1, $ex2]);
+        $this->assertSame(3, $unitOfWork->attempts);
+        $this->assertSame(1, $unitOfWork->commits);
+        $this->assertSame(2, $unitOfWork->rollbacks);
     }
 
     public function testItIsNotSuccessful(): void
@@ -108,6 +117,9 @@ class FakeUnitOfWorkTest extends TestCase
                 'rollback:2',
             ], $unitOfWork->sequence);
             $this->assertSame($unitOfWork->exceptions->reported, [$ex1, $ex2]);
+            $this->assertSame(2, $unitOfWork->attempts);
+            $this->assertSame(0, $unitOfWork->commits);
+            $this->assertSame(2, $unitOfWork->rollbacks);
         }
     }
 }

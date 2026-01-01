@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2025 Cloud Creativity Limited
+ * Copyright 2026 Cloud Creativity Limited
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file or at
@@ -12,25 +12,42 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Application\Bus;
 
-use CloudCreativity\Modules\Contracts\Application\Bus\CommandHandlerContainer;
+use CloudCreativity\Modules\Contracts\Application\Bus\CommandHandlerContainer as ICommandHandlerContainer;
 use CloudCreativity\Modules\Contracts\Application\Ports\Driving\CommandDispatcher as ICommandDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
-use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
+use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
+use Psr\Container\ContainerInterface;
+use ReflectionClass;
 
 class CommandDispatcher implements ICommandDispatcher
 {
+    private readonly ICommandHandlerContainer $handlers;
+
+    private readonly ?IPipeContainer $middleware;
+
     /**
      * @var array<callable|string>
      */
     private array $pipes = [];
 
     public function __construct(
-        private readonly CommandHandlerContainer $handlers,
-        private readonly ?PipeContainer $middleware = null,
+        ContainerInterface|ICommandHandlerContainer $handlers,
+        ?IPipeContainer $middleware = null,
     ) {
+        $this->handlers = $handlers instanceof ContainerInterface ?
+            new CommandHandlerContainer($handlers) :
+            $handlers;
+
+        $this->middleware = $middleware === null && $handlers instanceof ContainerInterface
+            ? new PipeContainer($handlers)
+            : $middleware;
+
+        $this->autowire();
     }
 
     /**
@@ -76,5 +93,22 @@ class CommandDispatcher implements ICommandDispatcher
         assert($result instanceof Result, 'Expecting pipeline to return a result object.');
 
         return $result;
+    }
+
+    private function autowire(): void
+    {
+        $reflection = new ReflectionClass($this);
+
+        if ($this->handlers instanceof CommandHandlerContainer) {
+            foreach ($reflection->getAttributes(WithCommand::class) as $attribute) {
+                $instance = $attribute->newInstance();
+                $this->handlers->bind($instance->command, $instance->handler);
+            }
+        }
+
+        foreach ($reflection->getAttributes(Through::class) as $attribute) {
+            $instance = $attribute->newInstance();
+            $this->pipes = $instance->pipes;
+        }
     }
 }

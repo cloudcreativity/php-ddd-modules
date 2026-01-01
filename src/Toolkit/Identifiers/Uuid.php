@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2025 Cloud Creativity Limited
+ * Copyright 2026 Cloud Creativity Limited
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file or at
@@ -21,7 +21,7 @@ use Ramsey\Uuid\UuidInterface as IBaseUuid;
 
 final class Uuid implements Identifier, JsonSerializable
 {
-    use IsIdentifier;
+    use IsUuid;
 
     private static ?IUuidFactory $factory = null;
 
@@ -78,50 +78,5 @@ final class Uuid implements Identifier, JsonSerializable
 
     public function __construct(public readonly IBaseUuid $value)
     {
-    }
-
-
-    public function __toString(): string
-    {
-        return $this->toString();
-    }
-
-    public function toString(): string
-    {
-        return $this->value->toString();
-    }
-
-    public function getBytes(): string
-    {
-        return $this->value->getBytes();
-    }
-
-    public function is(?Identifier $other): bool
-    {
-        if ($other instanceof self) {
-            return $this->equals($other);
-        }
-
-        return false;
-    }
-
-    public function equals(self $other): bool
-    {
-        return $this->value->equals($other->value);
-    }
-
-    public function key(): string
-    {
-        return $this->value->toString();
-    }
-
-    public function context(): string
-    {
-        return $this->value->toString();
-    }
-
-    public function jsonSerialize(): string
-    {
-        return $this->value->toString();
     }
 }
