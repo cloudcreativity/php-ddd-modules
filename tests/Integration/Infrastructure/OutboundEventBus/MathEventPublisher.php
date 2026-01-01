@@ -1,0 +1,29 @@
+<?php
+
+/*
+ * Copyright 2026 Cloud Creativity Limited
+ *
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
+ */
+
+declare(strict_types=1);
+
+namespace CloudCreativity\Modules\Tests\Integration\Infrastructure\OutboundEventBus;
+
+use CloudCreativity\Modules\Infrastructure\OutboundEventBus\ComponentPublisher;
+use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Middleware\LogOutboundEvent;
+use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Publishes;
+use CloudCreativity\Modules\Infrastructure\OutboundEventBus\WithDefault;
+use CloudCreativity\Modules\Tests\Integration\Application\InboundEventBus\NumbersAdded;
+use CloudCreativity\Modules\Tests\Integration\Application\InboundEventBus\NumbersSubtracted;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
+
+#[Publishes(NumbersAdded::class, NumbersAddedPublisher::class)]
+#[Publishes(NumbersSubtracted::class, NumbersSubtractedPublisher::class)]
+#[Through(LogOutboundEvent::class)]
+#[WithDefault(DefaultPublisher::class)]
+final class MathEventPublisher extends ComponentPublisher
+{
+}

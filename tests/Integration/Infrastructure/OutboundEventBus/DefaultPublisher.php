@@ -1,0 +1,28 @@
+<?php
+
+/*
+ * Copyright 2026 Cloud Creativity Limited
+ *
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
+ */
+
+declare(strict_types=1);
+
+namespace CloudCreativity\Modules\Tests\Integration\Infrastructure\OutboundEventBus;
+
+use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
+
+final class DefaultPublisher
+{
+    /**
+     * @var array<IntegrationEvent>
+     */
+    public array $published = [];
+
+    public function publish(IntegrationEvent $event): void
+    {
+        $this->published[] = $event;
+    }
+}
