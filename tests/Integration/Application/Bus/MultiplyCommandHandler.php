@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Integration\Application\Bus;
 
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
-use CloudCreativity\Modules\Application\Messages\Through;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 
 #[Through(ExecuteInUnitOfWork::class)]

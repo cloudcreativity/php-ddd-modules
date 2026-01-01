@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Application\Bus;
 
-use CloudCreativity\Modules\Application\Messages\Through;
 use CloudCreativity\Modules\Contracts\Application\Bus\QueryHandlerContainer as IQueryHandlerContainer;
 use CloudCreativity\Modules\Contracts\Application\Ports\Driving\QueryDispatcher as IQueryDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Query;
@@ -21,6 +20,7 @@ use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
 

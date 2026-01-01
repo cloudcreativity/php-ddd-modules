@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Application\InboundEventBus;
 
-use CloudCreativity\Modules\Application\Messages\Through;
 use CloudCreativity\Modules\Contracts\Application\InboundEventBus\EventHandlerContainer as IEventHandlerContainer;
 use CloudCreativity\Modules\Contracts\Application\Ports\Driving\InboundEventDispatcher as IInboundEventDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
@@ -20,6 +19,7 @@ use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeCon
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 use Psr\Container\ContainerInterface;
 
 class InboundEventDispatcher implements IInboundEventDispatcher

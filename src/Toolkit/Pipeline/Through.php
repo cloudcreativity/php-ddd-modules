@@ -10,7 +10,7 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Application\Messages;
+namespace CloudCreativity\Modules\Toolkit\Pipeline;
 
 use Attribute;
 

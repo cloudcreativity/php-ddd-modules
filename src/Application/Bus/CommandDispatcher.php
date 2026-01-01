@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Application\Bus;
 
-use CloudCreativity\Modules\Application\Messages\Through;
 use CloudCreativity\Modules\Contracts\Application\Bus\CommandHandlerContainer as ICommandHandlerContainer;
 use CloudCreativity\Modules\Contracts\Application\Ports\Driving\CommandDispatcher as ICommandDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
@@ -21,6 +20,7 @@ use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
 

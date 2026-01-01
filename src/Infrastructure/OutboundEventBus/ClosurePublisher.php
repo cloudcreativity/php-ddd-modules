@@ -18,6 +18,9 @@ use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
+use Psr\Container\ContainerInterface;
+use ReflectionClass;
 
 class ClosurePublisher implements OutboundEventPublisher
 {
@@ -33,8 +36,9 @@ class ClosurePublisher implements OutboundEventPublisher
 
     public function __construct(
         private readonly Closure $fn,
-        private readonly ?PipeContainer $middleware = null,
+        private readonly ContainerInterface|PipeContainer|null $middleware = null,
     ) {
+        $this->autowire();
     }
 
     /**
@@ -66,5 +70,15 @@ class ClosurePublisher implements OutboundEventPublisher
             ->build(new MiddlewareProcessor($publisher));
 
         $pipeline->process($event);
+    }
+
+    private function autowire(): void
+    {
+        $reflection = new ReflectionClass($this);
+
+        foreach ($reflection->getAttributes(Through::class) as $attribute) {
+            $instance = $attribute->newInstance();
+            $this->pipes = $instance->pipes;
+        }
     }
 }

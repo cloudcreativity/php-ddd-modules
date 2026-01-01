@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Integration\Application\InboundEventBus;
 
 use CloudCreativity\Modules\Application\InboundEventBus\Middleware\HandleInUnitOfWork;
-use CloudCreativity\Modules\Application\Messages\Through;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(HandleInUnitOfWork::class)]
 final class NumbersSubtractedHandler

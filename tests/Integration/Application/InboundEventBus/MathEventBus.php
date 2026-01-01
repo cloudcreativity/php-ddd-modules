@@ -16,7 +16,7 @@ use CloudCreativity\Modules\Application\InboundEventBus\InboundEventDispatcher;
 use CloudCreativity\Modules\Application\InboundEventBus\Middleware\LogInboundEvent;
 use CloudCreativity\Modules\Application\InboundEventBus\WithDefault;
 use CloudCreativity\Modules\Application\InboundEventBus\WithEvent;
-use CloudCreativity\Modules\Application\Messages\Through;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(LogInboundEvent::class)]
 #[WithDefault(DefaultHandler::class)]

@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file. This projec
   service container. Inject the service container via the handler container's only constructor argument.
 - The pipeline `PipeContainer` class can now fallback to resolving pipes from a PSR service container. Inject the
   service container via the pipe container's only constructor argument.
+- The outbound event bus `ClosurePublisher` class now accepts a PSR container for its middleware. Additionally,
+  middleware can be set on instances of closure publishers via the `Through` attribute.
 - The `FakeUnitOfWork` class now has integer properties for the number of attempts, commits and rollbacks.
 - New `FakeContainer` class for faking a PSR container in tests.
 

@@ -15,7 +15,7 @@ namespace CloudCreativity\Modules\Tests\Integration\Application\Bus;
 use CloudCreativity\Modules\Application\Bus\CommandDispatcher;
 use CloudCreativity\Modules\Application\Bus\Middleware\LogMessageDispatch;
 use CloudCreativity\Modules\Application\Bus\WithCommand;
-use CloudCreativity\Modules\Application\Messages\Through;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(LogMessageDispatch::class)]
 #[WithCommand(AddCommand::class, AddCommandHandler::class)]

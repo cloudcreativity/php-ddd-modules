@@ -15,7 +15,7 @@ namespace CloudCreativity\Modules\Tests\Integration\Application\Bus;
 use CloudCreativity\Modules\Application\Bus\Middleware\LogMessageDispatch;
 use CloudCreativity\Modules\Application\Bus\QueryDispatcher;
 use CloudCreativity\Modules\Application\Bus\WithQuery;
-use CloudCreativity\Modules\Application\Messages\Through;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(LogMessageDispatch::class)]
 #[WithQuery(DivideQuery::class, DivideQueryHandler::class)]

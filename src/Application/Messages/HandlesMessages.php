@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Application\Messages;
 
 use CloudCreativity\Modules\Contracts\Application\Messages\DispatchThroughMiddleware;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 use ReflectionClass;
 
 trait HandlesMessages
