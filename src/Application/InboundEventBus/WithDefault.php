@@ -10,23 +10,17 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Application\Messages;
+namespace CloudCreativity\Modules\Application\InboundEventBus;
 
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-final readonly class Through
+final readonly class WithDefault
 {
     /**
-     * @var list<non-empty-string>
+     * @param class-string $handler
      */
-    public array $pipes;
-
-    /**
-     * @param non-empty-string ...$pipes
-     */
-    public function __construct(string ...$pipes)
+    public function __construct(public string $handler)
     {
-        $this->pipes = array_values($pipes);
     }
 }

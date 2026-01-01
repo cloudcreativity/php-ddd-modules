@@ -17,6 +17,12 @@ All notable changes to this project will be documented in this file. This projec
       container via the first constructor argument.
     - Queries can now be mapped to handlers on a query bus class via the `WithQuery` attribute.
     - Middleware can now be added to a query bus via the `Through` attribute.
+- New inbound event bus features:
+    - Can now use a PSR container for the inbound event bus to resolve both handlers and middleware. Inject the service
+      container via the first constructor argument.
+    - Integration events can now be mapped to handlers on an inbound event bus class via the `WithEvent` attribute.
+    - The default handler can be set on the inbound event bus via the `WithDefault` attribute.
+    - Middleware can now be added to an inbound event bus via the `Through` attribute.
 - The `QueryHandlerContainer` and `CommandHandlerContainer` classes can now fallback to resolving handlers from a PSR
   service container. Inject the service container via the handler container's only constructor argument.
 - The pipeline `PipeContainer` class can now fallback to resolving pipes from a PSR service container. Inject the

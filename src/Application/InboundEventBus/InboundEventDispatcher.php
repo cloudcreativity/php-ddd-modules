@@ -12,24 +12,40 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Application\InboundEventBus;
 
-use CloudCreativity\Modules\Contracts\Application\InboundEventBus\EventHandlerContainer;
+use CloudCreativity\Modules\Application\Messages\Through;
+use CloudCreativity\Modules\Contracts\Application\InboundEventBus\EventHandlerContainer as IEventHandlerContainer;
 use CloudCreativity\Modules\Contracts\Application\Ports\Driving\InboundEventDispatcher as IInboundEventDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
-use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
+use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use Psr\Container\ContainerInterface;
 
 class InboundEventDispatcher implements IInboundEventDispatcher
 {
+    private readonly IEventHandlerContainer $handlers;
+
+    private readonly ?IPipeContainer $middleware;
+
     /**
      * @var array<callable|string>
      */
     private array $pipes = [];
 
     public function __construct(
-        private readonly EventHandlerContainer $handlers,
-        private readonly ?PipeContainer $middleware = null,
+        ContainerInterface|IEventHandlerContainer $handlers,
+        ?IPipeContainer $middleware = null,
     ) {
+        $this->handlers = $handlers instanceof ContainerInterface ?
+            new EventHandlerContainer(container: $handlers) :
+            $handlers;
+
+        $this->middleware = $middleware === null && $handlers instanceof ContainerInterface ?
+            new PipeContainer(container: $handlers) :
+            $middleware;
+
+        $this->autowire();
     }
 
     /**
@@ -64,5 +80,27 @@ class InboundEventDispatcher implements IInboundEventDispatcher
             ->build(MiddlewareProcessor::call($handler));
 
         $pipeline->process($event);
+    }
+
+    private function autowire(): void
+    {
+        $reflection = new \ReflectionClass($this);
+
+        if ($this->handlers instanceof EventHandlerContainer) {
+            foreach ($reflection->getAttributes(WithEvent::class) as $attribute) {
+                $instance = $attribute->newInstance();
+                $this->handlers->bind($instance->event, $instance->handler);
+            }
+
+            foreach ($reflection->getAttributes(WithDefault::class) as $attribute) {
+                $instance = $attribute->newInstance();
+                $this->handlers->withDefault($instance->handler);
+            }
+        }
+
+        foreach ($reflection->getAttributes(Through::class) as $attribute) {
+            $instance = $attribute->newInstance();
+            $this->pipes = $instance->pipes;
+        }
     }
 }

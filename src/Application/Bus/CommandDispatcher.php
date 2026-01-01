@@ -108,7 +108,7 @@ class CommandDispatcher implements ICommandDispatcher
 
         foreach ($reflection->getAttributes(Through::class) as $attribute) {
             $instance = $attribute->newInstance();
-            $this->pipes[] = $instance->pipe;
+            $this->pipes = $instance->pipes;
         }
     }
 }

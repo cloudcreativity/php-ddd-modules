@@ -16,40 +16,68 @@ use Closure;
 use CloudCreativity\Modules\Application\ApplicationException;
 use CloudCreativity\Modules\Contracts\Application\InboundEventBus\EventHandlerContainer as IEventHandlerContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
+use Psr\Container\ContainerInterface;
 
 final class EventHandlerContainer implements IEventHandlerContainer
 {
     /**
-     * @var array<class-string<IntegrationEvent>, Closure>
+     * @var array<class-string<IntegrationEvent>, Closure|non-empty-string>
      */
     private array $bindings = [];
 
     /**
-     * @param ?Closure(): object $default
+     * @param (Closure(): object)|non-empty-string|null $default
      */
-    public function __construct(private readonly ?Closure $default = null)
-    {
+    public function __construct(
+        private Closure|string|null $default = null,
+        private readonly ?ContainerInterface $container = null,
+    ) {
     }
 
     /**
      * Bind a handler factory into the container.
      *
      * @param class-string<IntegrationEvent> $eventName
-     * @param Closure(): object $binding
+     * @param (Closure(): object)|non-empty-string $binding
      */
-    public function bind(string $eventName, Closure $binding): void
+    public function bind(string $eventName, Closure|string $binding): void
     {
+        if (is_string($binding) && $this->container === null) {
+            throw new ApplicationException('Cannot use a string event handler binding without a PSR container.');
+        }
+
         $this->bindings[$eventName] = $binding;
+    }
+
+    /**
+     * Bind a default handler factory into the container.
+     *
+     * @param (Closure(): object)|non-empty-string $binding
+     */
+    public function withDefault(Closure|string $binding): void
+    {
+        if ($this->default === null) {
+            $this->default = $binding;
+            return;
+        }
+
+        throw new ApplicationException('Default event handler binding is already set.');
     }
 
     public function get(string $eventName): EventHandler
     {
-        $factory = $this->bindings[$eventName] ?? $this->default;
+        $binding = $this->bindings[$eventName] ?? $this->default;
 
-        if ($factory) {
-            $handler = $factory();
-            assert(is_object($handler), "Handler binding for integration event {$eventName} must return an object.");
-            return new EventHandler($handler);
+        if ($binding instanceof Closure) {
+            $instance = $binding();
+            assert(is_object($instance), "Handler binding for integration event {$eventName} must return an object.");
+            return new EventHandler($instance);
+        }
+
+        if (is_string($binding)) {
+            $instance = $this->container?->get($binding);
+            assert(is_object($instance), "PSR container event handler binding {$binding} is not an object.");
+            return new EventHandler($instance);
         }
 
         throw new ApplicationException('No handler bound for integration event: ' . $eventName);

@@ -19,22 +19,17 @@ trait HandlesMessages
 {
     public function middleware(): array
     {
-        $middleware = [];
+        if ($this->handler instanceof DispatchThroughMiddleware) {
+            return $this->handler->middleware();
+        }
 
         $reflection = new ReflectionClass($this->handler);
 
         foreach ($reflection->getAttributes(Through::class) as $attribute) {
             $instance = $attribute->newInstance();
-            $middleware[] = $instance->pipe;
+            return $instance->pipes;
         }
 
-        if ($this->handler instanceof DispatchThroughMiddleware) {
-            $middleware = [
-                ...$middleware,
-                ...$this->handler->middleware(),
-            ];
-        }
-
-        return $middleware;
+        return [];
     }
 }
