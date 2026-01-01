@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Application\InboundEventBus\Middleware;
 
-use CloudCreativity\Modules\Application\InboundEventBus\Middleware\LogInboundEvent;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Bus\Loggable\ObjectDecorator;
+use CloudCreativity\Modules\Bus\Middleware\LogInboundEvent;
+use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
 use CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus\TestOutboundEvent;
-use CloudCreativity\Modules\Toolkit\Loggable\ObjectDecorator;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
 use LogicException;
 use PHPUnit\Framework\MockObject\MockObject;

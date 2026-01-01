@@ -12,9 +12,9 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Application\InboundEventBus;
 
-use CloudCreativity\Modules\Application\ApplicationException;
-use CloudCreativity\Modules\Application\InboundEventBus\EventHandler;
-use CloudCreativity\Modules\Application\InboundEventBus\EventHandlerContainer;
+use CloudCreativity\Modules\Bus\BusException;
+use CloudCreativity\Modules\Bus\EventHandler;
+use CloudCreativity\Modules\Bus\EventHandlerContainer;
 use CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus\TestOutboundEvent;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -94,7 +94,7 @@ class EventHandlerContainerTest extends TestCase
         $container = new EventHandlerContainer();
         $container->bind(TestInboundEvent::class, fn () => new TestEventHandler());
 
-        $this->expectException(ApplicationException::class);
+        $this->expectException(BusException::class);
         $this->expectExceptionMessage(
             'No handler bound for integration event: ' . TestOutboundEvent::class,
         );

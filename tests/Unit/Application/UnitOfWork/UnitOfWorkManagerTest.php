@@ -14,8 +14,8 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\UnitOfWork;
 
 use Closure;
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
-use CloudCreativity\Modules\Contracts\Application\Ports\Driven\ExceptionReporter;
-use CloudCreativity\Modules\Contracts\Application\Ports\Driven\UnitOfWork;
+use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
+use CloudCreativity\Modules\Contracts\Application\Ports\UnitOfWork;
 use LogicException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

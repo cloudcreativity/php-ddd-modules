@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Infrastructure\ExceptionReporter;
 
-use CloudCreativity\Modules\Contracts\Application\Ports\Driven\ExceptionReporter;
-use CloudCreativity\Modules\Contracts\Toolkit\Loggable\ContextProvider;
+use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
+use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextProvider;
 use Psr\Log\LoggerInterface;
 use Throwable;
 

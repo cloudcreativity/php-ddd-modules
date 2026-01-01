@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Testing;
 
-use CloudCreativity\Modules\Contracts\Application\Ports\Driven\OutboundEventPublisher;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Application\Ports\OutboundEventPublisher;
+use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
 use CloudCreativity\Modules\Testing\FakeOutboundEventPublisher;
 use LogicException;
 use PHPUnit\Framework\TestCase;

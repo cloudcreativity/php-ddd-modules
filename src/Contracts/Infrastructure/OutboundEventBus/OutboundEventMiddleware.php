@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus;
 
 use Closure;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
 
 interface OutboundEventMiddleware
 {

@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Testing;
 
 use ArrayAccess;
-use CloudCreativity\Modules\Contracts\Application\Ports\Driven\OutboundEventPublisher;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Application\Ports\OutboundEventPublisher;
+use CloudCreativity\Modules\Contracts\Bus\IntegrationEvent;
 use Countable;
 use Generator;
 use IteratorAggregate;

@@ -13,9 +13,9 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus\Middleware;
 
 use Closure;
-use CloudCreativity\Modules\Application\Bus\Middleware\SetupBeforeDispatch;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\Query;
+use CloudCreativity\Modules\Bus\Middleware\SetupBeforeDispatch;
+use CloudCreativity\Modules\Contracts\Bus\Command;
+use CloudCreativity\Modules\Contracts\Bus\Query;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;

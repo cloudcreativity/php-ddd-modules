@@ -12,12 +12,12 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Infrastructure\Queue;
 
-use CloudCreativity\Modules\Contracts\Application\Ports\Driven\Queue;
+use CloudCreativity\Modules\Bus\PsrPipeContainer;
+use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
+use CloudCreativity\Modules\Contracts\Bus\Command;
 use CloudCreativity\Modules\Contracts\Infrastructure\Queue\EnqueuerContainer as IEnqueuerContainer;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
-use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
 use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 use Psr\Container\ContainerInterface;
@@ -43,7 +43,7 @@ class ComponentQueue implements Queue
             $enqueuers;
 
         $this->middleware = $middleware === null && $enqueuers instanceof ContainerInterface
-            ? new PipeContainer($enqueuers)
+            ? new PsrPipeContainer($enqueuers)
             : $middleware;
 
         $this->autowire();

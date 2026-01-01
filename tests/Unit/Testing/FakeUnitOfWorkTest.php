@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Testing;
 
-use CloudCreativity\Modules\Contracts\Application\Ports\Driven\UnitOfWork;
+use CloudCreativity\Modules\Contracts\Application\Ports\UnitOfWork;
 use CloudCreativity\Modules\Testing\FakeUnitOfWork;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;

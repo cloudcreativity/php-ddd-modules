@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
+use CloudCreativity\Modules\Contracts\Bus\Command;
 
 class TestCommand implements Command
 {

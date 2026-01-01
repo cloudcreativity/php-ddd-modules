@@ -2,26 +2,24 @@ deptrac:
   paths:
     - ./src
   layers:
-    - name: Toolkit
-      collectors:
-        - type: classLike
-          value: CloudCreativity\\Modules\\Contracts\\Toolkit\\*
-        - type: classLike
-          value: CloudCreativity\\Modules\\Toolkit\\*
-        - type: classLike
-          value: Ramsey\\Uuid\\*
-    - name: Domain
-      collectors:
-        - type: classLike
-          value: CloudCreativity\\Modules\\Contracts\\Domain\\*
-        - type: classLike
-          value: CloudCreativity\\Modules\\Domain\\*
     - name: Application
       collectors:
         - type: classLike
           value: CloudCreativity\\Modules\\Contracts\\Application\\*
         - type: classLike
           value: CloudCreativity\\Modules\\Application\\*
+    - name: Bus
+      collectors:
+        - type: classLike
+          value: CloudCreativity\\Modules\\Contracts\\Bus\\*
+        - type: classLike
+          value: CloudCreativity\\Modules\\Bus\\*
+    - name: Domain
+      collectors:
+        - type: classLike
+          value: CloudCreativity\\Modules\\Contracts\\Domain\\*
+        - type: classLike
+          value: CloudCreativity\\Modules\\Domain\\*
     - name: Infrastructure
       collectors:
         - type: classLike
@@ -36,27 +34,33 @@ deptrac:
       collectors:
         - type: classLike
           value: Psr\\Log\\*
-    - name: Attributes
+    - name: Toolkit
       collectors:
+        - type: classLike
+          value: CloudCreativity\\Modules\\Contracts\\Toolkit\\*
+        - type: classLike
+          value: CloudCreativity\\Modules\\Toolkit\\*
+        - type: classLike
+          value: Ramsey\\Uuid\\*
         - type: classLike
           value: ^Deprecated$
   ruleset:
-    Toolkit:
-      - Attributes
-      - PSR Container
-    Domain:
-      - Toolkit
-      - Attributes
     Application:
-      - Toolkit
+      - Bus
       - Domain
       - PSR Container
       - PSR Log
-      - Attributes
-    Infrastructure:
       - Toolkit
-      - Domain
+    Bus:
+      - PSR Container
+      - PSR Log
+      - Toolkit
+    Domain:
+      - Toolkit
+    Infrastructure:
+      - Bus
       - Application
       - PSR Container
       - PSR Log
-      - Attributes
+      - Toolkit
+    Toolkit:

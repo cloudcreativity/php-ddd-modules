@@ -12,10 +12,9 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Contracts\Toolkit\Identifiers;
 
-use CloudCreativity\Modules\Contracts\Toolkit\Loggable\Contextual;
 use Stringable;
 
-interface Identifier extends Stringable, Contextual
+interface Identifier extends Stringable
 {
     /**
      * Is the identifier the same as the provided identifier?
@@ -38,4 +37,9 @@ interface Identifier extends Stringable, Contextual
      * @return array-key
      */
     public function key(): int|string;
+
+    /**
+     * Get the value to use when adding the value to log context.
+     */
+    public function context(): mixed;
 }

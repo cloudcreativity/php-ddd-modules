@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Testing;
 
-use CloudCreativity\Modules\Contracts\Application\Ports\Driven\ExceptionReporter;
+use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
 use CloudCreativity\Modules\Testing\FakeExceptionReporter;
 use LogicException;
 use PHPUnit\Framework\TestCase;

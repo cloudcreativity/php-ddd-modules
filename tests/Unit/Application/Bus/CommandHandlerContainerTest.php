@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
-use CloudCreativity\Modules\Application\ApplicationException;
-use CloudCreativity\Modules\Application\Bus\CommandHandler;
-use CloudCreativity\Modules\Application\Bus\CommandHandlerContainer;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
+use CloudCreativity\Modules\Bus\BusException;
+use CloudCreativity\Modules\Bus\CommandHandler;
+use CloudCreativity\Modules\Bus\CommandHandlerContainer;
+use CloudCreativity\Modules\Contracts\Bus\Command;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
@@ -37,7 +37,7 @@ class CommandHandlerContainerTest extends TestCase
         $this->assertEquals(new CommandHandler($a), $container->get($command1::class));
         $this->assertEquals(new CommandHandler($b), $container->get($command2::class));
 
-        $this->expectException(ApplicationException::class);
+        $this->expectException(BusException::class);
         $this->expectExceptionMessage('No command handler bound for command class: ' . $command3::class);
 
         $container->get($command3::class);
@@ -69,7 +69,7 @@ class CommandHandlerContainerTest extends TestCase
         $this->assertEquals(new CommandHandler($a), $container->get($command1::class));
         $this->assertEquals(new CommandHandler($b), $container->get($command2::class));
 
-        $this->expectException(ApplicationException::class);
+        $this->expectException(BusException::class);
         $this->expectExceptionMessage('No command handler bound for command class: ' . $command3::class);
 
         $container->get($command3::class);

@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Tests\Integration\Infrastructure\Queue;
 
 use CloudCreativity\Modules\Infrastructure\Queue\Middleware\LogPushedToQueue;
 use CloudCreativity\Modules\Testing\FakeContainer;
-use CloudCreativity\Modules\Tests\Integration\Application\Bus\AddCommand;
+use CloudCreativity\Modules\Tests\Integration\Bus\AddCommand;
 use PHPUnit\Framework\TestCase;
 
 class TestClosureQueueTest extends TestCase
