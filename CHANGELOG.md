@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [5.1.0] - 2026-01-01
+
 ### Added
 
 - New command bus features:
