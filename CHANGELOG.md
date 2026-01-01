@@ -37,16 +37,18 @@ All notable changes to this project will be documented in this file. This projec
     - The default enqueuer can be set on the outbound event publisher via the `DefaultEnqueuer` attribute.
     - Middleware can now be added to the queue via the `Through` attribute.
 - In the Application layer, the `QueryHandlerContainer`, `CommandHandlerContainer` and `EventHandlerContainer` classes
-  can now fallback to resolving handlers from a PSR service container. Inject the service container via their
+  can now fall back to resolving handlers from a PSR service container. Inject the service container via their
   constructors.
-- In the Infrastructure layer, the `PublisherHandlerContainer` and `EnqueuerContainer` can now fallback to resolving
+- In the Infrastructure layer, the `PublisherHandlerContainer` and `EnqueuerContainer` can now fall back to resolving
   handlers/enqueuers from a PSR service container. Inject the service container via the constructor.
 - The outbound event bus `ClosurePublisher` and the `ClosureQueue` classes now both accept a PSR container for their
   middleware. Additionally, middleware can be set on instances of closure publishers via the `Through` attribute.
-- The pipeline `PipeContainer` class can now fallback to resolving pipes from a PSR service container. Inject the
+- The pipeline `PipeContainer` class can now fall back to resolving pipes from a PSR service container. Inject the
   service container via the pipe container's only constructor argument.
 - The `FakeUnitOfWork` class now has integer properties for the number of attempts, commits and rollbacks.
 - New `FakeContainer` class for faking a PSR container in tests.
+- Added `UuidV4` and `UuidV7` identifiers, for use by implementations that need to enforce use of specific UUID
+  versions.
 
 ## [5.0.0] - 2025-12-09
 
@@ -140,7 +142,7 @@ All notable changes to this project will be documented in this file. This projec
 - **BREAKING** The error and error list interfaces now accept `UnitEnum` instead of `BackedEnum` for error codes.
   Although technically breaking, this will only affect your implementation if you have implemented these interfaces. All
   concrete classes provided by this package have been updated.
-- **BREAKING**: The key of an error can now be a enum - previously only strings were accepted. This is only breaking if
+- **BREAKING**: The key of an error can now be an enum - previously only strings were accepted. This is only breaking if
   you have implemented the interface yourself.
 - Updated `KeyedSetOfErrors` to handle error keys now being strings or enums.
 - **BREAKING**: The `Guid::make()` method will now convert a string that is a UUID to a UUID GUID. Previously it would
@@ -349,8 +351,8 @@ All notable changes to this project will be documented in this file. This projec
   the `Contracts\Application\Ports` namespace, with them differentiated between driving and driven ports.
 - **BREAKING** As a number of interfaces had to be moved to a `Ports` namespace, we've tidied them all up by removing
   the `Interface` suffix and moving them to a `Contracts` namespace.
-- **BREAKING** We've also removed the `Trait` suffix from traits. To avoid collisions with interfaces, we've use `Is` a
-  prefix where it makes sense. For example, `EntityTrait` has become `IsEntity`.
+- **BREAKING** We've also removed the `Trait` suffix from traits. To avoid collisions with interfaces, we've used an
+  `Is` prefix where it makes sense. For example, `EntityTrait` has become `IsEntity`.
 - **BREAKING** The `DomainEventDispatching` namespace has been moved from `Infrastructure` to `Application`. This was
   needed for the new hexagonal architecture approach, but also makes it a lot clearer that domain events are the way the
   domain layer communicates with the application layer.
