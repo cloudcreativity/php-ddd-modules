@@ -7,8 +7,10 @@ All notable changes to this project will be documented in this file. This projec
 
 ### Added
 
-- The `PipeContainer` class can now fallback to resolving pipes from a PSR service container. Inject the service
-  container via the pipe container's only constructor argument.
+- The `QueryHandlerContainer` and `CommandHandlerContainer` classes can now fallback to resolving handlers from a PSR
+  service container. Inject the service container via the handler container's only constructor argument.
+- The pipeline `PipeContainer` class can now fallback to resolving pipes from a PSR service container. Inject the
+  service container via the pipe container's only constructor argument.
 
 ## [5.0.0] - 2025-12-09
 

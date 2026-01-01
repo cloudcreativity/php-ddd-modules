@@ -50,6 +50,7 @@ deptrac:
     Application:
       - Toolkit
       - Domain
+      - PSR Container
       - PSR Log
       - Attributes
     Infrastructure:
