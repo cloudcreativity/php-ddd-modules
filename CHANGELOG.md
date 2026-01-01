@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## Next Major
+
+### Removed
+
+- Removed the deprecated `contains()` method from the `ListOfErrors` interface. Use `any()` instead.
+- The `first()` method on the `ListOfErrors` interface no longer accepts arguments. Use `find()` instead.
+
 ## Unreleased
 
 ## [5.1.0] - 2026-01-01
