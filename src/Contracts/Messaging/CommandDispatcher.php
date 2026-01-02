@@ -10,7 +10,7 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Contracts\Messages;
+namespace CloudCreativity\Modules\Contracts\Messaging;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 

@@ -16,7 +16,7 @@ use Closure;
 use CloudCreativity\Modules\Bus\Loggable\SimpleContextFactory;
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextFactory;
 use CloudCreativity\Modules\Contracts\Infrastructure\Queue\QueueMiddleware;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;

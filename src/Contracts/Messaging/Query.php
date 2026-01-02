@@ -10,12 +10,8 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Contracts\Bus\Loggable;
+namespace CloudCreativity\Modules\Contracts\Messaging;
 
-interface Contextual
+interface Query extends Message
 {
-    /**
-     * Get the value to use when adding the value to log context.
-     */
-    public function context(): mixed;
 }

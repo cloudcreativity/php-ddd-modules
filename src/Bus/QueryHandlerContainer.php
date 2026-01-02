@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Bus;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Bus\QueryHandlerContainer as IQueryHandlerContainer;
-use CloudCreativity\Modules\Contracts\Messages\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Query;
 use Psr\Container\ContainerInterface;
 
 final class QueryHandlerContainer implements IQueryHandlerContainer

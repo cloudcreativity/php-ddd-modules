@@ -15,7 +15,7 @@ namespace CloudCreativity\Modules\Infrastructure\OutboundEventBus;
 use Closure;
 use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\{
     PublisherHandlerContainer as IPublisherHandlerContainer};
-use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Infrastructure\InfrastructureException;
 use Psr\Container\ContainerInterface;
 

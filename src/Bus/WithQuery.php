@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus;
 
 use Attribute;
-use CloudCreativity\Modules\Contracts\Messages\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Query;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final readonly class WithQuery

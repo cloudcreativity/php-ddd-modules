@@ -15,7 +15,7 @@ namespace CloudCreativity\Modules\Infrastructure\Queue;
 use CloudCreativity\Modules\Bus\PsrPipeContainer;
 use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
 use CloudCreativity\Modules\Contracts\Infrastructure\Queue\EnqueuerContainer as IEnqueuerContainer;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;

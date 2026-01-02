@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus;
 
 use CloudCreativity\Modules\Contracts\Bus\CommandHandlerContainer as ICommandHandlerContainer;
-use CloudCreativity\Modules\Contracts\Messages\Command;
-use CloudCreativity\Modules\Contracts\Messages\CommandDispatcher as ICommandDispatcher;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
+use CloudCreativity\Modules\Contracts\Messaging\CommandDispatcher as ICommandDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;

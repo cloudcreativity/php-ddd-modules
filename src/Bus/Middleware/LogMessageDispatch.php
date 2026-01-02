@@ -13,11 +13,13 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus\Middleware;
 
 use Closure;
-use CloudCreativity\Modules\Bus\Loggable\SimpleContextFactory;
-use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextFactory;
+use CloudCreativity\Modules\Bus\Logging\SanitizedMessage;
+use CloudCreativity\Modules\Bus\Logging\SanitizedResult;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;
-use CloudCreativity\Modules\Contracts\Messages\Command;
-use CloudCreativity\Modules\Contracts\Messages\Message;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messaging\Message;
+use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
 use Psr\Log\LoggerInterface;
@@ -29,19 +31,23 @@ final readonly class LogMessageDispatch implements BusMiddleware
         private LoggerInterface $logger,
         private string $dispatchLevel = LogLevel::DEBUG,
         private string $dispatchedLevel = LogLevel::INFO,
-        private ContextFactory $context = new SimpleContextFactory(),
     ) {
     }
 
     public function __invoke(Message $message, Closure $next): ?Result
     {
         $name = ModuleBasename::tryFrom($message)?->toString() ?? $message::class;
-        $key = ($message instanceof Command) ? 'command' : 'query';
+        $key = match (true) {
+            $message instanceof Command => 'command',
+            $message instanceof Query => 'query',
+            $message instanceof IntegrationEvent => 'event',
+            default => 'message',
+        };
 
         $this->logger->log(
             $this->dispatchLevel,
             "Bus dispatching {$name}.",
-            [$key => $this->context->make($message)],
+            [$key => new SanitizedMessage($message)],
         );
 
         $result = $next($message);
@@ -49,7 +55,7 @@ final readonly class LogMessageDispatch implements BusMiddleware
         $this->logger->log(
             $this->dispatchedLevel,
             "Bus dispatched {$name}.",
-            $result ? ['result' => $this->context->make($result)] : [],
+            $result ? ['result' => new SanitizedResult($result)] : [],
         );
 
         return $result;

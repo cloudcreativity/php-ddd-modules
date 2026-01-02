@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Application\Bus;
 
 use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
 use CloudCreativity\Modules\Contracts\Bus\CommandQueuer as ICommandQueuer;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 
 class CommandQueuer implements ICommandQueuer
 {

@@ -16,7 +16,7 @@ use Closure;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\CommandMiddleware;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Bail;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Validator;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result as IResult;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 

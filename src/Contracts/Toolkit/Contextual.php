@@ -10,8 +10,12 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Contracts\Messages;
+namespace CloudCreativity\Modules\Contracts\Toolkit;
 
-interface Command extends Message
+interface Contextual
 {
+    /**
+     * Get the value to use when adding the value to log context.
+     */
+    public function context(): mixed;
 }

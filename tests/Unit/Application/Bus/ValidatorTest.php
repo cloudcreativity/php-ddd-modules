@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
 use CloudCreativity\Modules\Bus\Validation\Validator;
-use CloudCreativity\Modules\Contracts\Messages\Command;
-use CloudCreativity\Modules\Contracts\Messages\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;

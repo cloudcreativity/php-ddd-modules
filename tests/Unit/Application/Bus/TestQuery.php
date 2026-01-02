@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
-use CloudCreativity\Modules\Contracts\Messages\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Query;
 
 class TestQuery implements Query
 {

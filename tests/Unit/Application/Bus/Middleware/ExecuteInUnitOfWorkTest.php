@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\Bus\Middleware;
 
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
 use CloudCreativity\Modules\Contracts\Application\UnitOfWork\UnitOfWorkManager;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 use PHPUnit\Framework\TestCase;
 use Throwable;

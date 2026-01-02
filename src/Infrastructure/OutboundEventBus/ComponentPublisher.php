@@ -15,7 +15,7 @@ namespace CloudCreativity\Modules\Infrastructure\OutboundEventBus;
 use CloudCreativity\Modules\Bus\PsrPipeContainer;
 use CloudCreativity\Modules\Contracts\Application\Ports\OutboundEventPublisher;
 use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\PublisherHandlerContainer as IPublisherHandlerContainer;
-use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;

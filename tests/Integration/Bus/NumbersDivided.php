@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Integration\Bus;
 
-use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Toolkit\Contracts;
 use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
 use DateTimeImmutable;

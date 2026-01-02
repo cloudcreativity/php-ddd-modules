@@ -13,7 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus\Loggable;
 
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextProvider;
-use CloudCreativity\Modules\Contracts\Bus\Loggable\Contextual;
+use CloudCreativity\Modules\Contracts\Toolkit\Contextual;
+use CloudCreativity\Modules\Messaging\Sensitive;
 use DateTimeInterface;
 use DateTimeZone;
 use Generator;

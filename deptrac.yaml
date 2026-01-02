@@ -26,10 +26,14 @@ deptrac:
           value: CloudCreativity\\Modules\\Contracts\\Infrastructure\\*
         - type: classLike
           value: CloudCreativity\\Modules\\Infrastructure\\*
-    - name: Messages
+        - type: classLike
+          value: Monolog\\*
+    - name: Messaging
       collectors:
         - type: classLike
-          value: CloudCreativity\\Modules\\Contracts\\Messages\\*
+          value: CloudCreativity\\Modules\\Contracts\\Messaging\\*
+        - type: classLike
+          value: CloudCreativity\\Modules\\Messaging\\*
     - name: PSR Container
       collectors:
         - type: classLike
@@ -52,12 +56,12 @@ deptrac:
     Application:
       - Bus
       - Domain
-      - Messages
+      - Messaging
       - PSR Container
       - PSR Log
       - Toolkit
     Bus:
-      - Messages
+      - Messaging
       - PSR Container
       - PSR Log
       - Toolkit
@@ -66,10 +70,10 @@ deptrac:
     Infrastructure:
       - Application
       - Bus
-      - Messages
+      - Messaging
       - PSR Container
       - PSR Log
       - Toolkit
-    Messages:
+    Messaging:
       - Toolkit
     Toolkit:

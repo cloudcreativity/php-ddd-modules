@@ -10,11 +10,9 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Bus\Loggable;
+namespace CloudCreativity\Modules\Infrastructure\Monolog;
 
-use Attribute;
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final class Sensitive
+interface ValueParser
 {
+    public function parse(mixed $value): mixed;
 }

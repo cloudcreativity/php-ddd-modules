@@ -10,8 +10,8 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Contracts\Messages;
+namespace CloudCreativity\Modules\Contracts\Messaging;
 
-interface Message
+interface Command extends Message
 {
 }

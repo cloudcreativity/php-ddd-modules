@@ -16,7 +16,7 @@ use BackedEnum;
 use CloudCreativity\Modules\Bus\Loggable\ResultDecorator;
 use CloudCreativity\Modules\Bus\Loggable\SimpleContextFactory;
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextProvider;
-use CloudCreativity\Modules\Contracts\Bus\Loggable\Contextual;
+use CloudCreativity\Modules\Contracts\Toolkit\Contextual;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Error as IError;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result as IResult;
 use CloudCreativity\Modules\Tests\TestBackedEnum;

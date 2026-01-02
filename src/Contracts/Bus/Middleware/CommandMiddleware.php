@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Contracts\Bus\Middleware;
 
 use Closure;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 interface CommandMiddleware

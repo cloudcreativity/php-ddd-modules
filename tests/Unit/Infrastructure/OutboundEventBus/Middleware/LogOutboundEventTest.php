@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus\Middleware;
 
 use CloudCreativity\Modules\Bus\Loggable\ObjectDecorator;
-use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Middleware\LogOutboundEvent;
 use CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus\TestOutboundEvent;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;

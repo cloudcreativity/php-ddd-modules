@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Bus\Validation;
 
-use CloudCreativity\Modules\Contracts\Messages\Command;
-use CloudCreativity\Modules\Contracts\Messages\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Processor;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
 

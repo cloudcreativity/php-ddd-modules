@@ -10,12 +10,11 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Contracts\Messages;
+namespace CloudCreativity\Modules\Messaging;
 
-interface InboundEventDispatcher
+use Attribute;
+
+#[Attribute(Attribute::TARGET_PROPERTY)]
+final class Sensitive
 {
-    /**
-     * Dispatch an inbound integration event.
-     */
-    public function dispatch(IntegrationEvent $event): void;
 }

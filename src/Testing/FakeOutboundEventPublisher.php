@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Testing;
 
 use ArrayAccess;
 use CloudCreativity\Modules\Contracts\Application\Ports\OutboundEventPublisher;
-use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use Countable;
 use Generator;
 use IteratorAggregate;

@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus;
 
 use CloudCreativity\Modules\Contracts\Bus\QueryHandlerContainer as IQueryHandlerContainer;
-use CloudCreativity\Modules\Contracts\Messages\Query;
-use CloudCreativity\Modules\Contracts\Messages\QueryDispatcher as IQueryDispatcher;
+use CloudCreativity\Modules\Contracts\Messaging\Query;
+use CloudCreativity\Modules\Contracts\Messaging\QueryDispatcher as IQueryDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;

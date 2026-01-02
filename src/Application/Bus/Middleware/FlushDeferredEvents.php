@@ -15,7 +15,7 @@ namespace CloudCreativity\Modules\Application\Bus\Middleware;
 use Closure;
 use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\DeferredDispatcher;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;
-use CloudCreativity\Modules\Contracts\Messages\Message;
+use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use Throwable;
 

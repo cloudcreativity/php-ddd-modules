@@ -13,10 +13,10 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Bus\Loggable;
 
 use CloudCreativity\Modules\Bus\Loggable\ObjectDecorator;
-use CloudCreativity\Modules\Bus\Loggable\Sensitive;
 use CloudCreativity\Modules\Bus\Loggable\SimpleContextFactory;
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextProvider;
-use CloudCreativity\Modules\Contracts\Messages\Message;
+use CloudCreativity\Modules\Contracts\Messaging\Message;
+use CloudCreativity\Modules\Messaging\Sensitive;
 use CloudCreativity\Modules\Tests\TestBackedEnum;
 use CloudCreativity\Modules\Tests\TestBackedIntEnum;
 use CloudCreativity\Modules\Tests\TestUnitEnum;

@@ -18,7 +18,7 @@ For example:
 ```php
 namespace App\Modules\EventManagement\Application\UseCases\Queries\GetAttendeeTickets;
 
-use CloudCreativity\Modules\Contracts\Messages\Query;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
+use CloudCreativity\Modules\Contracts\Messaging\Query;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
 final readonly class GetAttendeeTicketsQuery implements Query
 {
@@ -105,7 +105,7 @@ We do this by defining an interface in our application's driving ports:
 ```php
 namespace App\Modules\EventManagement\Application\Ports\Driving;
 
-use CloudCreativity\Modules\Contracts\Messages\QueryDispatcher;
+use CloudCreativity\Modules\Contracts\Messaging\QueryDispatcher;
 
 interface QueryBus extends QueryDispatcher
 {
@@ -391,7 +391,7 @@ following signature:
 ```php
 namespace App\Modules\EventManagement\Application\Bus\Middleware;
 
-use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\QueryMiddleware;use CloudCreativity\Modules\Contracts\Messages\Query;use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
+use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\QueryMiddleware;use CloudCreativity\Modules\Contracts\Messaging\Query;use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 final class MyMiddleware implements QueryMiddleware
 {
@@ -430,7 +430,7 @@ instead:
 ```php
 namespace App\Modules\EventManagement\Application\Bus\Middleware;
 
-use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;use CloudCreativity\Modules\Contracts\Messages\Command;use CloudCreativity\Modules\Contracts\Messages\Query;use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
+use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Contracts\Messaging\Query;use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 class MyBusMiddleware implements BusMiddleware
 {

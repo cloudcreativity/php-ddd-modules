@@ -79,7 +79,7 @@ Then you can create the adapter by providing it with the default closure for que
 ```php
 namespace App\Modules\EventManagement\Infrastructure\Queue;
 
-use App\Modules\EventManagement\Application\Ports\Driven\Queue\Queue;use CloudCreativity\Modules\Contracts\Messages\Command;use CloudCreativity\Modules\Infrastructure\Queue\Middleware\LogPushedToQueue;use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
+use App\Modules\EventManagement\Application\Ports\Driven\Queue\Queue;use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Infrastructure\Queue\Middleware\LogPushedToQueue;use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 
 final class QueueAdapterProvider
 {
@@ -217,7 +217,7 @@ example:
 ```php
 namespace App\Modules\EventManagement\Infrastructure\Queue;
 
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 
 final class DefaultEnqueuer
 {
@@ -244,7 +244,7 @@ implements the port interface that is extended in your application layer:
 ```php
 namespace CloudCreativity\Modules\Application\Ports\Driven\Queue;
 
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 
 interface Queue
 {
@@ -279,7 +279,7 @@ For example, a default Laravel job for queuing and dispatching commands would be
 ```php
 namespace App\Modules\EventManagement\Infrastructure\Queue;
 
-use App\Modules\EventManagement\Application\Ports\Driving\CommandBus;use CloudCreativity\Modules\Contracts\Messages\Command;use CloudCreativity\Modules\Toolkit\Result\FailedResultException;use Illuminate\Bus\Queueable;use Illuminate\Contracts\Queue\ShouldQueue;use Illuminate\Foundation\Bus\Dispatchable;use Illuminate\Queue\InteractsWithQueue;
+use App\Modules\EventManagement\Application\Ports\Driving\CommandBus;use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Toolkit\Result\FailedResultException;use Illuminate\Bus\Queueable;use Illuminate\Contracts\Queue\ShouldQueue;use Illuminate\Foundation\Bus\Dispatchable;use Illuminate\Queue\InteractsWithQueue;
 
 class DispatchCommandJob implements ShouldQueue
 {
@@ -454,7 +454,7 @@ following signature:
 ```php
 namespace App\Modules\Shared\Infrastructure\Queue\Middleware;
 
-use Closure;use CloudCreativity\Modules\Contracts\Infrastructure\Queue\QueueMiddleware;use CloudCreativity\Modules\Contracts\Messages\Command;
+use Closure;use CloudCreativity\Modules\Contracts\Infrastructure\Queue\QueueMiddleware;use CloudCreativity\Modules\Contracts\Messaging\Command;
 
 final class MyQueueMiddleware implements QueueMiddleware
 {

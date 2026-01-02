@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Bus\Loggable;
 
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextFactory;
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextProvider;
-use CloudCreativity\Modules\Contracts\Messages\Message;
+use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 final class SimpleContextFactory implements ContextFactory

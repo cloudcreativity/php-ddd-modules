@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus;
 
 use CloudCreativity\Modules\Contracts\Bus\CommandHandler as ICommandHandler;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 final readonly class CommandHandler implements ICommandHandler

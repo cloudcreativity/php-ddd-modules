@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\Queue\Middleware;
 
 use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextFactory;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Infrastructure\Queue\Middleware\LogPushedToQueue;
 use LogicException;
 use PHPUnit\Framework\MockObject\MockObject;

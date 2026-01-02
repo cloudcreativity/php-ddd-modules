@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Testing;
 
 use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Testing\FakeQueue;
 use LogicException;
 use PHPUnit\Framework\TestCase;

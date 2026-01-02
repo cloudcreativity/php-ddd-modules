@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Bus;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Bus\EventHandlerContainer as IEventHandlerContainer;
-use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use Psr\Container\ContainerInterface;
 
 final class EventHandlerContainer implements IEventHandlerContainer

@@ -10,7 +10,7 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Contracts\Messages;
+namespace CloudCreativity\Modules\Contracts\Messaging;
 
 use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
 use DateTimeImmutable;

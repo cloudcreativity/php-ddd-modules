@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Bus;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Bus\CommandHandlerContainer as ICommandHandlerContainer;
-use CloudCreativity\Modules\Contracts\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use Psr\Container\ContainerInterface;
 
 final class CommandHandlerContainer implements ICommandHandlerContainer

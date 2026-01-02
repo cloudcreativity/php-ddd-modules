@@ -18,7 +18,7 @@ For example:
 ```php
 namespace App\Modules\EventManagement\Application\UseCases\Commands\CancelAttendeeTicket;
 
-use CloudCreativity\Modules\Contracts\Messages\Command;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;use VendorName\EventManagement\Shared\Enums\CancellationReasonEnum;
+use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;use VendorName\EventManagement\Shared\Enums\CancellationReasonEnum;
 
 final readonly class CancelAttendeeTicketCommand implements Command
 {
@@ -602,7 +602,7 @@ However, there may be scenarios where a property should not be logged, e.g. beca
 In this scenario, use the `Sensitive` attribute on the property, and it will not be logged:
 
 ```php
-use CloudCreativity\Modules\Bus\Loggable\Sensitive;use CloudCreativity\Modules\Contracts\Messages\Command;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
+use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;use CloudCreativity\Modules\Messaging\Sensitive;
 
 final readonly class CancelAttendeeTicketCommand implements Command
 {
@@ -618,7 +618,7 @@ final readonly class CancelAttendeeTicketCommand implements Command
 If you need full control over the log context, implement the `ContextProvider` interface on your command message:
 
 ```php
-use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextProvider;use CloudCreativity\Modules\Contracts\Messages\Command;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
+use CloudCreativity\Modules\Contracts\Bus\Loggable\ContextProvider;use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
 final readonly class CancelAttendeeTicketCommand implements
   Command,
@@ -648,7 +648,7 @@ following signature:
 ```php
 namespace App\Modules\EventManagement\Application\Bus\Middleware;
 
-use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\CommandMiddleware;use CloudCreativity\Modules\Contracts\Messages\Command;use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
+use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\CommandMiddleware;use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 final class MyMiddleware implements CommandMiddleware
 {
@@ -687,7 +687,7 @@ instead:
 ```php
 namespace App\Modules\EventManagement\Application\Bus\Middleware;
 
-use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;use CloudCreativity\Modules\Contracts\Messages\Command;use CloudCreativity\Modules\Contracts\Messages\Query;use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
+use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Contracts\Messaging\Query;use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 class MyBusMiddleware implements BusMiddleware
 {

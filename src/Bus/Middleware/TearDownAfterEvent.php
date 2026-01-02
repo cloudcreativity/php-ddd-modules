@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Bus\Middleware;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\InboundEventMiddleware;
-use CloudCreativity\Modules\Contracts\Messages\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 
 final readonly class TearDownAfterEvent implements InboundEventMiddleware
 {

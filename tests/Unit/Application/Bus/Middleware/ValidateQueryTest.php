@@ -15,7 +15,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\Bus\Middleware;
 use CloudCreativity\Modules\Bus\Middleware\ValidateQuery;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Bail;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Validator;
-use CloudCreativity\Modules\Contracts\Messages\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
