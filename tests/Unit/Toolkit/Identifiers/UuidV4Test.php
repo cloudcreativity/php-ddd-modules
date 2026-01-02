@@ -46,22 +46,23 @@ class UuidV4Test extends TestCase
     public function testItIsEquals(): void
     {
         $base = RamseyUuid::uuid4();
+        $id = UuidV4::from($base);
 
-        $this->assertObjectEquals($id = UuidV4::from($base), $other = UuidV4::from($base));
+        $this->assertTrue($id->is($other = UuidV4::from($base)));
         $this->assertSame($id, UuidV4::from($id));
         $this->assertTrue($id->is($other));
         $this->assertTrue($id->any(null, UuidV4::make(), $other));
         $this->assertEquals($id, UuidV4::tryFrom($base));
         $this->assertSame($id, UuidV4::tryFrom($id));
+        $this->assertTrue($id->is(new Uuid($base)));
     }
 
     public function testItIsNotEqual(): void
     {
-        $id = UuidV4::from($base = RamseyUuid::fromString('6dcbad65-ed92-4e60-973b-9ba58a022816'));
-        $this->assertFalse($id->equals($other = UuidV4::from(
+        $id = UuidV4::from(RamseyUuid::fromString('6dcbad65-ed92-4e60-973b-9ba58a022816'));
+        $this->assertFalse($id->is($other = UuidV4::from(
             RamseyUuid::fromString('38c7be26-6887-4742-8b6b-7d07b30ca596'),
         )));
-        $this->assertFalse($id->is(new Uuid($base))); // not equal as not specifically UuidV4
         $this->assertFalse($id->is($other));
         $this->assertFalse($id->any(null, UuidV4::make(), $other));
     }
@@ -109,7 +110,7 @@ class UuidV4Test extends TestCase
     {
         $base = RamseyUuid::fromString('6dcbad65-ed92-4e60-973b-9ba58a022816');
 
-        $this->assertObjectEquals(UuidV4::from($base), UuidV4::from($base->toString()));
+        $this->assertTrue(UuidV4::from($base)->is(UuidV4::from($base->toString())));
     }
 
     public function testTryFromWithString(): void

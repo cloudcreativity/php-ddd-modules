@@ -14,12 +14,12 @@ namespace CloudCreativity\Modules\Tests\Integration\Bus;
 
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Toolkit\Contracts;
-use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
+use CloudCreativity\Modules\Toolkit\Identifiers\UuidV4;
 use DateTimeImmutable;
 
 final readonly class NumbersAdded implements IntegrationEvent
 {
-    public Uuid $uuid;
+    public UuidV4 $uuid;
 
     public function __construct(
         public int $a,
@@ -28,10 +28,10 @@ final readonly class NumbersAdded implements IntegrationEvent
         public DateTimeImmutable $calculatedAt = new DateTimeImmutable(),
     ) {
         Contracts::assert($sum === ($a + $b), 'The sum must be equal to a plus b.');
-        $this->uuid = Uuid::random();
+        $this->uuid = UuidV4::make();
     }
 
-    public function getUuid(): Uuid
+    public function getUuid(): UuidV4
     {
         return $this->uuid;
     }

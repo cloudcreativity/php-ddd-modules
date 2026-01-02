@@ -51,8 +51,9 @@ class UuidTest extends TestCase
     public function testItIsEquals(): void
     {
         $base = RamseyUuid::uuid4();
+        $id = new Uuid($base);
 
-        $this->assertObjectEquals($id = new Uuid($base), $other = Uuid::from($base));
+        $this->assertTrue($id->is($other = Uuid::from($base)));
         $this->assertSame($id, Uuid::from($id));
         $this->assertTrue($id->is($other));
         $this->assertTrue($id->any(null, Uuid::random(), $other));
@@ -63,7 +64,7 @@ class UuidTest extends TestCase
     public function testItIsNotEqual(): void
     {
         $id = new Uuid(RamseyUuid::fromString('6dcbad65-ed92-4e60-973b-9ba58a022816'));
-        $this->assertFalse($id->equals($other = new Uuid(
+        $this->assertFalse($id->is($other = new Uuid(
             RamseyUuid::fromString('38c7be26-6887-4742-8b6b-7d07b30ca596'),
         )));
         $this->assertFalse($id->is($other));
@@ -164,6 +165,6 @@ class UuidTest extends TestCase
         $base = RamseyUuid::fromString(RamseyUuid::NIL);
         $actual = Uuid::nil();
 
-        $this->assertTrue($actual->value->equals($base));
+        $this->assertTrue($actual->toBase()->equals($base));
     }
 }
