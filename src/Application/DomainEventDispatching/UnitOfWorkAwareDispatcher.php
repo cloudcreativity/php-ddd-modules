@@ -18,6 +18,7 @@ use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
 use CloudCreativity\Modules\Contracts\Domain\Events\OccursImmediately;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 class UnitOfWorkAwareDispatcher extends Dispatcher
 {
@@ -25,6 +26,7 @@ class UnitOfWorkAwareDispatcher extends Dispatcher
         private readonly UnitOfWorkManager $unitOfWorkManager,
         ContainerInterface|IListenerContainer $listeners = new ListenerContainer(),
         ?PipeContainer $middleware = null,
+        private readonly ?LoggerInterface $logger = null,
     ) {
         parent::__construct($listeners, $middleware);
     }
@@ -47,14 +49,30 @@ class UnitOfWorkAwareDispatcher extends Dispatcher
     protected function execute(DomainEvent $event, EventHandler $listener): void
     {
         if ($listener->beforeCommit()) {
-            $this->unitOfWorkManager->beforeCommit(static function () use ($event, $listener): void {
+            $this->logger?->debug('Deferring listener to be handled before commit.', [
+                'event' => $event::class,
+                'listener' => (string) $listener,
+            ]);
+            $this->unitOfWorkManager->beforeCommit(function () use ($event, $listener): void {
+                $this->logger?->debug('Executing listener before commit.', [
+                    'event' => $event::class,
+                    'listener' => (string) $listener,
+                ]);
                 $listener($event);
             });
             return;
         }
 
         if ($listener->afterCommit()) {
-            $this->unitOfWorkManager->afterCommit(static function () use ($event, $listener): void {
+            $this->logger?->debug('Deferring listener to be handled after commit.', [
+                'event' => $event::class,
+                'listener' => (string) $listener,
+            ]);
+            $this->unitOfWorkManager->afterCommit(function () use ($event, $listener): void {
+                $this->logger?->debug('Executing listener after commit.', [
+                    'event' => $event::class,
+                    'listener' => (string) $listener,
+                ]);
                 $listener($event);
             });
             return;

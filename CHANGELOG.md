@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file. This projec
       service container via the first constructor argument. This works for all three domain event dispatchers.
     - Domain events can now be mapped to handlers on a domain event dispatcher class via the `ListonTo` attribute.
     - Middleware can now be added to a domain event dispatcher via the `Through` attribute.
+- The unit of work domain event dispatcher will now log debug messages when deferring and executing listeners. To enable
+  this, inject an optional logger instance via the constructor.
 
 ## [5.1.0] - 2026-01-01
 
