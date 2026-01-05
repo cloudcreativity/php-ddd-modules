@@ -17,12 +17,13 @@ use CloudCreativity\Modules\Contracts\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
 use CloudCreativity\Modules\Contracts\Domain\Events\OccursImmediately;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use Psr\Container\ContainerInterface;
 
 class UnitOfWorkAwareDispatcher extends Dispatcher
 {
     public function __construct(
         private readonly UnitOfWorkManager $unitOfWorkManager,
-        IListenerContainer $listeners = new ListenerContainer(),
+        ContainerInterface|IListenerContainer $listeners = new ListenerContainer(),
         ?PipeContainer $middleware = null,
     ) {
         parent::__construct($listeners, $middleware);

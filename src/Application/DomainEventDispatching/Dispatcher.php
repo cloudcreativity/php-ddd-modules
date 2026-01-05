@@ -16,14 +16,22 @@ use Closure;
 use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\ListenerContainer as IListenerContainer;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEventDispatcher;
-use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
+use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 use Generator;
 use InvalidArgumentException;
+use Psr\Container\ContainerInterface;
+use ReflectionClass;
 
 class Dispatcher implements DomainEventDispatcher
 {
+    private readonly IListenerContainer $listeners;
+
+    private readonly ?IPipeContainer $middleware;
+
     /**
      * @var array<string, array<callable|string>>
      */
@@ -35,9 +43,18 @@ class Dispatcher implements DomainEventDispatcher
     private array $pipes = [];
 
     public function __construct(
-        private readonly IListenerContainer $listeners = new ListenerContainer(),
-        private readonly ?PipeContainer $middleware = null,
+        ContainerInterface|IListenerContainer $listeners = new ListenerContainer(),
+        ?IPipeContainer $middleware = null,
     ) {
+        $this->listeners = $listeners instanceof ContainerInterface ?
+            new ListenerContainer($listeners) :
+            $listeners;
+
+        $this->middleware = $middleware === null && $listeners instanceof ContainerInterface ?
+            new PipeContainer($listeners) :
+            $middleware;
+
+        $this->autowire();
     }
 
     /**
@@ -134,5 +151,19 @@ class Dispatcher implements DomainEventDispatcher
         }
 
         return is_string($listener) && !empty($listener);
+    }
+
+    private function autowire(): void
+    {
+        $reflection = new ReflectionClass($this);
+
+        foreach ($reflection->getAttributes(ListenTo::class) as $attribute) {
+            $instance = $attribute->newInstance();
+            $this->listen($instance->event, $instance->listeners);
+        }
+
+        foreach ($reflection->getAttributes(Through::class) as $attribute) {
+            $this->pipes = $attribute->newInstance()->pipes;
+        }
     }
 }

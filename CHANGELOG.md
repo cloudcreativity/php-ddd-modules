@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Added
+
+- New domain event dispatcher features:
+    - Can now use a PSR container for the domain event dispatcher to resolve both handlers and middleware. Inject the
+      service container via the first constructor argument. This works for all three domain event dispatchers.
+    - Domain events can now be mapped to handlers on a domain event dispatcher class via the `ListonTo` attribute.
+    - Middleware can now be added to a domain event dispatcher via the `Through` attribute.
+
 ## [5.1.0] - 2026-01-01
 
 ### Added
