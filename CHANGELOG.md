@@ -12,6 +12,18 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [5.2.0] - 2026-01-05
+
+### Added
+
+- New domain event dispatcher features:
+    - Can now use a PSR container for the domain event dispatcher to resolve both handlers and middleware. Inject the
+      service container via the first constructor argument. This works for all three domain event dispatchers.
+    - Domain events can now be mapped to handlers on a domain event dispatcher class via the `ListonTo` attribute.
+    - Middleware can now be added to a domain event dispatcher via the `Through` attribute.
+- The unit of work domain event dispatcher will now log debug messages when deferring and executing listeners. To enable
+  this, inject an optional logger instance via the constructor.
+
 ## [5.1.0] - 2026-01-01
 
 ### Added
@@ -611,6 +623,10 @@ All notable changes to this project will be documented in this file. This projec
 ## [0.1.0] - 2023-11-18
 
 Initial release.
+
+[5.2.0]: https://github.com/cloudcreativity/ddd-modules/compare/v5.1.0...v5.2.0
+
+[5.1.0]: https://github.com/cloudcreativity/ddd-modules/compare/v5.0.0...v5.1.0
 
 [5.0.0]: https://github.com/cloudcreativity/ddd-modules/compare/v5.0.0-rc.4...v5.0.0
 
