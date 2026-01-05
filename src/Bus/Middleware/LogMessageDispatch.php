@@ -13,8 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus\Middleware;
 
 use Closure;
-use CloudCreativity\Modules\Bus\Logging\SanitizedMessage;
-use CloudCreativity\Modules\Bus\Logging\SanitizedResult;
+use CloudCreativity\Modules\Bus\SanitizedMessage;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
@@ -47,7 +46,7 @@ final readonly class LogMessageDispatch implements BusMiddleware
         $this->logger->log(
             $this->dispatchLevel,
             "Bus dispatching {$name}.",
-            [$key => new SanitizedMessage($message)],
+            [$key => (new SanitizedMessage($message))->context()],
         );
 
         $result = $next($message);
@@ -55,7 +54,7 @@ final readonly class LogMessageDispatch implements BusMiddleware
         $this->logger->log(
             $this->dispatchedLevel,
             "Bus dispatched {$name}.",
-            $result ? ['result' => new SanitizedResult($result)] : [],
+            $result ? ['result' => $result->context()] : [],
         );
 
         return $result;

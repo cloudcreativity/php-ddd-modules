@@ -13,10 +13,10 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Bus\Middleware;
 
 use Closure;
-use CloudCreativity\Modules\Contracts\Bus\Middleware\InboundEventMiddleware;
+use CloudCreativity\Modules\Contracts\Bus\Middleware\IntegrationEventMiddleware;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 
-final readonly class TearDownAfterEvent implements InboundEventMiddleware
+final readonly class TearDownAfterEvent implements IntegrationEventMiddleware
 {
     /**
      * @param Closure(): void $callback

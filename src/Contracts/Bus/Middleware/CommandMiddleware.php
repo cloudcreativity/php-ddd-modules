@@ -22,7 +22,7 @@ interface CommandMiddleware
      * Handle the command.
      *
      * @param Closure(Command): Result<mixed> $next
-     * @return Result<mixed>
+     * @return Result<mixed>|null
      */
-    public function __invoke(Command $command, Closure $next): Result;
+    public function __invoke(Command $command, Closure $next): ?Result;
 }

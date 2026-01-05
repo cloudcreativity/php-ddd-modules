@@ -602,7 +602,7 @@ However, there may be scenarios where a property should not be logged, e.g. beca
 In this scenario, use the `Sensitive` attribute on the property, and it will not be logged:
 
 ```php
-use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;use CloudCreativity\Modules\Messaging\Sensitive;
+use CloudCreativity\Modules\Bus\Sensitive;use CloudCreativity\Modules\Contracts\Messaging\Command;use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
 final readonly class CancelAttendeeTicketCommand implements Command
 {

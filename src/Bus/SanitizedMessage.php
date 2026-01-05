@@ -10,10 +10,10 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Bus\Logging;
+namespace CloudCreativity\Modules\Bus;
 
 use CloudCreativity\Modules\Contracts\Messaging\Message;
-use CloudCreativity\Modules\Messaging\Sensitive;
+use CloudCreativity\Modules\Contracts\Toolkit\Contextual;
 use Generator;
 use IteratorAggregate;
 use ReflectionClass;
@@ -22,7 +22,7 @@ use ReflectionProperty;
 /**
  * @implements IteratorAggregate<string, mixed>
  */
-final readonly class SanitizedMessage implements IteratorAggregate
+final readonly class SanitizedMessage implements IteratorAggregate, Contextual
 {
     public function __construct(private Message $message)
     {
@@ -36,6 +36,14 @@ final readonly class SanitizedMessage implements IteratorAggregate
         foreach ($this->cursor() as $key) {
             yield $key => $this->message->{$key};
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function context(): array
+    {
+        return iterator_to_array($this);
     }
 
     /**

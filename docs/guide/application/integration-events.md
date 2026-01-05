@@ -865,9 +865,9 @@ following signature:
 ```php
 namespace App\Modules\EventManagement\Application\Bus\Middleware;
 
-use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\InboundEventMiddleware;use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
+use Closure;use CloudCreativity\Modules\Contracts\Bus\Middleware\IntegrationEventMiddleware;use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 
-final class MyMiddleware implements InboundEventMiddleware
+final class MyMiddleware implements IntegrationEventMiddleware
 {
     /**
      * Execute the middleware.

@@ -10,13 +10,13 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Bus\Logging;
+namespace CloudCreativity\Modules\Toolkit\Result;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Contextual;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Error;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
-final readonly class SanitizedResult
+readonly class ContextualResult implements Contextual
 {
     /**
      * @param Result<mixed> $result
@@ -30,19 +30,34 @@ final readonly class SanitizedResult
         return $this->result->didSucceed();
     }
 
-    public function value(): ?Contextual
+    public function value(): mixed
     {
         $value = $this->result->safe();
 
-        return $value instanceof Contextual ? $value : null;
+        if ($value instanceof Contextual) {
+            return $value->context();
+        }
+
+        // do not return strings as we do not know if they are sensitive or not.
+        if (is_bool($value) || is_int($value) || is_float($value)) {
+            return $value;
+        }
+
+        return null;
     }
 
     /**
-     * @return array<string,mixed>
+     * @return array<string,mixed>|null
      */
-    public function meta(): array
+    public function meta(): ?array
     {
-        return $this->result->meta()->all();
+        $meta = $this->result->meta();
+
+        if ($meta->isNotEmpty()) {
+            return $meta->all();
+        }
+
+        return null;
     }
 
     /**
@@ -54,6 +69,22 @@ final readonly class SanitizedResult
             fn (Error $error): array => $this->error($error),
             $this->result->errors()->all(),
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function context(): array
+    {
+        $errors = $this->errors();
+
+        return array_filter([
+            'success' => $this->success(),
+            'value' => $this->value(),
+            'error' => count($errors) === 1 ? $errors[0] : null,
+            'errors' => count($errors) > 1 ? $errors : null,
+            'meta' => $this->meta(),
+        ], fn (mixed $value): bool => $value !== null);
     }
 
     /**

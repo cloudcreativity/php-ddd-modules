@@ -15,7 +15,7 @@ namespace CloudCreativity\Modules\Contracts\Bus\Middleware;
 use Closure;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 
-interface InboundEventMiddleware
+interface IntegrationEventMiddleware
 {
     /**
      * Handle the inbound event.

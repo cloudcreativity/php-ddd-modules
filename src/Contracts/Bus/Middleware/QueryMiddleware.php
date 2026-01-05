@@ -22,7 +22,7 @@ interface QueryMiddleware
      * Handle the query.
      *
      * @param Closure(Query): Result<mixed> $next
-     * @return Result<mixed>
+     * @return Result<mixed>|null
      */
-    public function __invoke(Query $query, Closure $next): Result;
+    public function __invoke(Query $query, Closure $next): ?Result;
 }

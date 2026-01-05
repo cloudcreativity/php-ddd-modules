@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Tests\Integration\Bus;
 
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
-use CloudCreativity\Modules\Bus\Middleware\LogInboundEvent;
+use CloudCreativity\Modules\Bus\Middleware\LogMessageDispatch;
 use CloudCreativity\Modules\Testing\FakeContainer;
 use PHPUnit\Framework\TestCase;
 
@@ -30,7 +30,7 @@ class MathEventBusTest extends TestCase
         $container->bind(NumbersAddedHandler::class, fn () => $a);
         $container->bind(NumbersSubtractedHandler::class, fn () => $b);
         $container->bind(DefaultEventHandler::class, fn () => $c);
-        $container->bind(LogInboundEvent::class, fn () => new LogInboundEvent($container->logger));
+        $container->bind(LogMessageDispatch::class, fn () => new LogMessageDispatch($container->logger));
         $container->bind(ExecuteInUnitOfWork::class, fn () => new ExecuteInUnitOfWork(
             new UnitOfWorkManager($container->unitOfWork),
         ));

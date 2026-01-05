@@ -21,7 +21,7 @@ interface BusMiddleware
     /**
      * Handle the message.
      *
-     * @param (Closure(Message): ?Result<mixed>) $next
+     * @param Closure(Message): ?Result<mixed> $next
      * @return Result<mixed>|null
      */
     public function __invoke(Message $message, Closure $next): ?Result;

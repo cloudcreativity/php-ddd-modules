@@ -46,4 +46,14 @@ class FailedResultException extends RuntimeException
     {
         return $this->result;
     }
+
+    /**
+     * @return array<array-key, mixed>
+     */
+    public function context(): array
+    {
+        $context = $this->result->context();
+
+        return is_array($context) ? $context : [$context];
+    }
 }
