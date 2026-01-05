@@ -14,8 +14,7 @@ namespace CloudCreativity\Modules\Bus\Validation;
 
 use CloudCreativity\Modules\Bus\PsrPipeContainer;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Validator as IValidator;
-use CloudCreativity\Modules\Contracts\Messaging\Command;
-use CloudCreativity\Modules\Contracts\Messaging\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Pipeline;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\ListOfErrors as IListOfErrors;
@@ -55,7 +54,7 @@ final class Validator implements IValidator
         return $this;
     }
 
-    public function validate(Command|Query $message): IListOfErrors
+    public function validate(Message $message): IListOfErrors
     {
         $errors = $this
             ->getPipeline()

@@ -12,24 +12,26 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus\Middleware;
 
-use CloudCreativity\Modules\Bus\Middleware\ValidateCommand;
+use CloudCreativity\Modules\Bus\Middleware\ValidateMessage;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Bail;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Validator;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
-use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
+use CloudCreativity\Modules\Contracts\Messaging\Message;
+use CloudCreativity\Modules\Contracts\Messaging\Query;
+use CloudCreativity\Modules\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-class ValidateCommandTest extends TestCase
+class ValidateMessageTest extends TestCase
 {
     /**
      * @var MockObject&Validator
      */
     private Validator $validator;
 
-    private ValidateCommand $middleware;
+    private ValidateMessage $middleware;
 
     protected function setUp(): void
     {
@@ -37,7 +39,7 @@ class ValidateCommandTest extends TestCase
 
         $this->validator = $this->createMock(Validator::class);
 
-        $this->middleware = new class ($this->validator) extends ValidateCommand {
+        $this->middleware = new class ($this->validator) extends ValidateMessage {
             /**
              * @return iterable<string>
              */
@@ -51,8 +53,8 @@ class ValidateCommandTest extends TestCase
     public function testItSucceeds(): void
     {
         $rules = [];
-        $command = $this->createMock(Command::class);
-        $expected = $this->createMock(Result::class);
+        $command = $this->createStub(Command::class);
+        $expected = Result::ok();
 
         $this->validator
             ->expects($this->once())
@@ -104,7 +106,7 @@ class ValidateCommandTest extends TestCase
         $this->validator
             ->expects($this->once())
             ->method('validate')
-            ->with($command = $this->createMock(Command::class))
+            ->with($command = $this->createStub(Query::class))
             ->willReturn($errors = new ListOfErrors(new Error(null, 'Something went wrong.')));
 
         $next = function () {
@@ -113,13 +115,13 @@ class ValidateCommandTest extends TestCase
 
         $result = ($this->middleware)($command, $next);
 
-        $this->assertTrue($result->didFail());
+        $this->assertTrue($result?->didFail());
         $this->assertSame($errors, $result->errors());
     }
 
     public function testItStopsOnFirstFailureViaBail(): void
     {
-        $this->middleware = new class ($this->validator) extends ValidateCommand implements Bail {
+        $this->middleware = new class ($this->validator) extends ValidateMessage implements Bail {
             /**
              * @return iterable<string>
              */
@@ -143,7 +145,7 @@ class ValidateCommandTest extends TestCase
         $this->validator
             ->expects($this->once())
             ->method('validate')
-            ->with($command = $this->createMock(Command::class))
+            ->with($command = $this->createStub(Message::class))
             ->willReturn($errors = new ListOfErrors(new Error(null, 'Something went wrong.')));
 
         $next = function () {
@@ -152,16 +154,16 @@ class ValidateCommandTest extends TestCase
 
         $result = ($this->middleware)($command, $next);
 
-        $this->assertTrue($result->didFail());
+        $this->assertTrue($result?->didFail());
         $this->assertSame($errors, $result->errors());
     }
 
     public function testItStopsOnFirstFailure(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
 
-        $this->middleware = new class ($command, $this->validator) extends ValidateCommand {
-            public function __construct(private Command $command, Validator $validator)
+        $this->middleware = new class ($command, $this->validator) extends ValidateMessage {
+            public function __construct(private Message $message, Validator $validator)
             {
                 parent::__construct($validator);
             }
@@ -174,9 +176,9 @@ class ValidateCommandTest extends TestCase
                 return ['foo', 'bar'];
             }
 
-            protected function stopOnFirstFailure(Command $command): bool
+            protected function stopOnFirstFailure(Message $message): bool
             {
-                return $this->command === $command;
+                return $this->message === $message;
             }
         };
 
@@ -203,7 +205,7 @@ class ValidateCommandTest extends TestCase
 
         $result = ($this->middleware)($command, $next);
 
-        $this->assertTrue($result->didFail());
+        $this->assertTrue($result?->didFail());
         $this->assertSame($errors, $result->errors());
     }
 }

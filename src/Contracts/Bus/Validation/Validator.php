@@ -12,8 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Contracts\Bus\Validation;
 
-use CloudCreativity\Modules\Contracts\Messaging\Command;
-use CloudCreativity\Modules\Contracts\Messaging\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\ListOfErrors;
 
 interface Validator
@@ -36,5 +35,5 @@ interface Validator
     /**
      * Validate the provided message.
      */
-    public function validate(Command|Query $message): ListOfErrors;
+    public function validate(Message $message): ListOfErrors;
 }
