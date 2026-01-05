@@ -16,18 +16,24 @@ use Closure;
 use CloudCreativity\Modules\Contracts\Application\UnitOfWork\DispatchAfterCommit;
 use CloudCreativity\Modules\Contracts\Application\UnitOfWork\DispatchBeforeCommit;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
+use Stringable;
 
-final readonly class EventHandler
+final readonly class EventHandler implements Stringable
 {
     public function __construct(private object $listener)
     {
         assert(
             !($this->listener instanceof DispatchBeforeCommit && $this->listener instanceof DispatchAfterCommit),
             sprintf(
-                'Listener "%s" cannot be dispatched both before and after a unit of work is committed..',
+                'Listener "%s" cannot be dispatched both before and after a unit of work is committed.',
                 get_debug_type($this->listener),
             ),
         );
+    }
+
+    public function __toString(): string
+    {
+        return $this->listener::class;
     }
 
     /**
