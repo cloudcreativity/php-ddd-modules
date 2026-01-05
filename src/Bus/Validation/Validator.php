@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Bus\Validation;
 
+use CloudCreativity\Modules\Bus\PsrPipeContainer;
 use CloudCreativity\Modules\Contracts\Bus\Validation\Validator as IValidator;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Messaging\Query;
@@ -20,9 +21,12 @@ use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Pipeline;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\ListOfErrors as IListOfErrors;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
+use Psr\Container\ContainerInterface;
 
 final class Validator implements IValidator
 {
+    private readonly ?PipeContainer $rules;
+
     /**
      * @var iterable<callable|string>
      */
@@ -30,8 +34,11 @@ final class Validator implements IValidator
 
     private bool $stopOnFirstFailure = false;
 
-    public function __construct(private readonly ?PipeContainer $rules = null)
+    public function __construct(ContainerInterface|PipeContainer|null $rules = null)
     {
+        $this->rules = $rules instanceof ContainerInterface
+            ? new PsrPipeContainer($rules)
+            : $rules;
     }
 
     public function using(iterable $rules): static
