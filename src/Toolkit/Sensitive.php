@@ -10,7 +10,7 @@
 
 declare(strict_types=1);
 
-namespace CloudCreativity\Modules\Bus;
+namespace CloudCreativity\Modules\Toolkit;
 
 use Attribute;
 

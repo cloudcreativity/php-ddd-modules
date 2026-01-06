@@ -14,6 +14,7 @@ namespace CloudCreativity\Modules\Bus;
 
 use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Contextual;
+use CloudCreativity\Modules\Toolkit\Sensitive;
 use Generator;
 use IteratorAggregate;
 use ReflectionClass;
