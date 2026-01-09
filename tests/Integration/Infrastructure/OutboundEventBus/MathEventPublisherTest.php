@@ -14,9 +14,9 @@ namespace CloudCreativity\Modules\Tests\Integration\Infrastructure\OutboundEvent
 
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Middleware\LogOutboundEvent;
 use CloudCreativity\Modules\Testing\FakeContainer;
-use CloudCreativity\Modules\Tests\Integration\Application\InboundEventBus\NumbersAdded;
-use CloudCreativity\Modules\Tests\Integration\Application\InboundEventBus\NumbersDivided;
-use CloudCreativity\Modules\Tests\Integration\Application\InboundEventBus\NumbersSubtracted;
+use CloudCreativity\Modules\Tests\Integration\Bus\NumbersAdded;
+use CloudCreativity\Modules\Tests\Integration\Bus\NumbersDivided;
+use CloudCreativity\Modules\Tests\Integration\Bus\NumbersSubtracted;
 use PHPUnit\Framework\TestCase;
 
 class MathEventPublisherTest extends TestCase

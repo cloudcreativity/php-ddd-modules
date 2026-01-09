@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
-use CloudCreativity\Modules\Application\Bus\QueryHandler;
+use CloudCreativity\Modules\Bus\QueryHandler;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 use PHPUnit\Framework\TestCase;
 

@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Infrastructure\Queue;
 
 use Attribute;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final readonly class Queues

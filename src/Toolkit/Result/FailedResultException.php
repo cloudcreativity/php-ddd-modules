@@ -12,15 +12,13 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Toolkit\Result;
 
-use CloudCreativity\Modules\Contracts\Toolkit\Loggable\ContextProvider;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
-use CloudCreativity\Modules\Toolkit\Loggable\SimpleContextFactory;
 use RuntimeException;
 use Throwable;
 
 use function CloudCreativity\Modules\Toolkit\enum_string;
 
-class FailedResultException extends RuntimeException implements ContextProvider
+class FailedResultException extends RuntimeException
 {
     /**
      * @param Result<mixed> $result
@@ -49,8 +47,13 @@ class FailedResultException extends RuntimeException implements ContextProvider
         return $this->result;
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function context(): array
     {
-        return (new SimpleContextFactory())->make($this->result);
+        $context = $this->result->context();
+
+        return is_array($context) ? $context : [$context];
     }
 }

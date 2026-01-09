@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
 use CloudCreativity\Modules\Application\Bus\CommandQueuer;
-use CloudCreativity\Modules\Contracts\Application\Ports\Driven\Queue;
+use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 

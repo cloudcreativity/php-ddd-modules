@@ -14,7 +14,7 @@ namespace CloudCreativity\Modules\Infrastructure\Queue;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Infrastructure\Queue\EnqueuerContainer as IEnqueuerContainer;
-use CloudCreativity\Modules\Contracts\Toolkit\Messages\Command;
+use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Infrastructure\InfrastructureException;
 use Psr\Container\ContainerInterface;
 
