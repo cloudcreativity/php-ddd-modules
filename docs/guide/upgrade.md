@@ -66,7 +66,7 @@ The documentation provides guidance on how to set up a command queuer port.
 
 ### Other Changes
 
-Refer to the [changelog](https://github.com/cloudcreativity/ddd-modules/blob/develop/CHANGELOG.md) for other changes in
+Refer to the [changelog](https://github.com/cloudcreativity/php-ddd-modules/blob/main/CHANGELOG.md) for other changes in
 this release. These are unlikely to affect consuming applications.
 
 ## 1.x to 2.x
