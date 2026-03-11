@@ -24,4 +24,4 @@ composer require cloudcreativity/ddd-modules:^5.0
 ## License
 
 DDD Modules is licensed under the MIT license. See the
-[licence file](https://github.com/cloudcreativity/ddd-modules/blob/develop/LICENSE) for more information.
+[licence file](https://github.com/cloudcreativity/php-ddd-modules/blob/main/LICENSE) for more information.
