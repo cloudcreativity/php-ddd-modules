@@ -624,38 +624,38 @@ All notable changes to this project will be documented in this file. This projec
 
 Initial release.
 
-[5.2.0]: https://github.com/cloudcreativity/ddd-modules/compare/v5.1.0...v5.2.0
+[5.2.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v5.1.0...v5.2.0
 
-[5.1.0]: https://github.com/cloudcreativity/ddd-modules/compare/v5.0.0...v5.1.0
+[5.1.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v5.0.0...v5.1.0
 
-[5.0.0]: https://github.com/cloudcreativity/ddd-modules/compare/v5.0.0-rc.4...v5.0.0
+[5.0.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v5.0.0-rc.4...v5.0.0
 
-[5.0.0-rc.4]: https://github.com/cloudcreativity/ddd-modules/compare/v5.0.0-rc.3...v5.0.0-rc.4
+[5.0.0-rc.4]: https://github.com/cloudcreativity/php-ddd-modules/compare/v5.0.0-rc.3...v5.0.0-rc.4
 
-[5.0.0-rc.3]: https://github.com/cloudcreativity/ddd-modules/compare/v5.0.0-rc.2...v5.0.0-rc.3
+[5.0.0-rc.3]: https://github.com/cloudcreativity/php-ddd-modules/compare/v5.0.0-rc.2...v5.0.0-rc.3
 
-[5.0.0-rc.2]: https://github.com/cloudcreativity/ddd-modules/compare/v5.0.0-rc.1...v5.0.0-rc.2
+[5.0.0-rc.2]: https://github.com/cloudcreativity/php-ddd-modules/compare/v5.0.0-rc.1...v5.0.0-rc.2
 
-[5.0.0-rc.1]: https://github.com/cloudcreativity/ddd-modules/compare/v4.1.0...v5.0.0-rc.1
+[5.0.0-rc.1]: https://github.com/cloudcreativity/php-ddd-modules/compare/v4.1.0...v5.0.0-rc.1
 
-[4.1.0]: https://github.com/cloudcreativity/ddd-modules/compare/v4.0.0...v4.1.0
+[4.1.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v4.0.0...v4.1.0
 
-[4.0.0]: https://github.com/cloudcreativity/ddd-modules/compare/v3.4.0...v4.0.0
+[4.0.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v3.4.0...v4.0.0
 
-[3.4.0]: https://github.com/cloudcreativity/ddd-modules/compare/v3.3.1...v3.4.0
+[3.4.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v3.3.1...v3.4.0
 
-[3.3.1]: https://github.com/cloudcreativity/ddd-modules/compare/v3.3.0...v3.3.1
+[3.3.1]: https://github.com/cloudcreativity/php-ddd-modules/compare/v3.3.0...v3.3.1
 
-[3.3.0]: https://github.com/cloudcreativity/ddd-modules/compare/v3.2.0...v3.3.0
+[3.3.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v3.2.0...v3.3.0
 
-[3.2.0]: https://github.com/cloudcreativity/ddd-modules/compare/v3.1.0...v3.2.0
+[3.2.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v3.1.0...v3.2.0
 
-[3.1.0]: https://github.com/cloudcreativity/ddd-modules/compare/v3.0.0...v3.1.0
+[3.1.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v3.0.0...v3.1.0
 
-[3.0.0]: https://github.com/cloudcreativity/ddd-modules/compare/v3.0.0-rc.2...v3.0.0
+[3.0.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v3.0.0-rc.2...v3.0.0
 
-[3.0.0-rc.2]: https://github.com/cloudcreativity/ddd-modules/compare/v3.0.0-rc.1...v3.0.0-rc.2
+[3.0.0-rc.2]: https://github.com/cloudcreativity/php-ddd-modules/compare/v3.0.0-rc.1...v3.0.0-rc.2
 
-[3.0.0-rc.1]: https://github.com/cloudcreativity/ddd-modules/compare/v2.0.0...v3.0.0-rc.1
+[3.0.0-rc.1]: https://github.com/cloudcreativity/php-ddd-modules/compare/v2.0.0...v3.0.0-rc.1
 
-[2.0.0]: https://github.com/cloudcreativity/ddd-modules/compare/v2.0.0-rc.3...v2.0.0
+[2.0.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v2.0.0-rc.3...v2.0.0

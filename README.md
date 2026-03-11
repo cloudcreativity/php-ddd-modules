@@ -2,7 +2,7 @@
 
 **Write highly encapsulated and loosely coupled modules, for domain-centric architecture.**
 
-[Read the docs here.](https://cloudcreativity.github.io/ddd-modules)
+[Read the docs here.](https://cloudcreativity.github.io/php-ddd-modules)
 
 ## What is this?
 
@@ -35,7 +35,7 @@ This package provides a common PHP toolset for writing domain-centric modules.
 The key to achieving highly encapsulated and loosely coupled modules is _how you use the tools in this package_. That is
 described in the documentation - so ensure you read the docs before using these tools.
 
-[You can read the documentation here.](https://cloudcreativity.github.io/ddd-modules)
+[You can read the documentation here.](https://cloudcreativity.github.io/php-ddd-modules)
 
 ## Installation
 
