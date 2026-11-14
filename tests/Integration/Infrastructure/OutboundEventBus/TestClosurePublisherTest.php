@@ -15,11 +15,13 @@ namespace CloudCreativity\Modules\Tests\Integration\Infrastructure\OutboundEvent
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Middleware\LogOutboundEvent;
 use CloudCreativity\Modules\Testing\FakeContainer;
 use CloudCreativity\Modules\Tests\Integration\Bus\NumbersAdded;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TestClosurePublisherTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_publishes_an_event(): void
     {
         $published = [];
 

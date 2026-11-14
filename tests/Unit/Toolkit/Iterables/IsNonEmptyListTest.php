@@ -14,18 +14,50 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Iterables;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Iterables\NonEmptyList;
 use CloudCreativity\Modules\Toolkit\Iterables\IsNonEmptyList;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class IsNonEmptyListTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_iterates_over_the_values(): void
     {
-        $expected = ['one', 'two', 'three'];
+        $list = $this->makeList('one', 'two', 'three');
 
+        $actual = iterator_to_array($list);
+
+        $this->assertSame(['one', 'two', 'three'], $actual);
+    }
+
+    #[Test]
+    public function it_returns_all_values(): void
+    {
+        $list = $this->makeList('one', 'two', 'three');
+
+        $actual = $list->all();
+
+        $this->assertSame(['one', 'two', 'three'], $actual);
+    }
+
+    #[Test]
+    public function it_counts_the_values(): void
+    {
+        $list = $this->makeList('one', 'two', 'three');
+
+        $actual = count($list);
+
+        $this->assertSame(3, $actual);
+    }
+
+    /**
+     * @return NonEmptyList<string>
+     */
+    private function makeList(string $value, string ...$values): NonEmptyList
+    {
         /**
          * @implements NonEmptyList<string>
          */
-        $list = new class (...$expected) implements NonEmptyList {
+        return new class ($value, ...$values) implements NonEmptyList {
             /** @use IsNonEmptyList<string> */
             use IsNonEmptyList;
 
@@ -34,9 +66,5 @@ final class IsNonEmptyListTest extends TestCase
                 $this->stack = [$value, ...array_values($values)];
             }
         };
-
-        $this->assertSame($expected, iterator_to_array($list));
-        $this->assertSame($expected, $list->all());
-        $this->assertCount(count($expected), $list);
     }
 }

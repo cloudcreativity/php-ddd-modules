@@ -13,54 +13,51 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\InboundEventBus;
 
 use CloudCreativity\Modules\Bus\SwallowInboundEvent;
+use CloudCreativity\Modules\Testing\FakeLogger;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 final class SwallowInboundEventTest extends TestCase
 {
-    public function testItDoesNothing(): void
+    #[Test]
+    public function it_does_nothing(): void
     {
         $handler = new SwallowInboundEvent();
+
+        $this->expectNotToPerformAssertions();
+
         $handler->handle(new TestInboundEvent());
-        /** @phpstan-ignore-next-line */
-        $this->assertTrue(true);
     }
 
-    public function testItLogsThatItDoesNothing(): void
+    #[Test]
+    public function it_logs_that_it_does_nothing(): void
     {
         $event = new TestInboundEvent();
         $name = ModuleBasename::from($event);
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger
-            ->expects($this->once())
-            ->method('log')
-            ->with(
-                LogLevel::DEBUG,
-                "Swallowing inbound integration event {$name}.",
-                [],
-            );
-
+        $logger = new FakeLogger();
         $handler = new SwallowInboundEvent($logger);
+
         $handler->handle($event);
+
+        $this->assertSame([
+            ['level' => LogLevel::DEBUG, 'message' => "Swallowing inbound integration event {$name}.", 'context' => []],
+        ], $logger->log);
     }
 
-    public function testItLogsThatItDoesNothingWithSpecifiedLogLevel(): void
+    #[Test]
+    public function it_logs_that_it_does_nothing_with_specified_log_level(): void
     {
         $event = new TestInboundEvent();
         $name = ModuleBasename::from($event);
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger
-            ->expects($this->once())
-            ->method('log')
-            ->with(
-                LogLevel::NOTICE,
-                "Swallowing inbound integration event {$name}.",
-                [],
-            );
-
+        $logger = new FakeLogger();
         $handler = new SwallowInboundEvent(logger: $logger, level: LogLevel::NOTICE);
+
         $handler->handle($event);
+
+        $this->assertSame([
+            ['level' => LogLevel::NOTICE, 'message' => "Swallowing inbound integration event {$name}.", 'context' => []],
+        ], $logger->log);
     }
 }

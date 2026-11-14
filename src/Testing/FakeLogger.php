@@ -41,7 +41,7 @@ final class FakeLogger extends AbstractLogger implements Countable
             fn (array $entry): string => implode(': ', array_filter([
                 is_scalar($entry['level']) ? strtoupper((string) $entry['level']) : null,
                 $entry['message'],
-            ])),
+            ], static fn (?string $value): bool => $value !== null)),
             $this->log,
         );
     }

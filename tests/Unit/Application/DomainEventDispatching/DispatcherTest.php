@@ -14,54 +14,45 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\DomainEventDispatching;
 
 use Closure;
 use CloudCreativity\Modules\Application\DomainEventDispatching\Dispatcher;
-use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\ListenerContainer;
+use CloudCreativity\Modules\Application\DomainEventDispatching\ListenerContainer;
+use CloudCreativity\Modules\Bus\PsrPipeContainer;
+use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\ListenerContainer as IListenerContainer;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEventDispatcher;
-use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
-use PHPUnit\Framework\MockObject\MockObject;
+use CloudCreativity\Modules\Testing\FakeContainer;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class DispatcherTest extends TestCase
 {
-    private ListenerContainer&MockObject $listeners;
-
-    private MockObject&PipeContainer $middleware;
-
-    private Dispatcher $dispatcher;
-
-    protected function setUp(): void
+    #[Test]
+    public function it_is_a_domain_event_dispatcher(): void
     {
-        parent::setUp();
+        $dispatcher = new class () extends Dispatcher {};
 
-        $this->dispatcher = new class (
-            listeners: $this->listeners = $this->createMock(ListenerContainer::class),
-            middleware: $this->middleware = $this->createMock(PipeContainer::class),
-        ) extends Dispatcher {};
+        $this->assertInstanceOf(DomainEventDispatcher::class, $dispatcher);
     }
 
-    public function testItDispatchesImmediately(): void
+    #[Test]
+    public function it_dispatches_to_a_list_of_listeners(): void
     {
         $sequence = [];
         $event1 = new TestImmediateDomainEvent();
         $event2 = new class () extends TestDomainEvent {};
-        ;
 
         $listener1 = $this->createMock(TestListener::class);
         $listener2 = $this->createMock(TestListener::class);
         $listener3 = $this->createMock(TestListener::class);
-        $listener4 = $this->createMock(TestListener::class);
-
         $listener2Closure = static fn (DomainEvent $event) => $listener2->handle($event);
 
-        $this->listeners
-            ->expects($this->exactly(2))
-            ->method('get')
-            ->willReturnCallback(fn (string $name) => match ($name) {
-                'Listener1' => $listener1,
-                'Listener3' => $listener3,
-                'Listener4' => $listener4,
-                default => throw new \RuntimeException('Unexpected name: ' . $name),
-            });
+        $listeners = new ListenerContainer();
+        $listeners->bind('Listener1', fn () => $listener1);
+        $listeners->bind('Listener3', fn () => $listener3);
+
+        $dispatcher = new class ($listeners) extends Dispatcher {};
+        $dispatcher->listen($event1::class, ['Listener1', $listener2Closure]);
+        $dispatcher->listen($event2::class, ['Listener3']);
 
         $listener1
             ->expects($this->once())
@@ -80,41 +71,62 @@ final class DispatcherTest extends TestCase
             });
 
         $listener3
-            ->expects($this->once())
-            ->method('handle')
-            ->with($this->identicalTo($event2))
-            ->willReturnCallback(function () use (&$sequence) {
-                $sequence[] = 'Listener3';
-            });
-
-        $listener4
             ->expects($this->never())
             ->method('handle');
 
-        $this->dispatcher->listen($event1::class, ['Listener1', $listener2Closure]);
-        $this->dispatcher->listen($event2::class, ['Listener3']);
-        $this->dispatcher->listen($this->createMock(TestDomainEvent::class)::class, 'Listener4');
+        $dispatcher->dispatch($event1);
 
-        $this->dispatcher->dispatch($event1);
-        $this->dispatcher->dispatch($event2);
-
-        $this->assertInstanceOf(DomainEventDispatcher::class, $this->dispatcher);
-        $this->assertSame($sequence, ['Listener1', 'Listener2', 'Listener3']);
+        $this->assertSame(['Listener1', 'Listener2'], $sequence);
     }
 
-    public function testNoListeners(): void
-    {
-        $event = $this->createMock(DomainEvent::class);
-        $this->listeners->expects($this->never())->method($this->anything());
-        $this->dispatcher->dispatch($event);
-    }
-
-    public function testItDispatchesThroughMiddleware(): void
+    #[Test]
+    public function it_dispatches_to_a_single_listener(): void
     {
         $event1 = new class () extends TestDomainEvent {};
-        ;
+        $event2 = new TestImmediateDomainEvent();
+
+        $listener1 = $this->createMock(TestListener::class);
+        $listener2 = $this->createMock(TestListener::class);
+
+        $listeners = new ListenerContainer();
+        $listeners->bind('Listener1', fn () => $listener1);
+        $listeners->bind('Listener2', fn () => $listener2);
+
+        $dispatcher = new class ($listeners) extends Dispatcher {};
+        $dispatcher->listen($event1::class, 'Listener1');
+        $dispatcher->listen($event2::class, 'Listener2');
+
+        $listener1
+            ->expects($this->once())
+            ->method('handle')
+            ->with($this->identicalTo($event1));
+
+        $listener2
+            ->expects($this->never())
+            ->method('handle');
+
+        $dispatcher->dispatch($event1);
+    }
+
+    #[Test]
+    public function it_does_nothing_when_there_are_no_listeners(): void
+    {
+        $event = $this->createStub(DomainEvent::class);
+        $listeners = $this->createMock(IListenerContainer::class);
+        $dispatcher = new class ($listeners) extends Dispatcher {};
+
+        $listeners
+            ->expects($this->never())
+            ->method($this->anything());
+
+        $dispatcher->dispatch($event);
+    }
+
+    #[Test]
+    public function it_dispatches_through_middleware(): void
+    {
+        $event1 = new class () extends TestDomainEvent {};
         $event2 = new class () extends TestDomainEvent {};
-        ;
         $event3 = new TestImmediateDomainEvent();
 
         $a = function ($actual, Closure $next) use ($event1, $event2): DomainEvent {
@@ -129,44 +141,90 @@ final class DispatcherTest extends TestCase
             return $next($event3);
         };
 
-        $this->middleware
-            ->expects($this->once())
-            ->method('get')
-            ->with('Middleware2')
-            ->willReturn($b);
-
         $listener = $this->createMock(TestListener::class);
+
+        $listeners = new ListenerContainer();
+        $listeners->bind('MyListener', fn () => $listener);
+
+        $middleware = new PsrPipeContainer();
+        $middleware->bind('Middleware2', fn () => $b);
+
+        $dispatcher = new class ($listeners, $middleware) extends Dispatcher {};
+        $dispatcher->through([$a, 'Middleware2']);
+        $dispatcher->listen($event3::class, 'MyListener');
 
         $listener
             ->expects($this->once())
             ->method('handle')
             ->with($this->identicalTo($event3));
 
-        $this->listeners
-            ->expects($this->once())
-            ->method('get')
-            ->with('MyListener')
-            ->willReturn($listener);
-
-        $this->dispatcher->through([$a, 'Middleware2']);
-        $this->dispatcher->listen($event3::class, 'MyListener');
-        $this->dispatcher->dispatch($event1);
+        $dispatcher->dispatch($event1);
     }
 
-    public function testListenerDoesNotHaveHandleMethod(): void
+    #[Test]
+    public function it_throws_when_the_listener_is_an_empty_string(): void
     {
+        $dispatcher = new class () extends Dispatcher {};
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Expecting listener to be a Closure or non-empty string.');
+
+        $dispatcher->listen(TestImmediateDomainEvent::class, ['Listener1', '']);
+    }
+
+    #[Test]
+    public function it_autowires_listeners_and_middleware_from_attributes(): void
+    {
+        $sequence = [];
         $event = new TestImmediateDomainEvent();
+        $middleware = new PsrPipeContainer();
+        $middleware->bind('Middleware1', function () use (&$sequence): Closure {
+            return function (DomainEvent $actual, Closure $next) use (&$sequence) {
+                $sequence[] = 'Middleware1';
+                return $next($actual);
+            };
+        });
 
-        $this->listeners
-            ->expects($this->once())
-            ->method('get')
-            ->with('Listener1')
-            ->willReturn(new \DateTime());
+        $listeners = new ListenerContainer();
 
-        $this->expectException(\AssertionError::class);
-        $this->expectExceptionMessage('Listener "DateTime" is not an object with a handle method or a closure.');
+        foreach (['Listener1', 'Listener2', 'Listener3'] as $name) {
+            $listeners->bind($name, function () use (&$sequence, $event, $name): Closure {
+                return function (DomainEvent $actual) use (&$sequence, $event, $name): void {
+                    $this->assertSame($event, $actual);
+                    $sequence[] = $name;
+                };
+            });
+        }
 
-        $this->dispatcher->listen($event::class, 'Listener1');
-        $this->dispatcher->dispatch($event);
+        $dispatcher = new TestDispatcherWithAttributes($listeners, $middleware);
+
+        $dispatcher->dispatch($event);
+
+        $this->assertSame(['Middleware1', 'Listener1', 'Listener2', 'Listener3'], $sequence);
+    }
+
+    #[Test]
+    public function it_resolves_listeners_and_middleware_from_a_psr_container(): void
+    {
+        $sequence = [];
+        $event = new TestImmediateDomainEvent();
+        $container = new FakeContainer();
+        $container->instance('Middleware1', function (DomainEvent $actual, Closure $next) use (&$sequence) {
+            $sequence[] = 'Middleware1';
+            return $next($actual);
+        });
+
+        foreach (['Listener1', 'Listener2', 'Listener3'] as $name) {
+            $container->instance($name, function (DomainEvent $actual) use (&$sequence, $event, $name): void {
+                $this->assertSame($event, $actual);
+                $sequence[] = $name;
+            });
+        }
+
+        $dispatcher = new TestDispatcherWithAttributes($container);
+
+        $dispatcher->dispatch($event);
+
+        $this->assertSame(['Middleware1', 'Listener1', 'Listener2', 'Listener3'], $sequence);
     }
 }

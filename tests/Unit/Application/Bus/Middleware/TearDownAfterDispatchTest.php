@@ -16,14 +16,16 @@ use CloudCreativity\Modules\Bus\Middleware\TearDownAfterDispatch;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 final class TearDownAfterDispatchTest extends TestCase
 {
-    public function testItInvokesCallbackAfterSuccess(): void
+    #[Test]
+    public function it_invokes_callback_after_success(): void
     {
-        $message = $this->createMock(Command::class);
+        $message = $this->createStub(Command::class);
         $result = Result::ok();
         $sequence = [];
 
@@ -41,9 +43,10 @@ final class TearDownAfterDispatchTest extends TestCase
         $this->assertSame(['next', 'teardown'], $sequence);
     }
 
-    public function testItInvokesCallbackAfterFailure(): void
+    #[Test]
+    public function it_invokes_callback_after_failure(): void
     {
-        $message = $this->createMock(Query::class);
+        $message = $this->createStub(Query::class);
         $result = Result::failed('Something went wrong.');
         $sequence = [];
 
@@ -61,9 +64,10 @@ final class TearDownAfterDispatchTest extends TestCase
         $this->assertSame(['next', 'teardown'], $sequence);
     }
 
-    public function testItInvokesCallbackAfterException(): void
+    #[Test]
+    public function it_invokes_callback_after_exception(): void
     {
-        $message = $this->createMock(Command::class);
+        $message = $this->createStub(Command::class);
         $exception = new RuntimeException('Something went wrong.');
         $actual = null;
         $sequence = [];

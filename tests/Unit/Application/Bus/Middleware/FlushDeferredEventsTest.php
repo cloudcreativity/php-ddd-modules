@@ -16,6 +16,7 @@ use CloudCreativity\Modules\Application\Bus\Middleware\FlushDeferredEvents;
 use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\DeferredDispatcher;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -39,9 +40,16 @@ final class FlushDeferredEventsTest extends TestCase
         );
     }
 
-    public function testItFlushesDeferredEvents(): void
+    protected function tearDown(): void
     {
-        $command = $this->createMock(Command::class);
+        unset($this->middleware, $this->dispatcher);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_flushes_deferred_events(): void
+    {
+        $command = $this->createStub(Command::class);
         $expected = Result::ok();
 
         $this->dispatcher
@@ -65,9 +73,10 @@ final class FlushDeferredEventsTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItForgetsDeferredEventsOnFailedResult(): void
+    #[Test]
+    public function it_forgets_deferred_events_on_failed_result(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $expected = Result::failed('Something went wrong.');
 
         $this->dispatcher
@@ -87,13 +96,14 @@ final class FlushDeferredEventsTest extends TestCase
             return $expected;
         });
 
+        $this->assertSame($expected, $actual);
         $this->assertSame(['next', 'forget'], $this->sequence);
     }
 
-
-    public function testItForgetsDeferredEventsOnException(): void
+    #[Test]
+    public function it_forgets_deferred_events_on_exception(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $expected = new \LogicException('Boom!');
 
         $this->dispatcher
@@ -107,17 +117,19 @@ final class FlushDeferredEventsTest extends TestCase
             ->expects($this->never())
             ->method('flush');
 
+        $actual = null;
+
         try {
             ($this->middleware)($command, function ($in) use ($command, $expected) {
                 $this->assertSame($command, $in);
                 $this->sequence[] = 'next';
                 throw $expected;
             });
-            $this->fail('No exception thrown.');
         } catch (\LogicException $ex) {
-            $this->assertSame($expected, $ex);
+            $actual = $ex;
         }
 
+        $this->assertSame($expected, $actual);
         $this->assertSame(['next', 'forget'], $this->sequence);
     }
 }

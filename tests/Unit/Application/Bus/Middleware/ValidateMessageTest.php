@@ -21,15 +21,13 @@ use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 final class ValidateMessageTest extends TestCase
 {
-    /**
-     * @var MockObject&Validator
-     */
-    private Validator $validator;
+    private MockObject&Validator $validator;
 
     private ValidateMessage $middleware;
 
@@ -50,11 +48,23 @@ final class ValidateMessageTest extends TestCase
         };
     }
 
-    public function testItSucceeds(): void
+    protected function tearDown(): void
+    {
+        unset($this->validator, $this->middleware);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_succeeds(): void
     {
         $rules = [];
         $command = $this->createStub(Command::class);
         $expected = Result::ok();
+
+        $next = function ($actual) use ($command, $expected) {
+            $this->assertSame($command, $actual);
+            return $expected;
+        };
 
         $this->validator
             ->expects($this->once())
@@ -80,18 +90,21 @@ final class ValidateMessageTest extends TestCase
             }))
             ->willReturn(new ListOfErrors());
 
-        $next = function ($actual) use ($command, $expected) {
-            $this->assertSame($command, $actual);
-            return $expected;
-        };
-
         $actual = ($this->middleware)($command, $next);
 
         $this->assertSame($expected, $actual);
     }
 
-    public function testItFails(): void
+    #[Test]
+    public function it_fails(): void
     {
+        $command = $this->createStub(Query::class);
+        $errors = new ListOfErrors(new Error(null, 'Something went wrong.'));
+
+        $next = function () {
+            throw new \LogicException('Not expecting next closure to be called.');
+        };
+
         $this->validator
             ->expects($this->once())
             ->method('using')
@@ -106,22 +119,20 @@ final class ValidateMessageTest extends TestCase
         $this->validator
             ->expects($this->once())
             ->method('validate')
-            ->with($command = $this->createStub(Query::class))
-            ->willReturn($errors = new ListOfErrors(new Error(null, 'Something went wrong.')));
+            ->with($this->identicalTo($command))
+            ->willReturn($errors);
 
-        $next = function () {
-            throw new \LogicException('Not expecting next closure to be called.');
-        };
+        $actual = ($this->middleware)($command, $next);
 
-        $result = ($this->middleware)($command, $next);
-
-        $this->assertTrue($result?->didFail());
-        $this->assertSame($errors, $result->errors());
+        $this->assertEquals(Result::failed($errors), $actual);
     }
 
-    public function testItStopsOnFirstFailureViaBail(): void
+    #[Test]
+    public function it_stops_on_first_failure_via_bail(): void
     {
-        $this->middleware = new class ($this->validator) extends ValidateMessage implements Bail {
+        $command = $this->createStub(Message::class);
+        $errors = new ListOfErrors(new Error(null, 'Something went wrong.'));
+        $middleware = new class ($this->validator) extends ValidateMessage implements Bail {
             /**
              * @return iterable<string>
              */
@@ -129,6 +140,10 @@ final class ValidateMessageTest extends TestCase
             {
                 return ['foo', 'bar'];
             }
+        };
+
+        $next = function () {
+            throw new \LogicException('Not expecting next closure to be called.');
         };
 
         $this->validator
@@ -145,24 +160,20 @@ final class ValidateMessageTest extends TestCase
         $this->validator
             ->expects($this->once())
             ->method('validate')
-            ->with($command = $this->createStub(Message::class))
-            ->willReturn($errors = new ListOfErrors(new Error(null, 'Something went wrong.')));
+            ->with($this->identicalTo($command))
+            ->willReturn($errors);
 
-        $next = function () {
-            throw new \LogicException('Not expecting next closure to be called.');
-        };
+        $actual = $middleware($command, $next);
 
-        $result = ($this->middleware)($command, $next);
-
-        $this->assertTrue($result?->didFail());
-        $this->assertSame($errors, $result->errors());
+        $this->assertEquals(Result::failed($errors), $actual);
     }
 
-    public function testItStopsOnFirstFailure(): void
+    #[Test]
+    public function it_stops_on_first_failure(): void
     {
         $command = $this->createStub(Command::class);
-
-        $this->middleware = new class ($command, $this->validator) extends ValidateMessage {
+        $errors = new ListOfErrors(new Error(null, 'Something went wrong.'));
+        $middleware = new class ($command, $this->validator) extends ValidateMessage {
             public function __construct(private Message $message, Validator $validator)
             {
                 parent::__construct($validator);
@@ -182,6 +193,10 @@ final class ValidateMessageTest extends TestCase
             }
         };
 
+        $next = function () {
+            throw new \LogicException('Not expecting next closure to be called.');
+        };
+
         $this->validator
             ->expects($this->once())
             ->method('using')
@@ -196,16 +211,73 @@ final class ValidateMessageTest extends TestCase
         $this->validator
             ->expects($this->once())
             ->method('validate')
-            ->with($command)
-            ->willReturn($errors = new ListOfErrors(new Error(null, 'Something went wrong.')));
+            ->with($this->identicalTo($command))
+            ->willReturn($errors);
 
-        $next = function () {
-            throw new \LogicException('Not expecting next closure to be called.');
-        };
+        $actual = $middleware($command, $next);
 
-        $result = ($this->middleware)($command, $next);
+        $this->assertEquals(Result::failed($errors), $actual);
+    }
 
-        $this->assertTrue($result?->didFail());
-        $this->assertSame($errors, $result->errors());
+    #[Test]
+    public function it_uses_rules_from_the_with_rules_attribute(): void
+    {
+        $command = $this->createStub(Command::class);
+        $expected = Result::ok();
+        $middleware = new TestValidateMessageWithRules($this->validator);
+
+        $this->validator
+            ->expects($this->once())
+            ->method('using')
+            ->with($this->callback(
+                fn (iterable $rules): bool => ['Rule1', 'Rule2'] === iterator_to_array($rules, false),
+            ))
+            ->willReturnSelf();
+
+        $this->validator
+            ->expects($this->once())
+            ->method('stopOnFirstFailure')
+            ->with(false)
+            ->willReturnSelf();
+
+        $this->validator
+            ->expects($this->once())
+            ->method('validate')
+            ->with($this->identicalTo($command))
+            ->willReturn(new ListOfErrors());
+
+        $actual = $middleware($command, fn () => $expected);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    #[Test]
+    public function it_has_no_rules_by_default(): void
+    {
+        $command = $this->createStub(Command::class);
+        $expected = Result::ok();
+        $middleware = new class ($this->validator) extends ValidateMessage {};
+
+        $this->validator
+            ->expects($this->once())
+            ->method('using')
+            ->with($this->callback(fn (iterable $rules): bool => [] === iterator_to_array($rules, false)))
+            ->willReturnSelf();
+
+        $this->validator
+            ->expects($this->once())
+            ->method('stopOnFirstFailure')
+            ->with(false)
+            ->willReturnSelf();
+
+        $this->validator
+            ->expects($this->once())
+            ->method('validate')
+            ->with($this->identicalTo($command))
+            ->willReturn(new ListOfErrors());
+
+        $actual = $middleware($command, fn () => $expected);
+
+        $this->assertSame($expected, $actual);
     }
 }

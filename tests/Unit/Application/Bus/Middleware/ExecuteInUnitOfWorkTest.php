@@ -16,6 +16,7 @@ use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
 use CloudCreativity\Modules\Contracts\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Throwable;
 
@@ -26,9 +27,10 @@ final class ExecuteInUnitOfWorkTest extends TestCase
      */
     private array $sequence = [];
 
-    public function testItCommitsUnitOfWorkOnSuccess(): void
+    #[Test]
+    public function it_commits_unit_of_work_on_success(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $expected = Result::ok();
 
         $middleware = new ExecuteInUnitOfWork(
@@ -57,9 +59,10 @@ final class ExecuteInUnitOfWorkTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItDoesNotCommitUnitOfWorkOnFailure(): void
+    #[Test]
+    public function it_does_not_commit_unit_of_work_on_failure(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $expected = Result::failed('Something went wrong.');
 
         $middleware = new ExecuteInUnitOfWork(
@@ -88,9 +91,10 @@ final class ExecuteInUnitOfWorkTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItDoesNotCatchExceptions(): void
+    #[Test]
+    public function it_does_not_catch_exceptions(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $expected = new \RuntimeException('Boom! Something went wrong.');
 
         $middleware = new ExecuteInUnitOfWork(

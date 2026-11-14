@@ -16,6 +16,7 @@ use Closure;
 use CloudCreativity\Modules\Bus\Middleware\SetupBeforeEvent;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -26,9 +27,10 @@ final class SetupBeforeEventTest extends TestCase
      */
     private array $sequence = [];
 
-    public function testItSetsUpAndSucceedsWithoutTeardown(): void
+    #[Test]
+    public function it_sets_up_and_succeeds_without_teardown(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
 
         $middleware = new SetupBeforeEvent(function () {
             $this->sequence[] = 'setup';
@@ -43,9 +45,10 @@ final class SetupBeforeEventTest extends TestCase
         $this->assertSame(['setup', 'next'], $this->sequence);
     }
 
-    public function testItSetsUpAndSucceedsWithTeardown(): void
+    #[Test]
+    public function it_sets_up_and_succeeds_with_teardown(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
 
         $middleware = new SetupBeforeEvent(function (): Closure {
             $this->sequence[] = 'setup';
@@ -62,9 +65,10 @@ final class SetupBeforeEventTest extends TestCase
         $this->assertSame(['setup', 'next', 'teardown'], $this->sequence);
     }
 
-    public function testItSetsUpAndThrowsExceptionWithoutTeardown(): void
+    #[Test]
+    public function it_sets_up_and_throws_exception_without_teardown(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
         $exception = new RuntimeException('Something went wrong.');
         $actual = null;
 
@@ -88,9 +92,10 @@ final class SetupBeforeEventTest extends TestCase
         $this->assertSame(['setup', 'next'], $this->sequence);
     }
 
-    public function testItSetsUpAndThrowsExceptionWithTeardown(): void
+    #[Test]
+    public function it_sets_up_and_throws_exception_with_teardown(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
         $exception = new RuntimeException('Something went wrong.');
         $actual = null;
 

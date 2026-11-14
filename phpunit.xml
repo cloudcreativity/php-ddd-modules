@@ -7,12 +7,15 @@
          processIsolation="false"
          stopOnError="false"
          stopOnFailure="false"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.4/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/13.4/phpunit.xsd"
          cacheDirectory=".phpunit.cache"
          backupStaticProperties="false"
          failOnWarning="true"
          failOnDeprecation="true"
          failOnNotice="true"
+         failOnPhpunitWarning="true"
+         failOnPhpunitDeprecation="true"
+         failOnPhpunitNotice="true"
 >
     <coverage/>
     <testsuites>

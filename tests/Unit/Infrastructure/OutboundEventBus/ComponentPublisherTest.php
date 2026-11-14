@@ -14,49 +14,144 @@ namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\PublisherHandler;
-use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\PublisherHandlerContainer;
-use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\PublisherHandlerContainer as IPublisherHandlerContainer;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
+use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\ComponentPublisher;
-use PHPUnit\Framework\MockObject\MockObject;
+use CloudCreativity\Modules\Infrastructure\OutboundEventBus\PublisherHandlerContainer;
+use CloudCreativity\Modules\Testing\FakeContainer;
+use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ComponentPublisherTest extends TestCase
 {
     /**
-     * @var MockObject&PublisherHandlerContainer
-     */
-    private PublisherHandlerContainer $handlers;
-
-    private MockObject&PipeContainer $middleware;
-
-    private ComponentPublisher $publisher;
-
-    /**
      * @var array<string>
      */
     private array $sequence = [];
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->publisher = new class (
-            handlers: $this->handlers = $this->createMock(PublisherHandlerContainer::class),
-            middleware: $this->middleware = $this->createMock(PipeContainer::class),
-        ) extends ComponentPublisher {};
-    }
-
     protected function tearDown(): void
     {
-        unset($this->publisher, $this->handlers, $this->middleware);
+        unset($this->sequence);
         parent::tearDown();
     }
 
-    public function testPublish(): void
+    #[Test]
+    public function it_publishes_an_event(): void
+    {
+        $event = new TestNamedOutboundEvent();
+        $handler = $this->createRecordingPublisher();
+        $handlers = new PublisherHandlerContainer();
+        $handlers->bind(TestNamedOutboundEvent::class, fn () => $handler);
+        $publisher = new class (
+            handlers: $handlers,
+            middleware: new PipeContainer(),
+        ) extends ComponentPublisher {};
+
+        $publisher->publish($event);
+
+        $this->assertSame([$event], $handler->published);
+    }
+
+    #[Test]
+    public function it_publishes_an_event_through_middleware(): void
+    {
+        $event1 = new TestNamedOutboundEvent('one');
+        $event2 = new TestNamedOutboundEvent('two');
+        $event3 = new TestNamedOutboundEvent('three');
+        $handler = $this->createRecordingPublisher();
+        $handlers = new PublisherHandlerContainer(default: fn () => $handler);
+
+        $middleware1 = function (IntegrationEvent $actual, Closure $next) use ($event1, $event2): void {
+            $this->assertSame($event1, $actual);
+            $this->sequence[] = 'before1';
+            $next($event2);
+            $this->sequence[] = 'after1';
+        };
+
+        $middleware2 = function (IntegrationEvent $actual, Closure $next) use ($event2, $event3): void {
+            $this->assertSame($event2, $actual);
+            $this->sequence[] = 'before2';
+            $next($event3);
+            $this->sequence[] = 'after2';
+        };
+
+        $middleware = new PipeContainer();
+        $middleware->bind('Middleware2', fn () => $middleware2);
+
+        $publisher = new class (
+            handlers: $handlers,
+            middleware: $middleware,
+        ) extends ComponentPublisher {};
+        $publisher->through([$middleware1, 'Middleware2']);
+
+        $publisher->publish($event1);
+
+        $this->assertSame([$event3], $handler->published);
+        $this->assertSame(['before1', 'before2', 'published', 'after2', 'after1'], $this->sequence);
+    }
+
+    #[Test]
+    public function it_publishes_via_a_publisher_bound_with_an_attribute(): void
+    {
+        $event = new TestNamedOutboundEvent();
+        $publisher = new TestComponentPublisherWithAttributes($this->createContainer(
+            $bound = $this->createRecordingPublisher(),
+            $default = $this->createRecordingPublisher(),
+        ));
+
+        $publisher->publish($event);
+
+        $this->assertSame([$event], $bound->published);
+        $this->assertSame([], $default->published);
+    }
+
+    #[Test]
+    public function it_publishes_via_the_default_publisher_bound_with_an_attribute(): void
     {
         $event = new class () extends TestOutboundEvent {};
+        $publisher = new TestComponentPublisherWithAttributes($this->createContainer(
+            $bound = $this->createRecordingPublisher(),
+            $default = $this->createRecordingPublisher(),
+        ));
 
-        $this->handlers
+        $publisher->publish($event);
+
+        $this->assertSame([], $bound->published);
+        $this->assertSame([$event], $default->published);
+    }
+
+    #[Test]
+    public function it_publishes_through_middleware_from_the_through_attribute(): void
+    {
+        $publisher = new TestComponentPublisherWithAttributes($this->createContainer(
+            $this->createRecordingPublisher(),
+            $this->createRecordingPublisher(),
+        ));
+
+        $publisher->publish(new TestNamedOutboundEvent());
+
+        $this->assertSame(['before1', 'before2', 'published', 'after2', 'after1'], $this->sequence);
+    }
+
+    #[Test]
+    public function it_does_not_autowire_publisher_attributes_when_given_a_handler_container(): void
+    {
+        $event = new TestNamedOutboundEvent();
+        $handlers = $this->createMock(IPublisherHandlerContainer::class);
+        $middleware = $this->createMock(IPipeContainer::class);
+        $publisher = new TestComponentPublisherWithAttributes($handlers, $middleware);
+
+        $middleware
+            ->expects($this->exactly(2))
+            ->method('get')
+            ->willReturnCallback(fn (string $name): Closure => match ($name) {
+                'Middleware1', 'Middleware2' => fn (IntegrationEvent $e, Closure $next) => $next($e),
+                default => $this->fail('Unexpected middleware: ' . $name),
+            });
+
+        $handlers
             ->expects($this->once())
             ->method('get')
             ->with($event::class)
@@ -67,54 +162,50 @@ final class ComponentPublisherTest extends TestCase
             ->method('__invoke')
             ->with($this->identicalTo($event));
 
-        $this->publisher->publish($event);
+        $publisher->publish($event);
     }
 
-    public function testPublishWithMiddleware(): void
+    private function createContainer(TestPublisher $bound, TestPublisher $default): FakeContainer
     {
-        $event1 = new class () extends TestOutboundEvent {};
-        $event2 = new class () extends TestOutboundEvent {};
-        $event3 = new class () extends TestOutboundEvent {};
-
-        $middleware1 = function ($actual, Closure $next) use ($event1, $event2): void {
-            $this->assertSame($event1, $actual);
+        $container = new FakeContainer();
+        $container->instance(TestPublisher::class, $bound);
+        $container->instance('DefaultPublisher', $default);
+        $container->instance('Middleware1', function (IntegrationEvent $event, Closure $next): void {
             $this->sequence[] = 'before1';
-            $next($event2);
+            $next($event);
             $this->sequence[] = 'after1';
-        };
-
-        $middleware2 = function ($actual, Closure $next) use ($event2, $event3): void {
-            $this->assertSame($event2, $actual);
+        });
+        $container->instance('Middleware2', function (IntegrationEvent $event, Closure $next): void {
             $this->sequence[] = 'before2';
-            $next($event3);
+            $next($event);
             $this->sequence[] = 'after2';
+        });
+
+        return $container;
+    }
+
+    /**
+     * @return object{published: list<TestOutboundEvent>}&TestPublisher
+     */
+    private function createRecordingPublisher(): TestPublisher
+    {
+        return new class (function (): void {
+            $this->sequence[] = 'published';
+        }) extends TestPublisher {
+            /**
+             * @var list<TestOutboundEvent>
+             */
+            public array $published = [];
+
+            public function __construct(private readonly Closure $onPublish)
+            {
+            }
+
+            public function publish(TestOutboundEvent $event): void
+            {
+                $this->published[] = $event;
+                ($this->onPublish)();
+            }
         };
-
-        $this->middleware
-            ->expects($this->once())
-            ->method('get')
-            ->with('Middleware2')
-            ->willReturn($middleware2);
-
-        $handler = $this->createMock(PublisherHandler::class);
-
-        $handler
-            ->expects($this->once())
-            ->method('__invoke')
-            ->with($this->identicalTo($event3));
-
-        $this->handlers
-            ->expects($this->once())
-            ->method('get')
-            ->with($event3::class)
-            ->willReturnCallback(function () use ($handler) {
-                $this->assertSame(['before1', 'before2'], $this->sequence);
-                return $handler;
-            });
-
-        $this->publisher->through([$middleware1, 'Middleware2']);
-        $this->publisher->publish($event1);
-
-        $this->assertSame(['before1', 'before2', 'after2', 'after1'], $this->sequence);
     }
 }

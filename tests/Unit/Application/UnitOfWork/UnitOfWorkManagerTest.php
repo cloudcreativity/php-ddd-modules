@@ -13,10 +13,12 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\UnitOfWork;
 
 use Closure;
+use CloudCreativity\Modules\Application\ApplicationException;
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
-use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
 use CloudCreativity\Modules\Contracts\Application\Ports\UnitOfWork;
+use CloudCreativity\Modules\Testing\FakeExceptionReporter;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -25,7 +27,7 @@ final class UnitOfWorkManagerTest extends TestCase
 {
     private MockObject&UnitOfWork $unitOfWork;
 
-    private ExceptionReporter&MockObject $reporter;
+    private FakeExceptionReporter $reporter;
 
     private UnitOfWorkManager $manager;
 
@@ -35,24 +37,20 @@ final class UnitOfWorkManagerTest extends TestCase
 
         $this->manager = new UnitOfWorkManager(
             $this->unitOfWork = $this->createMock(UnitOfWork::class),
-            $this->reporter = $this->createMock(ExceptionReporter::class),
+            $this->reporter = new FakeExceptionReporter(),
         );
     }
 
-    public function testItExecutesCallbacks(): void
+    protected function tearDown(): void
+    {
+        unset($this->manager, $this->unitOfWork, $this->reporter);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_executes_callbacks(): void
     {
         $sequence = [];
-
-        $this->unitOfWork
-            ->expects($this->once())
-            ->method('execute')
-            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence) {
-                $this->assertSame(1, $attempts);
-                $sequence[] = 'start';
-                $result = $callback();
-                $sequence[] = 'commit';
-                return $result;
-            });
 
         $before1 = function () use (&$sequence): void {
             $this->assertSame(['start'], $sequence);
@@ -76,6 +74,17 @@ final class UnitOfWorkManagerTest extends TestCase
 
         $expected = new \DateTime();
 
+        $this->unitOfWork
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence) {
+                $this->assertSame(1, $attempts);
+                $sequence[] = 'start';
+                $result = $callback();
+                $sequence[] = 'commit';
+                return $result;
+            });
+
         $actual = $this->manager->execute(function () use ($before1, $before2, $after1, $after2, $expected) {
             $this->manager->beforeCommit($before1);
             $this->manager->afterCommit($after1);
@@ -88,20 +97,12 @@ final class UnitOfWorkManagerTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItExecutesCallbackWhenTransactionFailsToCommit(): void
+    #[Test]
+    public function it_executes_callback_when_transaction_fails_to_commit(): void
     {
-        $expected = new \RuntimeException('Boom');
+        $expected = new RuntimeException('Boom');
         $sequence = [];
-
-        $this->unitOfWork
-            ->expects($this->once())
-            ->method('execute')
-            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence, $expected) {
-                $this->assertSame(1, $attempts);
-                $sequence[] = 'start';
-                $callback();
-                throw $expected;
-            });
+        $actual = null;
 
         $before1 = function () use (&$sequence): void {
             $this->assertSame(['start'], $sequence);
@@ -117,37 +118,37 @@ final class UnitOfWorkManagerTest extends TestCase
             $this->fail('Not expecting after callback to be executed.');
         };
 
+        $this->unitOfWork
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence, $expected) {
+                $this->assertSame(1, $attempts);
+                $sequence[] = 'start';
+                $callback();
+                throw $expected;
+            });
+
         try {
             $this->manager->execute(function () use ($before1, $before2, $after) {
                 $this->manager->beforeCommit($before1);
                 $this->manager->afterCommit($after);
                 $this->manager->beforeCommit($before2);
             });
-            $this->fail('No exception thrown.');
-        } catch (\RuntimeException $ex) {
-            $this->assertSame($expected, $ex);
+        } catch (RuntimeException $ex) {
+            $actual = $ex;
         }
 
+        $this->assertSame($expected, $actual);
         $this->assertSame(['start', 'before1', 'before2'], $sequence);
     }
 
     /**
      * If any callbacks get registered by other callbacks, they are executed.
      */
-    public function testItExecutesAdditionalCommitCallbacks(): void
+    #[Test]
+    public function it_executes_additional_commit_callbacks(): void
     {
         $sequence = [];
-
-        $this->unitOfWork
-            ->expects($this->once())
-            ->method('execute')
-            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence) {
-                $this->assertSame(1, $attempts);
-                $sequence[] = 'start';
-                $result = $callback();
-                $sequence[] = 'commit';
-                return $result;
-            });
 
         $before = [
             function () use (&$sequence): void {
@@ -184,6 +185,17 @@ final class UnitOfWorkManagerTest extends TestCase
 
         $expected = new \DateTime();
 
+        $this->unitOfWork
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence) {
+                $this->assertSame(1, $attempts);
+                $sequence[] = 'start';
+                $result = $callback();
+                $sequence[] = 'commit';
+                return $result;
+            });
+
         $actual = $this->manager->execute(function () use ($before, $after, $expected) {
             $this->manager->beforeCommit($before[0]);
             $this->manager->beforeCommit($before[1]);
@@ -211,34 +223,30 @@ final class UnitOfWorkManagerTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItFlushesCallbacksOnSuccessfulTransaction(): void
+    #[Test]
+    public function it_flushes_callbacks_on_successful_transaction(): void
     {
         $this->unitOfWork
+            ->expects($this->exactly(2))
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
-        $result1 = $this->manager->execute(function () {
+        $this->manager->execute(function () {
             $this->manager->beforeCommit(fn () => null);
             $this->manager->afterCommit(fn () => null);
-            return 1;
         });
 
         // this would error if the manager is not empty at this point (tests below prove that).
-        $result2 = $this->manager->execute(fn () => 2);
+        $actual = $this->manager->execute(fn () => 2);
 
-        $this->assertSame(1, $result1);
-        $this->assertSame(2, $result2);
+        $this->assertSame(2, $actual);
     }
 
-    public function testItFlushesCallbacksOnUnsuccessfulTransaction(): void
+    #[Test]
+    public function it_flushes_callbacks_on_unsuccessful_transaction(): void
     {
         $ex = new LogicException('Boom');
         $count = 0;
-
-        $this->reporter
-            ->expects($this->exactly(2)) // only "swallowed" exceptions are reported
-            ->method('report')
-            ->with($this->identicalTo($ex));
 
         $this->unitOfWork
             ->expects($this->exactly(4))
@@ -257,15 +265,15 @@ final class UnitOfWorkManagerTest extends TestCase
                 $this->manager->beforeCommit(fn () => null);
                 $this->manager->afterCommit(fn () => null);
             }, 2);
-            $this->fail('No exception thrown.');
-        } catch (LogicException $ex) {
-            $this->assertSame($ex, $ex);
+        } catch (LogicException) {
+            // expected
         }
 
         // this would error if the manager is not empty at this point (tests below prove that).
-        $result = $this->manager->execute(fn () => true, 2);
+        $actual = $this->manager->execute(fn () => true, 2);
 
-        $this->assertTrue($result);
+        $this->assertTrue($actual);
+        $this->assertSame([$ex, $ex], $this->reporter->reported); // only "swallowed" exceptions are reported
     }
 
     /**
@@ -279,16 +287,12 @@ final class UnitOfWorkManagerTest extends TestCase
      * is thrown should be forgotten. Otherwise, if the callback is retried, the before
      * callbacks will be executed twice.
      */
-    public function testItHandlesCallbackExecutingMultipleTimes(): void
+    #[Test]
+    public function it_handles_callback_executing_multiple_times(): void
     {
         $ex = new LogicException('Boom!');
         $sequence = [];
         $count = 0;
-
-        $this->reporter
-            ->expects($this->exactly(2))
-            ->method('report')
-            ->with($this->identicalTo($ex));
 
         $before = [
             function () use (&$sequence): void {
@@ -353,6 +357,7 @@ final class UnitOfWorkManagerTest extends TestCase
             'after1',
             'after2',
         ], $sequence);
+        $this->assertSame([$ex, $ex], $this->reporter->reported);
     }
 
     /**
@@ -368,16 +373,12 @@ final class UnitOfWorkManagerTest extends TestCase
      * because any that are registered on one of the failed attempts should havbe been
      * forgotten.
      */
-    public function testItHandlesUnitOfWorkFailingMultipleTimes(): void
+    #[Test]
+    public function it_handles_unit_of_work_failing_multiple_times(): void
     {
         $ex = new LogicException('Boom!');
         $sequence = [];
         $count = 0;
-
-        $this->reporter
-            ->expects($this->exactly(2))
-            ->method('report')
-            ->with($this->identicalTo($ex));
 
         $before = [
             function () use (&$sequence): void {
@@ -398,6 +399,7 @@ final class UnitOfWorkManagerTest extends TestCase
         ];
 
         $this->unitOfWork
+            ->expects($this->exactly(3))
             ->method('execute')
             ->willReturnCallback(function (Closure $closure) use ($ex, &$sequence, &$count): mixed {
                 $count++;
@@ -437,36 +439,44 @@ final class UnitOfWorkManagerTest extends TestCase
             'after1',
             'after2',
         ], $sequence);
+        $this->assertSame([$ex, $ex], $this->reporter->reported);
     }
 
-    public function testItFailsIfBeforeCallbacksAreQueuedBeforeTransaction(): void
+    #[Test]
+    public function it_fails_if_before_callbacks_are_queued_before_transaction(): void
     {
         $this->unitOfWork
             ->expects($this->never())
             ->method('execute');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ApplicationException::class);
         $this->expectExceptionMessage('Cannot queue a before commit callback when not executing a unit of work.');
 
         $this->manager->beforeCommit(fn () => null);
     }
 
-    public function testItFailsIfAfterCallbacksAreQueuedBeforeTransaction(): void
+    #[Test]
+    public function it_fails_if_after_callbacks_are_queued_before_transaction(): void
     {
-        $this->expectException(RuntimeException::class);
+        $this->unitOfWork
+            ->expects($this->never())
+            ->method('execute');
+
+        $this->expectException(ApplicationException::class);
         $this->expectExceptionMessage('Cannot queue an after commit callback when not executing a unit of work.');
 
         $this->manager->afterCommit(fn () => null);
     }
 
-    public function testItCannotStartTransactionWithinAnExistingOne(): void
+    #[Test]
+    public function it_cannot_start_transaction_within_an_existing_one(): void
     {
         $this->unitOfWork
             ->expects($this->once())
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ApplicationException::class);
         $this->expectExceptionMessage(
             'Not expecting unit of work manager to start a unit of work within an existing one.',
         );
@@ -476,13 +486,15 @@ final class UnitOfWorkManagerTest extends TestCase
         });
     }
 
-    public function testItFailsIfAfterCommitCallbackRegistersBeforeCommitCallback(): void
+    #[Test]
+    public function it_fails_if_after_commit_callback_registers_before_commit_callback(): void
     {
         $this->unitOfWork
+            ->expects($this->once())
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ApplicationException::class);
         $this->expectExceptionMessage('Cannot queue a before commit callback as unit of work has been committed.');
 
         $this->manager->execute(function () {
@@ -492,11 +504,9 @@ final class UnitOfWorkManagerTest extends TestCase
         });
     }
 
-    public function testAttemptsMustBeGreaterThanZero(): void
+    #[Test]
+    public function it_fails_if_attempts_is_not_greater_than_zero(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Attempts must be greater than zero.');
-
         /**
          * Simulates an infinite loop if the zero attempts is not rejected.
          */
@@ -505,7 +515,10 @@ final class UnitOfWorkManagerTest extends TestCase
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
+        $this->expectException(ApplicationException::class);
+        $this->expectExceptionMessage('Attempts must be greater than zero.');
+
         /** @phpstan-ignore-next-line */
-        $this->manager->execute(fn () => throw new \LogicException('Boom!'), 0);
+        $this->manager->execute(fn () => throw new LogicException('Boom!'), 0);
     }
 }

@@ -17,30 +17,86 @@ use CloudCreativity\Modules\Testing\FakeContainer;
 use CloudCreativity\Modules\Tests\Integration\Bus\AddCommand;
 use CloudCreativity\Modules\Tests\Integration\Bus\FloorCommand;
 use CloudCreativity\Modules\Tests\Integration\Bus\MultiplyCommand;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MathQueueTest extends TestCase
 {
-    public function test(): void
-    {
-        $a = new AddCommandEnqueuer();
-        $b = new MultiplyCommandEnqueuer();
-        $c = new TestDefaultEnqueuer();
+    private FakeContainer $container;
 
-        $container = new FakeContainer();
+    private AddCommandEnqueuer $addEnqueuer;
+
+    private MultiplyCommandEnqueuer $multiplyEnqueuer;
+
+    private TestDefaultEnqueuer $defaultEnqueuer;
+
+    private MathQueue $queue;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->addEnqueuer = $a = new AddCommandEnqueuer();
+        $this->multiplyEnqueuer = $b = new MultiplyCommandEnqueuer();
+        $this->defaultEnqueuer = $c = new TestDefaultEnqueuer();
+
+        $this->container = $container = new FakeContainer();
         $container->bind(AddCommandEnqueuer::class, fn () => $a);
         $container->bind(MultiplyCommandEnqueuer::class, fn () => $b);
         $container->bind(TestDefaultEnqueuer::class, fn () => $c);
         $container->bind(LogPushedToQueue::class, fn () => new LogPushedToQueue($container->logger));
 
-        $publisher = new MathQueue($container);
-        $publisher->push($command1 = new AddCommand(1, 2));
-        $publisher->push($command2 = new MultiplyCommand(10, 6));
-        $publisher->push($command3 = new FloorCommand(99.9));
+        $this->queue = new MathQueue($container);
+    }
 
-        $this->assertSame([$command1], $a->queued);
-        $this->assertSame([$command2], $b->queued);
-        $this->assertSame([$command3], $c->queued);
-        $this->assertCount(6, $container->logger);
+    protected function tearDown(): void
+    {
+        unset(
+            $this->container,
+            $this->addEnqueuer,
+            $this->multiplyEnqueuer,
+            $this->defaultEnqueuer,
+            $this->queue,
+        );
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_queues_a_command_via_its_enqueuer(): void
+    {
+        $command = new AddCommand(1, 2);
+
+        $this->queue->push($command);
+
+        $this->assertSame([$command], $this->addEnqueuer->queued);
+        $this->assertSame([], $this->multiplyEnqueuer->queued);
+        $this->assertSame([], $this->defaultEnqueuer->queued);
+        $this->assertCount(2, $this->container->logger);
+    }
+
+    #[Test]
+    public function it_queues_a_command_via_an_enqueuer_registered_with_a_list_of_commands(): void
+    {
+        $command = new MultiplyCommand(10, 6);
+
+        $this->queue->push($command);
+
+        $this->assertSame([], $this->addEnqueuer->queued);
+        $this->assertSame([$command], $this->multiplyEnqueuer->queued);
+        $this->assertSame([], $this->defaultEnqueuer->queued);
+        $this->assertCount(2, $this->container->logger);
+    }
+
+    #[Test]
+    public function it_queues_a_command_via_the_default_enqueuer(): void
+    {
+        $command = new FloorCommand(99.9);
+
+        $this->queue->push($command);
+
+        $this->assertSame([], $this->addEnqueuer->queued);
+        $this->assertSame([], $this->multiplyEnqueuer->queued);
+        $this->assertSame([$command], $this->defaultEnqueuer->queued);
+        $this->assertCount(2, $this->container->logger);
     }
 }

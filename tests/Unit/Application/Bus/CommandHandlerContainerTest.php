@@ -16,19 +16,20 @@ use CloudCreativity\Modules\Bus\BusException;
 use CloudCreativity\Modules\Bus\CommandHandler;
 use CloudCreativity\Modules\Bus\CommandHandlerContainer;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
+use CloudCreativity\Modules\Testing\FakeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 
 final class CommandHandlerContainerTest extends TestCase
 {
-    public function testItResolvesUsingClosureBindings(): void
+    #[Test]
+    public function it_resolves_using_closure_bindings(): void
     {
         $a = new class () extends TestCommandHandler {};
         $b = $this->createStub(TestCommandHandler::class);
 
         $command1 = new class () implements Command {};
         $command2 = new class () implements Command {};
-        $command3 = new class () implements Command {};
 
         $container = new CommandHandlerContainer();
         $container->bind($command1::class, fn () => $a);
@@ -36,31 +37,35 @@ final class CommandHandlerContainerTest extends TestCase
 
         $this->assertEquals(new CommandHandler($a), $container->get($command1::class));
         $this->assertEquals(new CommandHandler($b), $container->get($command2::class));
-
-        $this->expectException(BusException::class);
-        $this->expectExceptionMessage('No command handler bound for command class: ' . $command3::class);
-
-        $container->get($command3::class);
     }
 
-    public function testItResolvesViaPsrContainer(): void
+    #[Test]
+    public function it_throws_when_no_closure_binding_exists_for_the_command(): void
+    {
+        $command1 = new class () implements Command {};
+        $command2 = new class () implements Command {};
+
+        $container = new CommandHandlerContainer();
+        $container->bind($command1::class, fn () => new class () extends TestCommandHandler {});
+
+        $this->expectException(BusException::class);
+        $this->expectExceptionMessage('No command handler bound for command class: ' . $command2::class);
+
+        $container->get($command2::class);
+    }
+
+    #[Test]
+    public function it_resolves_via_psr_container(): void
     {
         $a = new class () extends TestCommandHandler {};
         $b = $this->createStub(TestCommandHandler::class);
 
         $command1 = new class () implements Command {};
         $command2 = new class () implements Command {};
-        $command3 = new class () implements Command {};
 
-        $psrContainer = $this->createMock(ContainerInterface::class);
-        $psrContainer
-            ->expects($this->exactly(2))
-            ->method('get')
-            ->willReturnCallback(fn (string $id) => match ($id) {
-                $a::class => $a,
-                $b::class => $b,
-                default => $this->fail('Unexpected container id: ' . $id),
-            });
+        $psrContainer = new FakeContainer();
+        $psrContainer->instance($a::class, $a);
+        $psrContainer->instance($b::class, $b);
 
         $container = new CommandHandlerContainer($psrContainer);
         $container->bind($command1::class, $a::class);
@@ -68,10 +73,34 @@ final class CommandHandlerContainerTest extends TestCase
 
         $this->assertEquals(new CommandHandler($a), $container->get($command1::class));
         $this->assertEquals(new CommandHandler($b), $container->get($command2::class));
+    }
+
+    #[Test]
+    public function it_throws_when_no_psr_container_binding_exists_for_the_command(): void
+    {
+        $command1 = new class () implements Command {};
+        $command2 = new class () implements Command {};
+
+        $psrContainer = new FakeContainer();
+        $psrContainer->instance(TestCommandHandler::class, new class () extends TestCommandHandler {});
+
+        $container = new CommandHandlerContainer($psrContainer);
+        $container->bind($command1::class, TestCommandHandler::class);
 
         $this->expectException(BusException::class);
-        $this->expectExceptionMessage('No command handler bound for command class: ' . $command3::class);
+        $this->expectExceptionMessage('No command handler bound for command class: ' . $command2::class);
 
-        $container->get($command3::class);
+        $container->get($command2::class);
+    }
+
+    #[Test]
+    public function it_throws_when_binding_a_string_without_a_psr_container(): void
+    {
+        $container = new CommandHandlerContainer();
+
+        $this->expectException(BusException::class);
+        $this->expectExceptionMessage('Cannot use a string command handler binding without a PSR container.');
+
+        $container->bind(TestCommand::class, TestCommandHandler::class);
     }
 }

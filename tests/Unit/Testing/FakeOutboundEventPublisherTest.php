@@ -16,60 +16,167 @@ use CloudCreativity\Modules\Contracts\Application\Ports\OutboundEventPublisher;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Testing\FakeOutboundEventPublisher;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class FakeOutboundEventPublisherTest extends TestCase
 {
-    public function testItPublishesEvents(): void
+    private FakeOutboundEventPublisher $publisher;
+
+    protected function setUp(): void
     {
-        $publisher = new class () extends FakeOutboundEventPublisher {};
-
-        $event1 = $this->createMock(IntegrationEvent::class);
-        $event2 = $this->createMock(IntegrationEvent::class);
-
-        $publisher->publish($event1);
-        $publisher->publish($event2);
-
-        $this->assertInstanceOf(OutboundEventPublisher::class, $publisher);
-        $this->assertCount(2, $publisher);
-        $this->assertSame([$event1, $event2], $publisher->events);
-        $this->assertSame([$event1, $event2], iterator_to_array($publisher));
-        $this->assertSame($event1, $publisher[0]);
-        $this->assertSame($event2, $publisher[1]);
+        parent::setUp();
+        $this->publisher = new class () extends FakeOutboundEventPublisher {};
     }
 
-    public function testItReturnsSoleEvent(): void
+    protected function tearDown(): void
     {
-        $publisher = new class () extends FakeOutboundEventPublisher {};
-        $event = $this->createMock(IntegrationEvent::class);
-
-        $publisher->publish($event);
-
-        $this->assertSame($event, $publisher->sole());
+        unset($this->publisher);
+        parent::tearDown();
     }
 
-    public function testItThrowsExceptionIfNoEvents(): void
+    #[Test]
+    public function it_is_an_outbound_event_publisher(): void
     {
-        $publisher = new class () extends FakeOutboundEventPublisher {};
+        $this->assertInstanceOf(OutboundEventPublisher::class, $this->publisher);
+    }
 
+    #[Test]
+    public function it_is_empty_by_default(): void
+    {
+        $actual = [count($this->publisher), iterator_to_array($this->publisher)];
+
+        $this->assertSame([0, []], $actual);
+    }
+
+    // -------------------------------------------------------------------------
+    // publish()
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_publishes_events(): void
+    {
+        $event1 = $this->createStub(IntegrationEvent::class);
+        $event2 = $this->createStub(IntegrationEvent::class);
+
+        $this->publisher->publish($event1);
+        $this->publisher->publish($event2);
+
+        $this->assertSame([$event1, $event2], $this->publisher->events);
+    }
+
+    // -------------------------------------------------------------------------
+    // count() and getIterator()
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_counts_the_published_events(): void
+    {
+        $this->publisher->events = [
+            $this->createStub(IntegrationEvent::class),
+            $this->createStub(IntegrationEvent::class),
+        ];
+
+        $actual = count($this->publisher);
+
+        $this->assertSame(2, $actual);
+    }
+
+    #[Test]
+    public function it_iterates_over_the_published_events(): void
+    {
+        $event1 = $this->createStub(IntegrationEvent::class);
+        $event2 = $this->createStub(IntegrationEvent::class);
+        $this->publisher->events = [$event1, $event2];
+
+        $actual = iterator_to_array($this->publisher);
+
+        $this->assertSame([$event1, $event2], $actual);
+    }
+
+    // -------------------------------------------------------------------------
+    // ArrayAccess
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_gets_an_event_by_offset(): void
+    {
+        $event1 = $this->createStub(IntegrationEvent::class);
+        $event2 = $this->createStub(IntegrationEvent::class);
+        $this->publisher->events = [$event1, $event2];
+
+        $actual = [$this->publisher[0], $this->publisher[1]];
+
+        $this->assertSame([$event1, $event2], $actual);
+    }
+
+    #[Test]
+    public function it_checks_whether_an_offset_exists(): void
+    {
+        $this->publisher->events = [$this->createStub(IntegrationEvent::class)];
+
+        $actual = [isset($this->publisher[0]), isset($this->publisher[1])];
+
+        $this->assertSame([true, false], $actual);
+    }
+
+    #[Test]
+    public function it_cannot_set_an_offset(): void
+    {
+        $event = $this->createStub(IntegrationEvent::class);
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Cannot set integration events.');
+
+        $this->publisher[0] = $event;
+    }
+
+    #[Test]
+    public function it_cannot_unset_an_offset(): void
+    {
+        $this->publisher->events = [$this->createStub(IntegrationEvent::class)];
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Cannot unset integration events.');
+
+        unset($this->publisher[0]);
+    }
+
+    // -------------------------------------------------------------------------
+    // sole()
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_returns_sole_event(): void
+    {
+        $event = $this->createStub(IntegrationEvent::class);
+        $this->publisher->events = [$event];
+
+        $actual = $this->publisher->sole();
+
+        $this->assertSame($event, $actual);
+    }
+
+    #[Test]
+    public function it_throws_exception_if_no_events(): void
+    {
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Expected one event to be published but there are 0 events.');
 
-        $publisher->sole();
+        $this->publisher->sole();
     }
 
-    public function testItThrowsExceptionIfMultipleEvents(): void
+    #[Test]
+    public function it_throws_exception_if_multiple_events(): void
     {
-        $publisher = new class () extends FakeOutboundEventPublisher {};
-        $event1 = $this->createMock(IntegrationEvent::class);
-        $event2 = $this->createMock(IntegrationEvent::class);
-
-        $publisher->publish($event1);
-        $publisher->publish($event2);
+        $this->publisher->events = [
+            $this->createStub(IntegrationEvent::class),
+            $this->createStub(IntegrationEvent::class),
+        ];
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Expected one event to be published but there are 2 events.');
 
-        $publisher->sole();
+        $this->publisher->sole();
     }
 }

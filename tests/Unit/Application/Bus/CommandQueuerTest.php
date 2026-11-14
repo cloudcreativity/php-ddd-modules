@@ -13,13 +13,13 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
 use CloudCreativity\Modules\Application\Bus\CommandQueuer;
-use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
-use PHPUnit\Framework\MockObject\MockObject;
+use CloudCreativity\Modules\Testing\FakeQueue;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CommandQueuerTest extends TestCase
 {
-    private MockObject&Queue $queue;
+    private FakeQueue $queue;
 
     private CommandQueuer $queuer;
 
@@ -28,7 +28,7 @@ final class CommandQueuerTest extends TestCase
         parent::setUp();
 
         $this->queuer = new class (
-            $this->queue = $this->createMock(Queue::class),
+            $this->queue = new class () extends FakeQueue {},
         ) extends CommandQueuer {};
     }
 
@@ -38,13 +38,13 @@ final class CommandQueuerTest extends TestCase
         parent::tearDown();
     }
 
-    public function test(): void
+    #[Test]
+    public function it_queues_the_command(): void
     {
-        $this->queue
-            ->expects($this->once())
-            ->method('push')
-            ->with($this->identicalTo($command = new TestCommand()));
+        $command = new TestCommand();
 
         $this->queuer->queue($command);
+
+        $this->assertSame([$command], $this->queue->commands);
     }
 }

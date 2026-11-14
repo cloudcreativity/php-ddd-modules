@@ -15,53 +15,44 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\Bus\Middleware;
 use CloudCreativity\Modules\Bus\Middleware\LogMessageDispatch;
 use CloudCreativity\Modules\Bus\SanitizedMessage;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Messaging\Query;
+use CloudCreativity\Modules\Testing\FakeLogger;
+use CloudCreativity\Modules\Tests\Unit\Application\Bus\TestCommand;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 use LogicException;
-use PHPUnit\Framework\MockObject\Stub;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 final class LogMessageDispatchTest extends TestCase
 {
-    private LoggerInterface&Stub $logger;
+    private FakeLogger $logger;
 
     private Command $message;
-
-    /**
-     * @var array<int, mixed>
-     */
-    private array $logs = [];
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->logger = $this->createStub(LoggerInterface::class);
-        $this->logger
-            ->method('log')
-            ->willReturnCallback(function ($level, $message, $context): bool {
-                $this->logs[] = [$level, $message, $context];
-                return true;
-            });
-
+        $this->logger = new FakeLogger();
         $this->message = new class () implements Command {};
     }
 
     protected function tearDown(): void
     {
+        unset($this->logger, $this->message);
         parent::tearDown();
-        unset($this->logger, $this->message, $this->logs);
     }
 
-    public function testWithDefaultLevels(): void
+    #[Test]
+    public function it_logs_with_the_default_levels(): void
     {
         $expected = Result::ok();
         $name = $this->message::class;
-
         $middleware = new LogMessageDispatch($this->logger);
+
         $actual = $middleware($this->message, function (Message $received) use ($expected) {
             $this->assertSame($this->message, $received);
             return $expected;
@@ -69,17 +60,26 @@ final class LogMessageDispatchTest extends TestCase
 
         $this->assertSame($expected, $actual);
         $this->assertEquals([
-            [LogLevel::DEBUG, "Bus dispatching {$name}.", ['command' => new SanitizedMessage($this->message)->context()]],
-            [LogLevel::INFO, "Bus dispatched {$name}.", ['result' => $expected->context()]],
-        ], $this->logs);
+            [
+                'level' => LogLevel::DEBUG,
+                'message' => "Bus dispatching {$name}.",
+                'context' => ['command' => new SanitizedMessage($this->message)->context()],
+            ],
+            [
+                'level' => LogLevel::INFO,
+                'message' => "Bus dispatched {$name}.",
+                'context' => ['result' => $expected->context()],
+            ],
+        ], $this->logger->log);
     }
 
-    public function testWithCustomLevels(): void
+    #[Test]
+    public function it_logs_with_custom_levels(): void
     {
         $expected = Result::failed('Something went wrong.');
         $name = $this->message::class;
-
         $middleware = new LogMessageDispatch($this->logger, LogLevel::NOTICE, LogLevel::WARNING);
+
         $actual = $middleware($this->message, function (Message $received) use ($expected) {
             $this->assertSame($this->message, $received);
             return $expected;
@@ -87,28 +87,106 @@ final class LogMessageDispatchTest extends TestCase
 
         $this->assertSame($expected, $actual);
         $this->assertEquals([
-            [LogLevel::NOTICE, "Bus dispatching {$name}.", ['command' => new SanitizedMessage($this->message)->context()]],
-            [LogLevel::WARNING, "Bus dispatched {$name}.", ['result' => $expected->context()]],
-        ], $this->logs);
+            [
+                'level' => LogLevel::NOTICE,
+                'message' => "Bus dispatching {$name}.",
+                'context' => ['command' => new SanitizedMessage($this->message)->context()],
+            ],
+            [
+                'level' => LogLevel::WARNING,
+                'message' => "Bus dispatched {$name}.",
+                'context' => ['result' => $expected->context()],
+            ],
+        ], $this->logger->log);
     }
 
-    public function testItLogsAfterTheNextClosureIsInvoked(): void
+    #[Test]
+    public function it_logs_after_the_next_closure_is_invoked(): void
     {
         $expected = new LogicException();
-        $message = $this->createMock(Query::class);
+        $message = $this->createStub(Query::class);
         $name = $message::class;
         $middleware = new LogMessageDispatch($this->logger);
+        $actual = null;
 
         try {
             $middleware($message, static function () use ($expected) {
                 throw $expected;
             });
-            $this->fail('No exception thrown.');
         } catch (LogicException $ex) {
-            $this->assertSame($expected, $ex);
-            $this->assertEquals([
-                [LogLevel::DEBUG, "Bus dispatching {$name}.", ['query' => new SanitizedMessage($message)->context()]],
-            ], $this->logs);
+            $actual = $ex;
         }
+
+        $this->assertSame($expected, $actual);
+        $this->assertEquals([
+            [
+                'level' => LogLevel::DEBUG,
+                'message' => "Bus dispatching {$name}.",
+                'context' => ['query' => new SanitizedMessage($message)->context()],
+            ],
+        ], $this->logger->log);
+    }
+
+    #[Test]
+    public function it_logs_an_integration_event(): void
+    {
+        $event = $this->createStub(IntegrationEvent::class);
+        $name = $event::class;
+        $middleware = new LogMessageDispatch($this->logger);
+
+        $actual = $middleware($event, fn () => null);
+
+        $this->assertNull($actual);
+        $this->assertEquals([
+            [
+                'level' => LogLevel::DEBUG,
+                'message' => "Bus dispatching {$name}.",
+                'context' => ['event' => new SanitizedMessage($event)->context()],
+            ],
+            ['level' => LogLevel::INFO, 'message' => "Bus dispatched {$name}.", 'context' => []],
+        ], $this->logger->log);
+    }
+
+    #[Test]
+    public function it_logs_a_message_that_is_not_a_command_query_or_event(): void
+    {
+        $message = $this->createStub(Message::class);
+        $expected = Result::ok();
+        $name = $message::class;
+        $middleware = new LogMessageDispatch($this->logger);
+
+        $actual = $middleware($message, fn () => $expected);
+
+        $this->assertSame($expected, $actual);
+        $this->assertEquals([
+            [
+                'level' => LogLevel::DEBUG,
+                'message' => "Bus dispatching {$name}.",
+                'context' => ['message' => new SanitizedMessage($message)->context()],
+            ],
+            [
+                'level' => LogLevel::INFO,
+                'message' => "Bus dispatched {$name}.",
+                'context' => ['result' => $expected->context()],
+            ],
+        ], $this->logger->log);
+    }
+
+    #[Test]
+    public function it_logs_the_module_basename_and_sanitized_message(): void
+    {
+        $command = new TestCommand(fail: true);
+        $middleware = new LogMessageDispatch($this->logger);
+
+        $middleware($command, fn () => null);
+
+        $this->assertSame([
+            [
+                'level' => LogLevel::DEBUG,
+                'message' => 'Bus dispatching Tests:TestCommand.',
+                'context' => ['command' => ['fail' => true]],
+            ],
+            ['level' => LogLevel::INFO, 'message' => 'Bus dispatched Tests:TestCommand.', 'context' => []],
+        ], $this->logger->log);
     }
 }

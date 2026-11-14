@@ -14,13 +14,13 @@ namespace CloudCreativity\Modules\Infrastructure\Queue\Middleware;
 
 use Closure;
 use CloudCreativity\Modules\Bus\SanitizedMessage;
-use CloudCreativity\Modules\Contracts\Bus\Middleware\CommandMiddleware;
+use CloudCreativity\Modules\Contracts\Infrastructure\Queue\QueueMiddleware;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
-final readonly class LogPushedToQueue implements CommandMiddleware
+final readonly class LogPushedToQueue implements QueueMiddleware
 {
     public function __construct(
         private LoggerInterface $log,
@@ -29,7 +29,7 @@ final readonly class LogPushedToQueue implements CommandMiddleware
     ) {
     }
 
-    public function __invoke(Command $command, Closure $next): null
+    public function __invoke(Command $command, Closure $next): void
     {
         $name = ModuleBasename::tryFrom($command)?->toString() ?? $command::class;
 
@@ -42,7 +42,5 @@ final readonly class LogPushedToQueue implements CommandMiddleware
         $next($command);
 
         $this->log->log($this->queuedLevel, "Queued command {$name}.", $context);
-
-        return null;
     }
 }

@@ -15,8 +15,11 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Pipeline;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Pipeline;
 use CloudCreativity\Modules\Toolkit\Pipeline\LazyPipe;
+use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class LazyPipeTest extends TestCase
 {
@@ -31,13 +34,23 @@ final class LazyPipeTest extends TestCase
         $this->container = $this->createMock(PipeContainer::class);
     }
 
-    public function test(): void
+    protected function tearDown(): void
     {
+        unset($this->container);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_resolves_the_pipe_from_the_container_and_invokes_it(): void
+    {
+        $pipe = $this->createMock(Pipeline::class);
+        $lazyPipe = new LazyPipe($this->container, 'SomePipe');
+
         $this->container
             ->expects($this->once())
             ->method('get')
             ->with('SomePipe')
-            ->willReturn($pipe = $this->createMock(Pipeline::class));
+            ->willReturn($pipe);
 
         $pipe
             ->expects($this->once())
@@ -45,29 +58,48 @@ final class LazyPipeTest extends TestCase
             ->with('arg1', 'arg2')
             ->willReturn($expected = 'Hello World!');
 
-        $lazyPipe = new LazyPipe($this->container, 'SomePipe');
         $actual = $lazyPipe('arg1', 'arg2');
 
         $this->assertSame($expected, $actual);
     }
 
-    public function testItRethrowsException(): void
+    #[Test]
+    public function it_throws_when_the_pipe_cannot_be_resolved(): void
     {
+        $lazyPipe = new LazyPipe($this->container, 'PipeThatWillError');
+
         $this->container
             ->expects($this->once())
             ->method('get')
             ->with('PipeThatWillError')
-            ->willThrowException($expected = new \LogicException('Boom!'));
+            ->willThrowException(new LogicException('Boom!'));
 
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to get pipe "PipeThatWillError" from container.');
+        $this->expectExceptionCode(0);
+
+        $lazyPipe('blah');
+    }
+
+    #[Test]
+    public function it_sets_the_container_exception_as_the_previous_exception(): void
+    {
         $lazyPipe = new LazyPipe($this->container, 'PipeThatWillError');
+
+        $this->container
+            ->expects($this->once())
+            ->method('get')
+            ->with('PipeThatWillError')
+            ->willThrowException($expected = new LogicException('Boom!'));
+
+        $actual = null;
 
         try {
             $lazyPipe('blah');
-            $this->fail('No exception thrown.');
-        } catch (\RuntimeException $ex) {
-            $this->assertSame('Failed to get pipe "PipeThatWillError" from container.', $ex->getMessage());
-            $this->assertSame(0, $ex->getCode());
-            $this->assertSame($expected, $ex->getPrevious());
+        } catch (RuntimeException $ex) {
+            $actual = $ex->getPrevious();
         }
+
+        $this->assertSame($expected, $actual);
     }
 }

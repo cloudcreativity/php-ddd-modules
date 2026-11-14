@@ -14,11 +14,13 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Pipeline;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Processor;
 use CloudCreativity\Modules\Toolkit\Pipeline\Pipeline;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PipelineTest extends TestCase
 {
-    public function testProcess(): void
+    #[Test]
+    public function it_processes_the_payload(): void
     {
         $payload = 'Hello World';
         $stages = ['strtoupper', 'strtolower'];
@@ -38,7 +40,8 @@ final class PipelineTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testInvokable(): void
+    #[Test]
+    public function it_is_invokable(): void
     {
         $payload = 'Hello World';
         $stages = ['strtoupper', 'strtolower'];
@@ -58,7 +61,8 @@ final class PipelineTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testDefaultProcessor(): void
+    #[Test]
+    public function it_uses_a_default_processor(): void
     {
         $pipeline = new Pipeline(null, [
             static fn (int $value): int => $value * 5,
@@ -71,19 +75,42 @@ final class PipelineTest extends TestCase
         $this->assertSame(14, $result);
     }
 
-    public function testPipe(): void
+    #[Test]
+    public function it_returns_a_new_pipeline_when_piping(): void
     {
-        $pipeline1 = new Pipeline(null, [
+        $pipeline = new Pipeline(null, [
+            static fn (int $value): int => $value * 5,
+        ]);
+
+        $actual = $pipeline->pipe(static fn (int $value): int => $value + 2);
+
+        $this->assertNotSame($pipeline, $actual);
+    }
+
+    #[Test]
+    public function it_does_not_change_the_original_pipeline_when_piping(): void
+    {
+        $pipeline = new Pipeline(null, [
             static fn (int $value): int => $value * 5,
             static fn (int $value): int => $value + 2,
         ]);
+        $pipeline->pipe(static fn (int $value): int => $value - 3);
 
-        $pipeline2 = $pipeline1->pipe(
-            static fn (int $value): int => $value - 3,
-        );
+        $actual = $pipeline->process(3);
 
-        $this->assertNotSame($pipeline1, $pipeline2);
-        $this->assertSame(17, $pipeline1->process(3));
-        $this->assertSame(14, $pipeline2->process(3));
+        $this->assertSame(17, $actual);
+    }
+
+    #[Test]
+    public function it_processes_the_piped_stage_after_the_existing_stages(): void
+    {
+        $pipeline = new Pipeline(null, [
+            static fn (int $value): int => $value * 5,
+            static fn (int $value): int => $value + 2,
+        ])->pipe(static fn (int $value): int => $value - 3);
+
+        $actual = $pipeline->process(3);
+
+        $this->assertSame(14, $actual);
     }
 }

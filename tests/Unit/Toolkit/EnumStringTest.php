@@ -16,6 +16,7 @@ use CloudCreativity\Modules\Tests\TestBackedEnum;
 use CloudCreativity\Modules\Tests\TestBackedIntEnum;
 use CloudCreativity\Modules\Tests\TestUnitEnum;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use UnitEnum;
 
@@ -53,7 +54,8 @@ final class EnumStringTest extends TestCase
     }
 
     #[DataProvider('valueProvider')]
-    public function testItReturnsScalarValue(string|UnitEnum $value, string $expected): void
+    #[Test]
+    public function it_returns_scalar_value(string|UnitEnum $value, string $expected): void
     {
         $this->assertSame($expected, enum_string($value));
     }

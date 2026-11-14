@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [6.1.1] - 2026-11-14
+
+### Fixed
+
+- `EnqueuerContainer::bind()` now throws an `InfrastructureException` when given a string binding without a PSR
+  container, instead of failing later when the enqueuer is resolved.
+- `KeyedSetOfErrors::put()` and `merge()` now sort keys case-insensitively, matching the constructor.
+- `Meta::merge()` no longer renumbers numeric string keys.
+- `Error` now accepts a message of `'0'` and no longer converts a key of `'0'` to `null`.
+- The `ContractException` thrown by `UuidV4` and `UuidV7` when given a lazy UUID of the wrong version now has a message.
+- `FakeExceptionReporter` now rethrows when more exceptions have already been reported than expected, e.g. when
+  `none()` is called after an exception was reported.
+- `FakeLogger::messages()` no longer drops a message of `'0'`.
+- `LogPushedToQueue` now implements the `QueueMiddleware` interface, instead of `CommandMiddleware`. Its `__invoke()`
+  method now has a `void` return type, matching the queue middleware contract.
+- `FakeContainer` now allows the built-in exception reporter, logger and unit of work services to be overridden via
+  `bind()` or `instance()`. Its `has()` method also no longer resolves the binding to check if it exists.
+
 ## [6.1.0] - 2026-11-14
 
 ### Added
@@ -658,6 +676,8 @@ All notable changes to this project will be documented in this file. This projec
 ## [0.1.0] - 2023-11-18
 
 Initial release.
+
+[6.1.1]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.1.0...v6.1.1
 
 [6.1.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.0.1...v6.1.0
 

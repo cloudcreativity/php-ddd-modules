@@ -15,11 +15,13 @@ namespace CloudCreativity\Modules\Tests\Integration\Application\DomainEventDispa
 use CloudCreativity\Modules\Application\DomainEventDispatching\Middleware\LogDomainEventDispatch;
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Testing\FakeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MathDomainEventDispatcherTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_dispatches_domain_events(): void
     {
         $container = new FakeContainer();
         $listener = new TestDomainListener();

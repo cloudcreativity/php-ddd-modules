@@ -14,21 +14,30 @@ namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\Queue;
 
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Infrastructure\Queue\Enqueuer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class EnqueuerTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_pushes_the_command_to_the_inner_enqueuer(): void
     {
-        $command = $this->createMock(Command::class);
-        $innerEnqueuer = $this->createMock(TestEnqueuer::class);
+        $command = $this->createStub(Command::class);
+        $innerEnqueuer = new class () extends TestEnqueuer {
+            /**
+             * @var list<Command>
+             */
+            public array $pushed = [];
 
-        $innerEnqueuer
-            ->expects($this->once())
-            ->method('push')
-            ->with($this->identicalTo($command));
-
+            public function push(Command $command): void
+            {
+                $this->pushed[] = $command;
+            }
+        };
         $enqueuer = new Enqueuer($innerEnqueuer);
+
         $enqueuer($command);
+
+        $this->assertSame([$command], $innerEnqueuer->pushed);
     }
 }

@@ -17,11 +17,13 @@ use CloudCreativity\Modules\Tests\TestBackedEnum;
 use CloudCreativity\Modules\Tests\TestUnitEnum;
 use CloudCreativity\Modules\Toolkit\ContractException;
 use CloudCreativity\Modules\Toolkit\Result\Error;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ErrorTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_has_a_key_message_and_code(): void
     {
         $error = new Error(key: 'foo', message: 'Bar', code: TestUnitEnum::Baz);
 
@@ -29,11 +31,30 @@ final class ErrorTest extends TestCase
         $this->assertSame('foo', $error->key());
         $this->assertSame('Bar', $error->message());
         $this->assertSame(TestUnitEnum::Baz, $error->code());
-        $this->assertTrue($error->is(TestUnitEnum::Baz));
-        $this->assertFalse($error->is(TestUnitEnum::Bat));
     }
 
-    public function testOnlyMessage(): void
+    #[Test]
+    public function it_is_its_code(): void
+    {
+        $error = new Error(code: TestUnitEnum::Baz);
+
+        $actual = $error->is(TestUnitEnum::Baz);
+
+        $this->assertTrue($actual);
+    }
+
+    #[Test]
+    public function it_is_not_another_code(): void
+    {
+        $error = new Error(code: TestUnitEnum::Baz);
+
+        $actual = $error->is(TestUnitEnum::Bat);
+
+        $this->assertFalse($actual);
+    }
+
+    #[Test]
+    public function it_can_have_only_a_message(): void
     {
         $error = new Error(message: 'Hello World');
 
@@ -42,7 +63,8 @@ final class ErrorTest extends TestCase
         $this->assertNull($error->code());
     }
 
-    public function testOnlyCode(): void
+    #[Test]
+    public function it_can_have_only_a_code(): void
     {
         $error = new Error(code: TestBackedEnum::Foo);
 
@@ -51,11 +73,54 @@ final class ErrorTest extends TestCase
         $this->assertSame(TestBackedEnum::Foo, $error->code());
     }
 
-    public function testNoMessageOrCode(): void
+    #[Test]
+    public function it_requires_a_message_or_a_code(): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Error must have a message or a code.');
 
         new Error(key: 'foo');
+    }
+
+    #[Test]
+    public function it_can_have_an_enum_key(): void
+    {
+        $error = new Error(message: 'Hello World', key: TestUnitEnum::Bat);
+
+        $this->assertSame(TestUnitEnum::Bat, $error->key());
+    }
+
+    #[Test]
+    public function it_converts_an_empty_key_to_null(): void
+    {
+        $error = new Error(message: 'Hello World', key: '');
+
+        $this->assertNull($error->key());
+    }
+
+    #[Test]
+    public function it_can_have_a_message_of_zero(): void
+    {
+        $error = new Error(message: '0');
+
+        $this->assertSame('0', $error->message());
+    }
+
+    #[Test]
+    public function it_can_have_a_key_of_zero(): void
+    {
+        $error = new Error(message: 'Hello World', key: '0');
+
+        $this->assertSame('0', $error->key());
+    }
+
+    #[Test]
+    public function it_is_not_a_code_when_it_has_no_code(): void
+    {
+        $error = new Error(message: 'Hello World');
+
+        $actual = $error->is(TestUnitEnum::Baz);
+
+        $this->assertFalse($actual);
     }
 }

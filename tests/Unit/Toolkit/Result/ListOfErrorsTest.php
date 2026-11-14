@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Result;
 
+use ArrayIterator;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Error as IError;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\ListOfErrors as IListOfErrors;
 use CloudCreativity\Modules\Tests\TestBackedEnum;
@@ -19,11 +20,17 @@ use CloudCreativity\Modules\Tests\TestUnitEnum;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\KeyedSetOfErrors;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
+use Closure;
+use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use UnitEnum;
 
 final class ListOfErrorsTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_holds_errors(): void
     {
         $errors = new ListOfErrors(
             $a = new Error(null, 'Message A'),
@@ -39,18 +46,20 @@ final class ListOfErrorsTest extends TestCase
         $this->assertFalse($errors->isEmpty());
     }
 
-    public function testEmpty(): void
+    #[Test]
+    public function it_can_be_empty(): void
     {
         $errors = new ListOfErrors();
 
         $this->assertTrue($errors->isEmpty());
         $this->assertFalse($errors->isNotEmpty());
-        $this->assertSame(0, $errors->count());
+        $this->assertCount(0, $errors);
         $this->assertNull($errors->first());
-        $this->assertEmpty($errors->codes());
+        $this->assertSame([], $errors->codes());
     }
 
-    public function testPush(): void
+    #[Test]
+    public function it_pushes_an_error(): void
     {
         $original = new ListOfErrors(
             $a = new Error(null, 'Message A'),
@@ -64,7 +73,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertSame([$a, $b, $c], $actual->all());
     }
 
-    public function testMerge(): void
+    #[Test]
+    public function it_merges_another_list(): void
     {
         $stack1 = new ListOfErrors(
             $a = new Error(null, 'Message A'),
@@ -85,7 +95,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertSame([$a, $b, $c, $d], $actual->all());
     }
 
-    public function testFirst(): void
+    #[Test]
+    public function it_returns_the_first_error(): void
     {
         $errors = new ListOfErrors(
             $a = new Error(null, 'Message A'),
@@ -93,26 +104,58 @@ final class ListOfErrorsTest extends TestCase
             new Error(null, 'Message C'),
         );
 
-        $this->assertSame($a, $errors->first());
+        $actual = $errors->first();
+
+        $this->assertSame($a, $actual);
     }
 
-    public function testFind(): void
+    /**
+     * @return array<string, array{0: Closure(IError): bool|UnitEnum, 1: int|null}>
+     */
+    public static function findProvider(): array
     {
-        $errors = new ListOfErrors(
+        return [
+            'callback matches' => [static fn (IError $error): bool => 'Message C' === $error->message(), 2],
+            'code matches' => [TestUnitEnum::Bat, 4],
+            'callback does not match' => [static fn (IError $error): bool => 'Message E' === $error->message(), null],
+            'code does not match' => [TestUnitEnum::Baz, null],
+        ];
+    }
+
+    #[DataProvider('findProvider')]
+    #[Test]
+    public function it_finds_an_error(Closure|UnitEnum $matcher, ?int $expected): void
+    {
+        $all = [
             new Error(null, 'Message A'),
             new Error(null, 'Message B'),
-            $c = new Error(null, 'Message C'),
+            new Error(null, 'Message C'),
             new Error(null, 'Message D'),
-            $e = new Error(code: TestUnitEnum::Bat),
-        );
+            new Error(code: TestUnitEnum::Bat),
+        ];
+        $errors = new ListOfErrors(...$all);
 
-        $this->assertSame($c, $errors->find(fn (IError $error) => 'Message C' === $error->message()));
-        $this->assertSame($e, $errors->find(TestUnitEnum::Bat));
-        $this->assertNull($errors->find(fn (IError $error) => 'Message E' === $error->message()));
-        $this->assertNull($errors->find(TestUnitEnum::Baz));
+        $actual = $errors->find($matcher);
+
+        $this->assertSame($expected === null ? null : $all[$expected], $actual);
     }
 
-    public function testAny(): void
+    /**
+     * @return array<string, array{0: Closure(IError): bool|UnitEnum, 1: bool}>
+     */
+    public static function anyProvider(): array
+    {
+        return [
+            'callback matches' => [static fn (IError $error): bool => 'Message C' === $error->message(), true],
+            'code matches' => [TestUnitEnum::Baz, true],
+            'callback does not match' => [static fn (IError $error): bool => 'Message E' === $error->message(), false],
+            'code does not match' => [TestUnitEnum::Bat, false],
+        ];
+    }
+
+    #[DataProvider('anyProvider')]
+    #[Test]
+    public function it_checks_if_any_error_matches(Closure|UnitEnum $matcher, bool $expected): void
     {
         $errors = new ListOfErrors(
             new Error(message: 'Message A'),
@@ -121,194 +164,297 @@ final class ListOfErrorsTest extends TestCase
             new Error(code: TestUnitEnum::Baz, message: 'Message D'),
         );
 
-        $this->assertTrue($errors->any(fn (IError $error) => 'Message C' === $error->message()));
-        $this->assertTrue($errors->any(TestUnitEnum::Baz));
-        $this->assertFalse($errors->any(fn (IError $error) => 'Message E' === $error->message()));
-        $this->assertFalse($errors->any(TestUnitEnum::Bat));
+        $actual = $errors->any($matcher);
+
+        $this->assertSame($expected, $actual);
     }
 
-    public function testEvery(): void
+    /**
+     * @return array<string, array{0: ListOfErrors, 1: Closure(IError): bool|UnitEnum, 2: bool}>
+     */
+    public static function everyProvider(): array
     {
-        $errors1 = new ListOfErrors(
+        $mixed = new ListOfErrors(
             new Error(message: 'Message A'),
             new Error(message: 'Message B'),
             new Error(message: 'Message C'),
             new Error(message: 'Message D', code: TestUnitEnum::Baz),
         );
 
-        $errors2 = new ListOfErrors(
+        $codes = new ListOfErrors(
             new Error(code: TestUnitEnum::Baz, message: 'Message D'),
             new Error(code: TestUnitEnum::Baz, message: 'Message D'),
             new Error(code: TestUnitEnum::Baz, message: 'Message D'),
         );
 
-        $this->assertTrue($errors1->every(fn (IError $error) => str_starts_with($error->message(), 'Message')));
-        $this->assertFalse($errors1->every(fn (IError $error) => null !== $error->code()));
-        $this->assertFalse($errors1->every(fn (IError $error) => 'Message A' === $error->message()));
-
-        $this->assertTrue($errors2->every(TestUnitEnum::Baz));
-        $this->assertFalse($errors1->every(TestUnitEnum::Baz));
-        $this->assertFalse($errors2->every(TestUnitEnum::Bat));
+        return [
+            'callback matches all' => [
+                $mixed,
+                static fn (IError $error): bool => str_starts_with($error->message(), 'Message'),
+                true,
+            ],
+            'callback matches some' => [
+                $mixed,
+                static fn (IError $error): bool => null !== $error->code(),
+                false,
+            ],
+            'callback matches one' => [
+                $mixed,
+                static fn (IError $error): bool => 'Message A' === $error->message(),
+                false,
+            ],
+            'code matches all' => [$codes, TestUnitEnum::Baz, true],
+            'code matches some' => [$mixed, TestUnitEnum::Baz, false],
+            'code matches none' => [$codes, TestUnitEnum::Bat, false],
+        ];
     }
 
-    public function testSoleWithExactlyOne(): void
-    {
-        $errors1 = new ListOfErrors(
-            $expected = new Error(message: 'Message A', code: $code = TestUnitEnum::Baz),
-        );
+    #[DataProvider('everyProvider')]
+    #[Test]
+    public function it_checks_if_every_error_matches(
+        ListOfErrors $errors,
+        Closure|UnitEnum $matcher,
+        bool $expected,
+    ): void {
+        $actual = $errors->every($matcher);
 
-        $errors2 = new ListOfErrors(
+        $this->assertSame($expected, $actual);
+    }
+
+    /**
+     * @return array<string, array{0: ListOfErrors, 1: Closure(IError): bool|UnitEnum|null, 2: Error}>
+     */
+    public static function soleProvider(): array
+    {
+        $expected = new Error(message: 'Message A', code: TestUnitEnum::Baz);
+        $one = new ListOfErrors($expected);
+        $many = new ListOfErrors(
             new Error(message: 'Message B'),
             new Error(message: 'Message C'),
             $expected,
         );
+        $fn = static fn (IError $error): bool => 'Message A' === $error->message();
 
-        $fn = fn (IError $error) => 'Message A' === $error->message();
-
-        $this->assertSame($expected, $errors1->sole());
-        $this->assertSame($expected, $errors1->sole($code));
-        $this->assertSame($expected, $errors1->sole($fn));
-
-        $this->assertSame($expected, $errors2->sole($code));
-        $this->assertSame($expected, $errors2->sole($fn));
+        return [
+            'one error' => [$one, null, $expected],
+            'one error matching code' => [$one, TestUnitEnum::Baz, $expected],
+            'one error matching callback' => [$one, $fn, $expected],
+            'many errors matching code' => [$many, TestUnitEnum::Baz, $expected],
+            'many errors matching callback' => [$many, $fn, $expected],
+        ];
     }
 
-    public function testSoleWithNone(): void
+    #[DataProvider('soleProvider')]
+    #[Test]
+    public function it_returns_the_sole_error(ListOfErrors $errors, Closure|UnitEnum|null $matcher, Error $expected): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Expected exactly one error but there are 0.');
+        $actual = $errors->sole($matcher);
 
+        $this->assertSame($expected, $actual);
+    }
+
+    #[Test]
+    public function it_throws_when_there_is_no_sole_error(): void
+    {
         $errors = new ListOfErrors();
 
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Expected exactly one error but there are 0.');
+
         $errors->sole();
     }
 
-    public function testSoleWithMany(): void
+    #[Test]
+    public function it_throws_when_there_are_many_errors_for_sole(): void
     {
-        $this->expectException(\LogicException::class);
+        $errors = new ListOfErrors(
+            new Error(message: 'Message A'),
+            new Error(message: 'Message B'),
+            new Error(message: 'Message C'),
+        );
+
+        $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Expected exactly one error but there are 3.');
 
-        $errors = new ListOfErrors(
-            new Error(message: 'Message A'),
-            new Error(message: 'Message B'),
-            new Error(message: 'Message C'),
-        );
-
         $errors->sole();
     }
 
-    public function testSoleWithNoneMatching(): void
+    #[Test]
+    public function it_throws_when_no_error_matches_the_sole_callback(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Expected exactly one error matching the criteria but there are 0.');
-
         $errors = new ListOfErrors(
             new Error(message: 'Message A'),
             new Error(message: 'Message B'),
             new Error(message: 'Message C'),
         );
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Expected exactly one error matching the criteria but there are 0.');
 
         $errors->sole(fn (IError $error) => 'Message D' === $error->message());
     }
 
-    public function testSoleWithManyMatching(): void
+    #[Test]
+    public function it_throws_when_many_errors_match_the_sole_callback(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Expected exactly one error matching the criteria but there are 2.');
-
         $errors = new ListOfErrors(
             new Error(message: 'Message A'),
             new Error(message: 'Message B'),
             new Error(message: 'Message A'),
         );
 
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Expected exactly one error matching the criteria but there are 2.');
+
         $errors->sole(fn (IError $error) => 'Message A' === $error->message());
     }
 
-    public function testSoleWithNoneMatchingEnum(): void
+    #[Test]
+    public function it_throws_when_no_error_matches_the_sole_code(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Expected exactly one error with code "Baz" but there are 0.');
-
         $errors = new ListOfErrors(
             new Error(code: TestUnitEnum::Bat, message: 'Message A'),
             new Error(code: TestUnitEnum::Bat, message: 'Message B'),
             new Error(code: TestUnitEnum::Bat, message: 'Message C'),
         );
 
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Expected exactly one error with code "Baz" but there are 0.');
+
         $errors->sole(TestUnitEnum::Baz);
     }
 
-    public function testSoleWithManyMatchingEnum(): void
+    #[Test]
+    public function it_throws_when_many_errors_match_the_sole_code(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Expected exactly one error with code "Bat" but there are 2.');
-
         $errors = new ListOfErrors(
             new Error(code: TestUnitEnum::Bat, message: 'Message A'),
             new Error(code: TestUnitEnum::Bat, message: 'Message B'),
             new Error(code: TestUnitEnum::Baz, message: 'Message C'),
         );
 
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Expected exactly one error with code "Bat" but there are 2.');
+
         $errors->sole(TestUnitEnum::Bat);
     }
 
-    public function testFilter(): void
+    #[Test]
+    public function it_filters_the_list_using_a_callback(): void
+    {
+        $errors = new ListOfErrors(
+            new Error(message: 'Message A'),
+            $b = new Error(code: TestUnitEnum::Bat, message: 'Message B'),
+            new Error(code: TestUnitEnum::Bat, message: 'Message C'),
+            $d = new Error(code: TestUnitEnum::Baz, message: 'Message D'),
+        );
+
+        $actual = $errors->filter(fn (IError $error) => in_array($error, [$b, $d], true));
+
+        $this->assertNotSame($errors, $actual);
+        $this->assertCount(4, $errors);
+        $this->assertSame([$b, $d], $actual->all());
+    }
+
+    #[Test]
+    public function it_filters_the_list_by_code(): void
     {
         $errors = new ListOfErrors(
             new Error(message: 'Message A'),
             $b = new Error(code: TestUnitEnum::Bat, message: 'Message B'),
             $c = new Error(code: TestUnitEnum::Bat, message: 'Message C'),
-            $d = new Error(code: TestUnitEnum::Baz, message: 'Message D'),
+            new Error(code: TestUnitEnum::Baz, message: 'Message D'),
         );
 
-        $filtered1 = $errors->filter(fn (IError $error) => in_array($error, [$b, $d], true));
-        $filtered2 = $errors->filter(TestUnitEnum::Bat);
+        $actual = $errors->filter(TestUnitEnum::Bat);
 
         $this->assertCount(4, $errors);
-        $this->assertSame([$b, $d], $filtered1->all());
-        $this->assertSame([$b, $c], $filtered2->filter(TestUnitEnum::Bat)->all());
-        $this->assertEmpty($errors->filter(fn (IError $error) => $error->message() === 'Message E'));
-        $this->assertEmpty($errors->filter(TestBackedEnum::Bar));
+        $this->assertSame([$b, $c], $actual->all());
     }
 
-    public function testCodes(): void
+    /**
+     * @return array<string, array{0: Closure(IError): bool|UnitEnum}>
+     */
+    public static function noMatchProvider(): array
     {
-        $errors1 = new ListOfErrors(
+        return [
+            'callback' => [static fn (IError $error): bool => $error->message() === 'Message E'],
+            'code' => [TestBackedEnum::Bar],
+        ];
+    }
+
+    #[DataProvider('noMatchProvider')]
+    #[Test]
+    public function it_filters_to_an_empty_list_when_no_errors_match(Closure|UnitEnum $matcher): void
+    {
+        $errors = new ListOfErrors(
+            new Error(message: 'Message A'),
+            new Error(code: TestUnitEnum::Bat, message: 'Message B'),
+        );
+
+        $actual = $errors->filter($matcher);
+
+        $this->assertTrue($actual->isEmpty());
+    }
+
+    #[Test]
+    public function it_returns_unique_codes(): void
+    {
+        $errors = new ListOfErrors(
             new Error(message: 'Message A'),
             new Error(code: TestBackedEnum::Foo, message: 'Message B'),
             new Error(code: TestUnitEnum::Baz, message: 'Message C'),
             new Error(code: TestBackedEnum::Foo, message: 'Message D'),
         );
 
-        $errors2 = new ListOfErrors(
+        $actual = $errors->codes();
+
+        $this->assertSame([TestBackedEnum::Foo, TestUnitEnum::Baz], $actual);
+    }
+
+    #[Test]
+    public function it_returns_no_codes_when_errors_do_not_have_codes(): void
+    {
+        $errors = new ListOfErrors(
             new Error(message: 'Message E'),
             new Error(message: 'Message F'),
         );
 
-        $this->assertSame([TestBackedEnum::Foo, TestUnitEnum::Baz], $errors1->codes());
-        $this->assertEmpty($errors2->codes());
+        $actual = $errors->codes();
+
+        $this->assertSame([], $actual);
     }
 
-    public function testCode(): void
+    #[Test]
+    public function it_returns_the_first_code(): void
     {
-        $errors1 = new ListOfErrors(
+        $errors = new ListOfErrors(
             new Error(message: 'Message A'),
             new Error(code: TestBackedEnum::Foo, message: 'Message B'),
             new Error(code: TestUnitEnum::Baz, message: 'Message C'),
             new Error(code: TestBackedEnum::Foo, message: 'Message D'),
         );
 
-        $errors2 = new ListOfErrors(
+        $actual = $errors->code();
+
+        $this->assertSame(TestBackedEnum::Foo, $actual);
+    }
+
+    #[Test]
+    public function it_returns_no_code_when_errors_do_not_have_codes(): void
+    {
+        $errors = new ListOfErrors(
             new Error(message: 'Message E'),
             new Error(message: 'Message F'),
         );
 
-        $this->assertSame(TestBackedEnum::Foo, $errors1->code());
-        $this->assertNull($errors2->code());
+        $actual = $errors->code();
+
+        $this->assertNull($actual);
     }
 
-    public function testMessages(): void
+    #[Test]
+    public function it_returns_unique_messages(): void
     {
         $errors = new ListOfErrors(
             new Error(message: 'Message A'),
@@ -318,25 +464,122 @@ final class ListOfErrorsTest extends TestCase
             new Error(message: 'Message C'),
         );
 
-        $this->assertSame(['Message A', 'Message B', 'Message C'], $errors->messages());
+        $actual = $errors->messages();
+
+        $this->assertSame(['Message A', 'Message B', 'Message C'], $actual);
     }
 
-    public function testMessage(): void
+    #[Test]
+    public function it_returns_the_first_message(): void
     {
-        $errors1 = new ListOfErrors(
-            new Error(message: 'Message A'),
-            new Error(message: 'Message B'),
+        $errors = new ListOfErrors(
             new Error(code: TestUnitEnum::Baz),
             new Error(message: 'Message A'),
-            new Error(message: 'Message C'),
+            new Error(message: 'Message B'),
         );
 
-        $errors2 = new ListOfErrors(
+        $actual = $errors->message();
+
+        $this->assertSame('Message A', $actual);
+    }
+
+    #[Test]
+    public function it_returns_no_message_when_errors_do_not_have_messages(): void
+    {
+        $errors = new ListOfErrors(
             new Error(code: TestUnitEnum::Baz),
             new Error(code: TestBackedEnum::Foo),
         );
 
-        $this->assertSame('Message A', $errors1->message());
-        $this->assertNull($errors2->message());
+        $actual = $errors->message();
+
+        $this->assertNull($actual);
+    }
+
+    // -------------------------------------------------------------------------
+    // from()
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_returns_the_same_instance_when_created_from_a_list_of_errors(): void
+    {
+        $errors = new ListOfErrors(new Error(null, 'Message A'));
+
+        $actual = ListOfErrors::from($errors);
+
+        $this->assertSame($errors, $actual);
+    }
+
+    #[Test]
+    public function it_is_created_from_another_list_of_errors_implementation(): void
+    {
+        $a = new Error(null, 'Message A');
+        $b = new Error(null, 'Message B');
+        $other = $this->createStub(IListOfErrors::class);
+        $other->method('getIterator')->willReturn(new ArrayIterator([$a, $b]));
+
+        $actual = ListOfErrors::from($other);
+
+        $this->assertEquals(new ListOfErrors($a, $b), $actual);
+    }
+
+    #[Test]
+    public function it_is_created_from_an_array_of_errors(): void
+    {
+        $a = new Error(null, 'Message A');
+        $b = new Error(null, 'Message B');
+
+        $actual = ListOfErrors::from(['foo' => $a, 'bar' => $b]);
+
+        $this->assertSame([$a, $b], $actual->all());
+    }
+
+    #[Test]
+    public function it_is_created_from_an_error(): void
+    {
+        $error = new Error(null, 'Message A');
+
+        $actual = ListOfErrors::from($error);
+
+        $this->assertSame([$error], $actual->all());
+    }
+
+    #[Test]
+    public function it_is_created_from_a_string(): void
+    {
+        $actual = ListOfErrors::from('Message A');
+
+        $this->assertEquals(new ListOfErrors(new Error(message: 'Message A')), $actual);
+    }
+
+    /**
+     * @return array<string, array{0: UnitEnum}>
+     */
+    public static function codeProvider(): array
+    {
+        return [
+            'unit enum' => [TestUnitEnum::Baz],
+            'backed enum' => [TestBackedEnum::Foo],
+        ];
+    }
+
+    #[DataProvider('codeProvider')]
+    #[Test]
+    public function it_is_created_from_an_error_code(UnitEnum $code): void
+    {
+        $actual = ListOfErrors::from($code);
+
+        $this->assertEquals(new ListOfErrors(new Error(code: $code)), $actual);
+    }
+
+    #[Test]
+    public function it_reindexes_errors_passed_to_the_constructor(): void
+    {
+        $a = new Error(null, 'Message A');
+        $b = new Error(null, 'Message B');
+
+        $actual = new ListOfErrors(...['foo' => $a, 'bar' => $b]);
+
+        $this->assertSame([$a, $b], $actual->all());
     }
 }

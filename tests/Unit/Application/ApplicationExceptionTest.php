@@ -13,12 +13,14 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application;
 
 use CloudCreativity\Modules\Application\ApplicationException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 final class ApplicationExceptionTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_is_a_runtime_exception(): void
     {
         $ex = new ApplicationException();
         $this->assertInstanceOf(RuntimeException::class, $ex);

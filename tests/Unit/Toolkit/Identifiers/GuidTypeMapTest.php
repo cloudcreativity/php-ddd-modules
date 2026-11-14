@@ -12,93 +12,139 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Identifiers;
 
-use AssertionError;
 use CloudCreativity\Modules\Tests\TestBackedEnum;
 use CloudCreativity\Modules\Tests\TestBackedIntEnum;
 use CloudCreativity\Modules\Tests\TestUnitEnum;
 use CloudCreativity\Modules\Toolkit\Identifiers\Guid;
 use CloudCreativity\Modules\Toolkit\Identifiers\GuidTypeMap;
-use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
-use PHPUnit\Framework\Attributes\Depends;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use UnitEnum;
 
 final class GuidTypeMapTest extends TestCase
 {
-    public function testItReturnsExpectedType(): GuidTypeMap
+    private const string UUID = '6dcbad65-ed92-4e60-973b-9ba58a022816';
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function stringTypeProvider(): array
+    {
+        return [
+            'a' => ['SomeTypeA', 'SomeOtherTypeA'],
+            'b' => ['SomeTypeB', 'SomeOtherTypeB'],
+            'c' => ['SomeTypeC', 'SomeOtherTypeC'],
+        ];
+    }
+
+    #[DataProvider('stringTypeProvider')]
+    #[Test]
+    public function it_returns_expected_type(string $alias, string $expected): void
     {
         $map = new GuidTypeMap([
             'SomeTypeA' => 'SomeOtherTypeA',
             'SomeTypeB' => 'SomeOtherTypeB',
             'SomeTypeC' => 'SomeOtherTypeC',
-            'NotString' => true,
-            'EmptyString' => '',
         ]);
 
-        $this->assertSame('SomeOtherTypeA', $map->typeFor('SomeTypeA'));
-        $this->assertSame('SomeOtherTypeB', $map->typeFor('SomeTypeB'));
-        $this->assertSame('SomeOtherTypeC', $map->typeFor('SomeTypeC'));
+        $actual = $map->typeFor($alias);
 
-        return $map;
+        $this->assertSame($expected, $actual);
     }
 
-    #[Depends('testItReturnsExpectedType')]
-    public function testItReturnsExpectedGuid(GuidTypeMap $map): void
+    /**
+     * @return array<string, array{0: string, 1: int|string, 2: Guid}>
+     */
+    public static function stringGuidProvider(): array
     {
-        $this->assertEquals(
-            Guid::fromInteger('SomeOtherTypeA', 99),
-            $map->guidFor('SomeTypeA', 99),
-        );
-
-        $this->assertEquals(
-            Guid::fromString('SomeOtherTypeC', 'foobar'),
-            $map->guidFor('SomeTypeC', 'foobar'),
-        );
+        return [
+            'integer id' => ['SomeTypeA', 99, Guid::fromInteger('SomeOtherTypeA', 99)],
+            'string id' => ['SomeTypeC', 'foobar', Guid::fromString('SomeOtherTypeC', 'foobar')],
+            'uuid' => ['SomeTypeB', self::UUID, Guid::fromUuid('SomeOtherTypeB', self::UUID)],
+        ];
     }
 
-    #[Depends('testItReturnsExpectedType')]
-    public function testItThrowsIfTypeIsNotValidString(GuidTypeMap $map): void
+    #[DataProvider('stringGuidProvider')]
+    #[Test]
+    public function it_returns_expected_guid(string $alias, int|string $id, Guid $expected): void
     {
-        $this->expectException(AssertionError::class);
-        $this->expectExceptionMessage('Expecting type for alias "NotString" to be a non-empty string.');
+        $map = new GuidTypeMap([
+            'SomeTypeA' => 'SomeOtherTypeA',
+            'SomeTypeB' => 'SomeOtherTypeB',
+            'SomeTypeC' => 'SomeOtherTypeC',
+        ]);
 
-        $map->typeFor('NotString');
+        $actual = $map->guidFor($alias, $id);
+
+        $this->assertObjectEquals($expected, $actual);
     }
 
-    #[Depends('testItReturnsExpectedType')]
-    public function testItThrowsIfTypeIsEmptyString(GuidTypeMap $map): void
+    /**
+     * @return array<string, array{0: UnitEnum, 1: string|UnitEnum}>
+     */
+    public static function enumTypeProvider(): array
     {
-        $this->expectException(AssertionError::class);
-        $this->expectExceptionMessage('Expecting type for alias "EmptyString" to be a non-empty string.');
-
-        $map->typeFor('EmptyString');
+        return [
+            'backed enum to string' => [TestBackedEnum::Foo, 'SomeFooType'],
+            'backed enum to enum' => [TestBackedEnum::Bar, TestBackedIntEnum::FooBar],
+            'unit enum to string' => [TestUnitEnum::Baz, 'SomeBazType'],
+            'unit enum to enum' => [TestUnitEnum::Bat, TestBackedIntEnum::BazBat],
+        ];
     }
 
-    #[Depends('testItReturnsExpectedType')]
-    public function testItThrowsIfTypeIsNotDefined(GuidTypeMap $map): void
+    #[DataProvider('enumTypeProvider')]
+    #[Test]
+    public function it_returns_expected_type_with_enums(UnitEnum $alias, string|UnitEnum $expected): void
     {
-        $this->expectException(AssertionError::class);
-        $this->expectExceptionMessage('Alias "NotDefined" is not defined in the type map.');
+        $map = $this->makeEnumMap();
 
-        $map->typeFor('NotDefined');
+        $actual = $map->typeFor($alias);
+
+        $this->assertSame($expected, $actual);
     }
 
-    public function testItReturnsExpectedTypeWithEnums(): void
+    #[DataProvider('enumTypeProvider')]
+    #[Test]
+    public function it_returns_expected_guid_with_enums(UnitEnum $alias, string|UnitEnum $type): void
+    {
+        $map = $this->makeEnumMap();
+
+        $actual = $map->guidFor($alias, self::UUID);
+
+        $this->assertObjectEquals(Guid::fromUuid($type, self::UUID), $actual);
+    }
+
+    /**
+     * @return array<string, array{0: string|UnitEnum, 1: string|UnitEnum}>
+     */
+    public static function defineProvider(): array
+    {
+        return [
+            'string alias' => ['SomeAlias', 'SomeType'],
+            'backed enum alias' => [TestBackedEnum::Foo, TestBackedIntEnum::FooBar],
+            'unit enum alias' => [TestUnitEnum::Baz, 'SomeBazType'],
+        ];
+    }
+
+    #[DataProvider('defineProvider')]
+    #[Test]
+    public function it_defines_a_type(string|UnitEnum $alias, string|UnitEnum $type): void
     {
         $map = new GuidTypeMap();
-        $map->define(TestBackedEnum::Foo, 'SomeFooType');
-        $map->define(TestBackedEnum::Bar, TestBackedIntEnum::FooBar);
-        $map->define(TestUnitEnum::Baz, 'SomeBazType');
-        $map->define(TestUnitEnum::Bat, TestBackedIntEnum::BazBat);
 
-        $id = Uuid::random();
+        $map->define($alias, $type);
 
-        $this->assertSame('SomeFooType', $map->typeFor(TestBackedEnum::Foo));
-        $this->assertObjectEquals(Guid::fromUuid('SomeFooType', $id), $map->guidFor(TestBackedEnum::Foo, $id));
-        $this->assertSame(TestBackedIntEnum::FooBar, $map->typeFor(TestBackedEnum::Bar));
-        $this->assertObjectEquals(Guid::fromUuid(TestBackedIntEnum::FooBar, $id), $map->guidFor(TestBackedEnum::Bar, $id));
-        $this->assertSame('SomeBazType', $map->typeFor(TestUnitEnum::Baz));
-        $this->assertObjectEquals(Guid::fromUuid('SomeBazType', $id), $map->guidFor(TestUnitEnum::Baz, $id));
-        $this->assertSame(TestBackedIntEnum::BazBat, $map->typeFor(TestUnitEnum::Bat));
-        $this->assertObjectEquals(Guid::fromUuid(TestBackedIntEnum::BazBat, $id), $map->guidFor(TestUnitEnum::Bat, $id));
+        $this->assertSame($type, $map->typeFor($alias));
+    }
+
+    private function makeEnumMap(): GuidTypeMap
+    {
+        return new GuidTypeMap([
+            TestBackedEnum::Foo->value => 'SomeFooType',
+            TestBackedEnum::Bar->value => TestBackedIntEnum::FooBar,
+            TestUnitEnum::Baz->name => 'SomeBazType',
+            TestUnitEnum::Bat->name => TestBackedIntEnum::BazBat,
+        ]);
     }
 }

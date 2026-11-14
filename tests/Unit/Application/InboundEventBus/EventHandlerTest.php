@@ -13,42 +13,55 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\InboundEventBus;
 
 use CloudCreativity\Modules\Bus\EventHandler;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class EventHandlerTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_handles_the_event(): void
     {
         $event = new TestInboundEvent();
-
         $innerHandler = $this->createMock(TestEventHandler::class);
+        $handler = new EventHandler($innerHandler);
+
         $innerHandler
             ->expects($this->once())
             ->method('handle')
             ->with($this->identicalTo($event));
 
-        $innerHandler
-            ->expects($this->once())
-            ->method('middleware')
-            ->willReturn($middleware = ['Middleware1', 'Middleware2']);
-
-        $handler = new EventHandler($innerHandler);
         $handler($event);
-
-        $this->assertSame($middleware, $handler->middleware());
     }
 
-    public function testItDoesNotHaveExecuteMethod(): void
+    #[Test]
+    public function it_returns_the_middleware_of_the_inner_handler(): void
     {
-        $handler = new EventHandler(new \DateTime());
-        $event = new TestInboundEvent();
-        $eventClass = $event::class;
+        $innerHandler = $this->createStub(TestEventHandler::class);
+        $innerHandler->method('middleware')->willReturn(['Middleware1', 'Middleware2']);
+        $handler = new EventHandler($innerHandler);
 
-        $this->expectException(\AssertionError::class);
-        $this->expectExceptionMessage(
-            "Cannot dispatch \"{$eventClass}\" - handler \"DateTime\" does not have a handle method.",
-        );
+        $actual = $handler->middleware();
 
-        $handler($event);
+        $this->assertSame(['Middleware1', 'Middleware2'], $actual);
+    }
+
+    #[Test]
+    public function it_returns_middleware_from_the_through_attribute(): void
+    {
+        $handler = new EventHandler(new TestEventHandlerWithThrough());
+
+        $actual = $handler->middleware();
+
+        $this->assertSame(['Middleware1', 'Middleware2'], $actual);
+    }
+
+    #[Test]
+    public function it_returns_no_middleware_when_none_is_declared(): void
+    {
+        $handler = new EventHandler(new \stdClass());
+
+        $actual = $handler->middleware();
+
+        $this->assertSame([], $actual);
     }
 }

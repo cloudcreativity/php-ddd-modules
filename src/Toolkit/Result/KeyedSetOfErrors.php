@@ -49,7 +49,7 @@ final class KeyedSetOfErrors implements KeyedSet
             $this->stack[$key] = $this->get($key)->push($error);
         }
 
-        ksort($this->stack, SORT_STRING | SORT_FLAG_CASE);
+        $this->sort();
     }
 
     /**
@@ -63,7 +63,7 @@ final class KeyedSetOfErrors implements KeyedSet
         $copy = clone $this;
         $copy->stack[$key] = $errors->push($error);
 
-        ksort($copy->stack);
+        $copy->sort();
 
         return $copy;
     }
@@ -76,7 +76,7 @@ final class KeyedSetOfErrors implements KeyedSet
             $copy->stack[$key] = $copy->get($key)->merge($errors);
         }
 
-        ksort($copy->stack);
+        $copy->sort();
 
         return $copy;
     }
@@ -124,6 +124,11 @@ final class KeyedSetOfErrors implements KeyedSet
         assert($count >= 0, 'Expecting count to be zero or greater.');
 
         return $count;
+    }
+
+    private function sort(): void
+    {
+        ksort($this->stack, SORT_STRING | SORT_FLAG_CASE);
     }
 
     private function keyFor(IError $error): string

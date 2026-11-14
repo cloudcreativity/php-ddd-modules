@@ -14,63 +14,67 @@ namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\ExceptionReporter;
 
 use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
 use CloudCreativity\Modules\Infrastructure\ExceptionReporter\PsrLogExceptionReporter;
+use CloudCreativity\Modules\Testing\FakeLogger;
 use LogicException;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 
 final class PsrLogExceptionReporterTest extends TestCase
 {
-    private LoggerInterface&MockObject $logger;
+    private FakeLogger $logger;
 
     private PsrLogExceptionReporter $reporter;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->logger = new FakeLogger();
         $this->reporter = new PsrLogExceptionReporter($this->logger);
     }
 
     protected function tearDown(): void
     {
-        parent::tearDown();
         unset($this->logger, $this->reporter);
+        parent::tearDown();
     }
 
-    public function testItReportsException(): void
+    #[Test]
+    public function it_is_an_exception_reporter(): void
     {
-        $exception = new LogicException('Test exception');
-
-        $this->logger
-            ->expects($this->once())
-            ->method('error')
-            ->with(
-                $exception->getMessage(),
-                ['exception' => $exception],
-            );
-
-        $this->reporter->report($exception);
-
         $this->assertInstanceOf(ExceptionReporter::class, $this->reporter);
     }
 
-    public function testItReportsDefaultMessageIfExceptionHasEmptyMessage(): void
+    #[Test]
+    public function it_reports_exception(): void
+    {
+        $exception = new LogicException('Test exception');
+
+        $this->reporter->report($exception);
+
+        $this->assertSame([
+            ['level' => LogLevel::ERROR, 'message' => 'Test exception', 'context' => ['exception' => $exception]],
+        ], $this->logger->log);
+    }
+
+    #[Test]
+    public function it_reports_default_message_if_exception_has_empty_message(): void
     {
         $exception = new LogicException();
 
-        $this->logger
-            ->expects($this->once())
-            ->method('error')
-            ->with(
-                'Unexpected error: LogicException',
-                ['exception' => $exception],
-            );
-
         $this->reporter->report($exception);
+
+        $this->assertSame([
+            [
+                'level' => LogLevel::ERROR,
+                'message' => 'Unexpected error: LogicException',
+                'context' => ['exception' => $exception],
+            ],
+        ], $this->logger->log);
     }
 
-    public function testItLogsContextForExceptionThatImplementsContextProvider(): void
+    #[Test]
+    public function it_logs_context_for_exception_that_has_context_method(): void
     {
         $exception = new class ('Boom!') extends LogicException {
             /**
@@ -82,47 +86,31 @@ final class PsrLogExceptionReporterTest extends TestCase
             }
         };
 
-        $expected = [
-            'foo' => 'bar',
-            'exception' => $exception,
-        ];
-
-        $this->logger
-            ->expects($this->once())
-            ->method('error')
-            ->with(
-                $exception->getMessage(),
-                $this->identicalTo($expected),
-            );
-
         $this->reporter->report($exception);
+
+        $this->assertSame([
+            [
+                'level' => LogLevel::ERROR,
+                'message' => 'Boom!',
+                'context' => ['foo' => 'bar', 'exception' => $exception],
+            ],
+        ], $this->logger->log);
     }
 
-    public function testItLogsContextForExceptionThatHasContextMethod(): void
+    #[Test]
+    public function it_ignores_context_that_is_not_an_array(): void
     {
         $exception = new class ('Boom!') extends LogicException {
-            /**
-             * @return array<string, mixed>
-             */
-            public function context(): array
+            public function context(): string
             {
-                return ['foo' => 'bar', 'exception' => null];
+                return 'not an array';
             }
         };
 
-        $expected = [
-            'foo' => 'bar',
-            'exception' => $exception,
-        ];
-
-        $this->logger
-            ->expects($this->once())
-            ->method('error')
-            ->with(
-                $exception->getMessage(),
-                $this->identicalTo($expected),
-            );
-
         $this->reporter->report($exception);
+
+        $this->assertSame([
+            ['level' => LogLevel::ERROR, 'message' => 'Boom!', 'context' => ['exception' => $exception]],
+        ], $this->logger->log);
     }
 }
