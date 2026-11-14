@@ -124,4 +124,16 @@ final class FakeLoggerTest extends TestCase
 
         $this->assertSame(['Some message'], $actual);
     }
+
+    #[Test]
+    public function it_returns_a_message_of_zero(): void
+    {
+        $this->logger->log = [
+            ['level' => LogLevel::INFO, 'message' => '0', 'context' => []],
+        ];
+
+        $actual = $this->logger->messages();
+
+        $this->assertSame(['INFO: 0'], $actual);
+    }
 }
