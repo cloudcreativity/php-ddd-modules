@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Fixed
+
+- `EnqueuerContainer::bind()` now throws an `InfrastructureException` when given a string binding without a PSR
+  container, instead of failing later when the enqueuer is resolved.
+
 ## [6.1.0] - 2026-11-14
 
 ### Added

@@ -222,4 +222,15 @@ final class EnqueuerContainerTest extends TestCase
 
         $container->withDefault(TestEnqueuer::class);
     }
+
+    #[Test]
+    public function it_throws_when_binding_a_string_enqueuer_without_a_psr_container(): void
+    {
+        $container = new EnqueuerContainer();
+
+        $this->expectException(InfrastructureException::class);
+        $this->expectExceptionMessage('Cannot bind enqueuer as a string without a PSR container.');
+
+        $container->bind(TestQueueableCommand::class, TestEnqueuer::class);
+    }
 }
