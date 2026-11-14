@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file. This projec
 - `Meta::merge()` no longer renumbers numeric string keys.
 - `Error` now accepts a message of `'0'` and no longer converts a key of `'0'` to `null`.
 - The `ContractException` thrown by `UuidV4` and `UuidV7` when given a lazy UUID of the wrong version now has a message.
+- `FakeExceptionReporter` now rethrows when more exceptions have already been reported than expected, e.g. when
+  `none()` is called after an exception was reported.
 
 ## [6.1.0] - 2026-11-14
 

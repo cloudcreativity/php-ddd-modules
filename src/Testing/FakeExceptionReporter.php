@@ -35,7 +35,7 @@ final class FakeExceptionReporter implements ExceptionReporter, Countable, Array
 
     public function report(Throwable $ex): void
     {
-        if ($this->expected === count($this->reported)) {
+        if ($this->expected !== null && count($this->reported) >= $this->expected) {
             throw $ex;
         }
 
