@@ -17,6 +17,21 @@ use Closure;
 interface UnitOfWork
 {
     /**
+     * Is a unit of work currently active?
+     *
+     * Returns true while a callback passed to `execute()` is running, i.e. there is an open transaction that will be
+     * committed or rolled back once the callback completes.
+     */
+    public function active(): bool;
+
+    /**
+     * Is there no unit of work currently active?
+     *
+     * Returns the inverse of `active()`.
+     */
+    public function inactive(): bool;
+
+    /**
      * Execute the callback in a transaction.
      *
      * @template TReturn

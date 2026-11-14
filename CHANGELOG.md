@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## Unreleased Next Major
+
+### Added
+
+- **BREAKING** The `UnitOfWork` port now has `active()` and `inactive()` methods, to determine whether a unit of work
+  is currently in progress. Implementations of this interface must add these methods. The `FakeUnitOfWork` implements
+  them, and now throws if `execute()` is called while it is already active.
+
 ## Unreleased
 
 ## [6.1.1] - 2026-11-14

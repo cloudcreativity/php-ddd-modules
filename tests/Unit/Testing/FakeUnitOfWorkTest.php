@@ -44,8 +44,92 @@ final class FakeUnitOfWorkTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // active() and inactive()
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_is_inactive_by_default(): void
+    {
+        $unitOfWork = new FakeUnitOfWork();
+
+        $active = $unitOfWork->active();
+        $inactive = $unitOfWork->inactive();
+
+        $this->assertFalse($active);
+        $this->assertTrue($inactive);
+    }
+
+    #[Test]
+    public function it_is_active_while_executing_the_callback(): void
+    {
+        $unitOfWork = new FakeUnitOfWork();
+
+        $flags = $unitOfWork->execute(fn () => [$unitOfWork->active(), $unitOfWork->inactive()]);
+
+        $this->assertSame([true, false], $flags);
+    }
+
+    #[Test]
+    public function it_is_inactive_after_committing(): void
+    {
+        $unitOfWork = new FakeUnitOfWork();
+
+        $unitOfWork->execute(fn () => 'result');
+
+        $this->assertFalse($unitOfWork->active());
+        $this->assertTrue($unitOfWork->inactive());
+    }
+
+    #[Test]
+    public function it_is_inactive_after_rolling_back(): void
+    {
+        $unitOfWork = new FakeUnitOfWork();
+
+        try {
+            $unitOfWork->execute(fn () => throw new RuntimeException('An error occurred.'));
+        } catch (RuntimeException) {
+            // expected
+        }
+
+        $this->assertFalse($unitOfWork->active());
+        $this->assertTrue($unitOfWork->inactive());
+    }
+
+    #[Test]
+    public function it_is_active_on_every_attempt_when_retrying(): void
+    {
+        $unitOfWork = new FakeUnitOfWork();
+        $flags = [];
+        $exceptions = [new RuntimeException('An error occurred.')];
+
+        $unitOfWork->execute(function () use ($unitOfWork, &$flags, &$exceptions): string {
+            $flags[] = $unitOfWork->active();
+
+            if ($ex = array_shift($exceptions)) {
+                throw $ex;
+            }
+
+            return 'result';
+        }, 2);
+
+        $this->assertSame([true, true], $flags);
+        $this->assertFalse($unitOfWork->active());
+    }
+
+    // -------------------------------------------------------------------------
     // execute()
     // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_throws_when_executing_within_an_active_unit_of_work(): void
+    {
+        $unitOfWork = new FakeUnitOfWork();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Fake unit of work is already active.');
+
+        $unitOfWork->execute(fn () => $unitOfWork->execute(fn () => 'result'));
+    }
 
     #[Test]
     public function it_is_successful_on_first_attempt(): void

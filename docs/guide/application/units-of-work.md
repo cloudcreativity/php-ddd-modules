@@ -169,6 +169,21 @@ use Closure;
 interface UnitOfWork
 {
     /**
+     * Is a unit of work currently active?
+     *
+     * Returns true while a callback passed to `execute()` is running, i.e. there is an open transaction that will be
+     * committed or rolled back once the callback completes.
+     */
+    public function active(): bool;
+
+    /**
+     * Is there no unit of work currently active?
+     *
+     * Returns the inverse of `active()`.
+     */
+    public function inactive(): bool;
+
+    /**
      * Execute the callback in a transaction.
      *
      * @template TReturn
@@ -196,12 +211,22 @@ final readonly class IlluminateUnitOfWork implements UnitOfWork
     {
     }
 
+    public function active(): bool
+    {
+        return $this->db->transactionLevel() > 0;
+    }
+
+    public function inactive(): bool
+    {
+        return !$this->active();
+    }
+
     public function execute(Closure $callback, int $attempts = 1): mixed
     {
         return $this->db->transaction(
             static fn () => $callback(),
             $attempts,
-      );
+        );
     }
 }
 ```
@@ -479,3 +504,8 @@ $this->assertSame(
     $unitOfWork->sequence,
 );
 ```
+
+The fake also implements the `active()` and `inactive()` methods. It is active while the callback passed to
+`execute()` is running, including on each retry, and inactive before and after. To match the unit of work manager,
+which does not support nested units of work, the fake throws a `RuntimeException` if `execute()` is called while it is
+already active.
