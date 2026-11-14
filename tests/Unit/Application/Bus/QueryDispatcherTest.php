@@ -29,11 +29,6 @@ final class QueryDispatcherTest extends TestCase
      */
     private QueryHandlerContainer $handlers;
 
-    /**
-     * @var MockObject&PipeContainer
-     */
-    private PipeContainer $middleware;
-
     private QueryDispatcher $dispatcher;
 
     /**
@@ -47,20 +42,20 @@ final class QueryDispatcherTest extends TestCase
 
         $this->dispatcher = new class (
             handlers: $this->handlers = $this->createMock(QueryHandlerContainer::class),
-            middleware: $this->middleware = $this->createMock(PipeContainer::class),
+            middleware: $this->createStub(PipeContainer::class),
         ) extends QueryDispatcher {};
     }
 
     protected function tearDown(): void
     {
-        unset($this->handlers, $this->middleware, $this->dispatcher, $this->sequence);
+        unset($this->handlers, $this->dispatcher, $this->sequence);
         parent::tearDown();
     }
 
     #[Test]
     public function it_dispatches_a_query(): void
     {
-        $query = $this->createMock(Query::class);
+        $query = $this->createStub(Query::class);
 
         $this->handlers
             ->expects($this->once())
@@ -121,7 +116,13 @@ final class QueryDispatcherTest extends TestCase
                 return $handler;
             });
 
-        $this->middleware
+        $middleware = $this->createMock(PipeContainer::class);
+        $this->dispatcher = new class (
+            handlers: $this->handlers,
+            middleware: $middleware,
+        ) extends QueryDispatcher {};
+
+        $middleware
             ->expects($this->exactly(2))
             ->method('get')
             ->willReturnCallback(fn (string $name) => match ($name) {

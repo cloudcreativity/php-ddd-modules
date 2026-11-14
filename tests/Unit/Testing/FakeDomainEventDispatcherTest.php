@@ -26,8 +26,8 @@ final class FakeDomainEventDispatcherTest extends TestCase
     {
         $dispatcher = new class () extends FakeDomainEventDispatcher {};
 
-        $event1 = $this->createMock(DomainEvent::class);
-        $event2 = $this->createMock(DomainEvent::class);
+        $event1 = $this->createStub(DomainEvent::class);
+        $event2 = $this->createStub(DomainEvent::class);
 
         $dispatcher->dispatch($event1);
         $dispatcher->dispatch($event2);
@@ -46,7 +46,7 @@ final class FakeDomainEventDispatcherTest extends TestCase
     public function it_returns_sole_event(): void
     {
         $dispatcher = new class () extends FakeDomainEventDispatcher {};
-        $event = $this->createMock(DomainEvent::class);
+        $event = $this->createStub(DomainEvent::class);
 
         $dispatcher->dispatch($event);
 
@@ -68,8 +68,8 @@ final class FakeDomainEventDispatcherTest extends TestCase
     public function it_throws_exception_if_multiple_events(): void
     {
         $dispatcher = new class () extends FakeDomainEventDispatcher {};
-        $event1 = $this->createMock(DomainEvent::class);
-        $event2 = $this->createMock(DomainEvent::class);
+        $event1 = $this->createStub(DomainEvent::class);
+        $event2 = $this->createStub(DomainEvent::class);
 
         $dispatcher->dispatch($event1);
         $dispatcher->dispatch($event2);

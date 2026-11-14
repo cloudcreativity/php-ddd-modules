@@ -17,13 +17,10 @@ use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Infrastructure\Queue\ClosureQueue;
 use CloudCreativity\Modules\Tests\Unit\Application\Bus\TestCommand;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 final class ClosureQueueTest extends TestCase
 {
-    private MockObject&PipeContainer $middleware;
-
     /**
      * @var array<Command>
      */
@@ -35,24 +32,19 @@ final class ClosureQueueTest extends TestCase
     {
         parent::setUp();
 
-        $this->queue = new class (
-            function (Command $command): void {
-                $this->actual[] = $command;
-            },
-            $this->middleware = $this->createMock(PipeContainer::class),
-        ) extends ClosureQueue {};
+        $this->queue = $this->createQueue($this->createStub(PipeContainer::class));
     }
 
     protected function tearDown(): void
     {
-        unset($this->queue, $this->middleware, $this->actual);
+        unset($this->queue, $this->actual);
         parent::tearDown();
     }
 
     #[Test]
     public function it_queues_a_command(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
 
         $this->queue->push($command);
 
@@ -62,10 +54,10 @@ final class ClosureQueueTest extends TestCase
     #[Test]
     public function it_queues_a_command_through_middleware(): void
     {
-        $command1 = $this->createMock(Command::class);
-        $command2 = $this->createMock(Command::class);
-        $command3 = $this->createMock(Command::class);
-        $command4 = $this->createMock(Command::class);
+        $command1 = $this->createStub(Command::class);
+        $command2 = $this->createStub(Command::class);
+        $command3 = $this->createStub(Command::class);
+        $command4 = $this->createStub(Command::class);
 
         $middleware1 = function ($command, \Closure $next) use ($command1, $command2) {
             $this->assertSame($command1, $command);
@@ -82,11 +74,14 @@ final class ClosureQueueTest extends TestCase
             return $next($command4);
         };
 
-        $this->middleware
+        $middleware = $this->createMock(PipeContainer::class);
+        $middleware
             ->expects($this->once())
             ->method('get')
             ->with('MySecondMiddleware')
             ->willReturn($middleware2);
+
+        $this->queue = $this->createQueue($middleware);
 
         $this->queue->through([
             $middleware1,
@@ -99,15 +94,14 @@ final class ClosureQueueTest extends TestCase
         $this->assertSame([$command4], $this->actual);
     }
 
-
     #[Test]
     public function it_queues_using_the_handler_bound_to_the_command_class(): void
     {
         $expected = new TestCommand();
-        $mock = $this->createMock(Command::class);
+        $stub = $this->createStub(Command::class);
         $actual = null;
 
-        $this->queue->bind($mock::class, function (Command $cmd): never {
+        $this->queue->bind($stub::class, function (Command $cmd): never {
             $this->fail('Not expecting this closure to be called.');
         });
 
@@ -122,5 +116,15 @@ final class ClosureQueueTest extends TestCase
 
         $this->assertEmpty($this->actual);
         $this->assertSame($expected, $actual);
+    }
+
+    private function createQueue(PipeContainer $middleware): ClosureQueue
+    {
+        return new class (
+            function (Command $command): void {
+                $this->actual[] = $command;
+            },
+            $middleware,
+        ) extends ClosureQueue {};
     }
 }

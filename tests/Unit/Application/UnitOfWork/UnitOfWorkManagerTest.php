@@ -26,8 +26,6 @@ final class UnitOfWorkManagerTest extends TestCase
 {
     private MockObject&UnitOfWork $unitOfWork;
 
-    private ExceptionReporter&MockObject $reporter;
-
     private UnitOfWorkManager $manager;
 
     protected function setUp(): void
@@ -36,13 +34,13 @@ final class UnitOfWorkManagerTest extends TestCase
 
         $this->manager = new UnitOfWorkManager(
             $this->unitOfWork = $this->createMock(UnitOfWork::class),
-            $this->reporter = $this->createMock(ExceptionReporter::class),
+            $this->createStub(ExceptionReporter::class),
         );
     }
 
     protected function tearDown(): void
     {
-        unset($this->manager, $this->unitOfWork, $this->reporter);
+        unset($this->manager, $this->unitOfWork);
         parent::tearDown();
     }
 
@@ -225,6 +223,7 @@ final class UnitOfWorkManagerTest extends TestCase
     public function it_flushes_callbacks_on_successful_transaction(): void
     {
         $this->unitOfWork
+            ->expects($this->exactly(2))
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
@@ -244,10 +243,13 @@ final class UnitOfWorkManagerTest extends TestCase
     #[Test]
     public function it_flushes_callbacks_on_unsuccessful_transaction(): void
     {
+        $reporter = $this->createMock(ExceptionReporter::class);
+        $this->manager = new UnitOfWorkManager($this->unitOfWork, $reporter);
+
         $ex = new LogicException('Boom');
         $count = 0;
 
-        $this->reporter
+        $reporter
             ->expects($this->exactly(2)) // only "swallowed" exceptions are reported
             ->method('report')
             ->with($this->identicalTo($ex));
@@ -294,11 +296,14 @@ final class UnitOfWorkManagerTest extends TestCase
     #[Test]
     public function it_handles_callback_executing_multiple_times(): void
     {
+        $reporter = $this->createMock(ExceptionReporter::class);
+        $this->manager = new UnitOfWorkManager($this->unitOfWork, $reporter);
+
         $ex = new LogicException('Boom!');
         $sequence = [];
         $count = 0;
 
-        $this->reporter
+        $reporter
             ->expects($this->exactly(2))
             ->method('report')
             ->with($this->identicalTo($ex));
@@ -384,11 +389,14 @@ final class UnitOfWorkManagerTest extends TestCase
     #[Test]
     public function it_handles_unit_of_work_failing_multiple_times(): void
     {
+        $reporter = $this->createMock(ExceptionReporter::class);
+        $this->manager = new UnitOfWorkManager($this->unitOfWork, $reporter);
+
         $ex = new LogicException('Boom!');
         $sequence = [];
         $count = 0;
 
-        $this->reporter
+        $reporter
             ->expects($this->exactly(2))
             ->method('report')
             ->with($this->identicalTo($ex));
@@ -412,6 +420,7 @@ final class UnitOfWorkManagerTest extends TestCase
         ];
 
         $this->unitOfWork
+            ->expects($this->exactly(3))
             ->method('execute')
             ->willReturnCallback(function (Closure $closure) use ($ex, &$sequence, &$count): mixed {
                 $count++;
@@ -469,6 +478,10 @@ final class UnitOfWorkManagerTest extends TestCase
     #[Test]
     public function it_fails_if_after_callbacks_are_queued_before_transaction(): void
     {
+        $this->unitOfWork
+            ->expects($this->never())
+            ->method('execute');
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Cannot queue an after commit callback when not executing a unit of work.');
 
@@ -497,6 +510,7 @@ final class UnitOfWorkManagerTest extends TestCase
     public function it_fails_if_after_commit_callback_registers_before_commit_callback(): void
     {
         $this->unitOfWork
+            ->expects($this->once())
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 

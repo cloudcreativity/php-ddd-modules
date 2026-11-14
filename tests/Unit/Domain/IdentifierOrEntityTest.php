@@ -33,7 +33,7 @@ final class IdentifierOrEntityTest extends TestCase
     #[Test]
     public function it_is_an_entity_with_guid(): void
     {
-        $entity = $this->createMock(Entity::class);
+        $entity = $this->createStub(Entity::class);
         $entity->method('getId')->willReturn($guid = Guid::fromInteger('SomeType', 1));
 
         $guidOrEntity = IdentifierOrEntity::make($entity);
@@ -46,7 +46,7 @@ final class IdentifierOrEntityTest extends TestCase
     #[Test]
     public function it_is_an_entity_without_guid(): void
     {
-        $entity = $this->createMock(Entity::class);
+        $entity = $this->createStub(Entity::class);
         $entity->method('getId')->willReturn(null);
 
         $guidOrEntity = IdentifierOrEntity::make($entity);

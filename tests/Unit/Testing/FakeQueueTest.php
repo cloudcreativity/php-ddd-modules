@@ -25,8 +25,8 @@ final class FakeQueueTest extends TestCase
     public function it_queues_commands(): void
     {
         $queue = new class () extends FakeQueue {};
-        $queue->push($command1 = $this->createMock(Command::class));
-        $queue->push($command2 = $this->createMock(Command::class));
+        $queue->push($command1 = $this->createStub(Command::class));
+        $queue->push($command2 = $this->createStub(Command::class));
 
         $this->assertInstanceOf(Queue::class, $queue);
         $this->assertCount(2, $queue);
@@ -40,7 +40,7 @@ final class FakeQueueTest extends TestCase
     public function it_has_sole_command(): void
     {
         $queue = new class () extends FakeQueue {};
-        $queue->push($command = $this->createMock(Command::class));
+        $queue->push($command = $this->createStub(Command::class));
 
         $this->assertSame($command, $queue->sole());
     }
@@ -62,8 +62,8 @@ final class FakeQueueTest extends TestCase
         $this->expectException(LogicException::class);
 
         $queue = new class () extends FakeQueue {};
-        $queue->push($this->createMock(Command::class));
-        $queue->push($this->createMock(Command::class));
+        $queue->push($this->createStub(Command::class));
+        $queue->push($this->createStub(Command::class));
         $queue->sole();
     }
 }

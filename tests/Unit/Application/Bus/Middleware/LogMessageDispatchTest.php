@@ -99,7 +99,7 @@ final class LogMessageDispatchTest extends TestCase
     public function it_logs_after_the_next_closure_is_invoked(): void
     {
         $expected = new LogicException();
-        $message = $this->createMock(Query::class);
+        $message = $this->createStub(Query::class);
         $name = $message::class;
         $middleware = new LogMessageDispatch($this->logger);
 

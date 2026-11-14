@@ -26,11 +26,6 @@ final class DeferredDispatcherTest extends TestCase
 {
     private ListenerContainer&MockObject $listeners;
 
-    /**
-     * @var MockObject&MockObject&PipeContainer
-     */
-    private MockObject&PipeContainer $middleware;
-
     private DeferredDispatcher $dispatcher;
 
     protected function setUp(): void
@@ -39,13 +34,13 @@ final class DeferredDispatcherTest extends TestCase
 
         $this->dispatcher = new class (
             listeners: $this->listeners = $this->createMock(ListenerContainer::class),
-            middleware: $this->middleware = $this->createMock(PipeContainer::class),
+            middleware: $this->createStub(PipeContainer::class),
         ) extends DeferredDispatcher {};
     }
 
     protected function tearDown(): void
     {
-        unset($this->dispatcher, $this->listeners, $this->middleware);
+        unset($this->dispatcher, $this->listeners);
         parent::tearDown();
     }
 
@@ -118,7 +113,7 @@ final class DeferredDispatcherTest extends TestCase
     {
         $sequence = [];
         $event1 = new class () extends TestDomainEvent {};
-        $event2 = $this->createMock(DomainEvent::class);
+        $event2 = $this->createStub(DomainEvent::class);
 
         $listener1 = $this->createMock(TestListener::class);
         $listener2 = $this->createMock(TestListener::class);
@@ -190,7 +185,7 @@ final class DeferredDispatcherTest extends TestCase
     {
         $sequence = [];
         $event1 = new class () extends TestDomainEvent {};
-        $event2 = $this->createMock(DomainEvent::class);
+        $event2 = $this->createStub(DomainEvent::class);
 
         $listener1 = $this->createMock(TestListener::class);
         $listener2 = $this->createMock(TestListener::class);
@@ -255,6 +250,7 @@ final class DeferredDispatcherTest extends TestCase
         $listener4 = $this->createMock(TestListener::class);
 
         $this->listeners
+            ->expects($this->exactly(2))
             ->method('get')
             ->willReturnCallback(fn (string $name) => match ($name) {
                 'Listener1' => $listener1,
@@ -309,7 +305,7 @@ final class DeferredDispatcherTest extends TestCase
     {
         $sequence = [];
         $event1 = new class () extends TestDomainEvent {};
-        $event2 = $this->createMock(DomainEvent::class);
+        $event2 = $this->createStub(DomainEvent::class);
         $expected = new \LogicException('Boom!');
 
         $listener1 = $this->createMock(TestListener::class);
@@ -318,6 +314,7 @@ final class DeferredDispatcherTest extends TestCase
         $listener4 = $this->createMock(TestListener::class);
 
         $this->listeners
+            ->expects($this->exactly(2))
             ->method('get')
             ->willReturnCallback(fn (string $name) => match ($name) {
                 'Listener1' => $listener1,
@@ -370,7 +367,7 @@ final class DeferredDispatcherTest extends TestCase
     #[Test]
     public function it_does_nothing_when_there_are_no_listeners(): void
     {
-        $event = $this->createMock(DomainEvent::class);
+        $event = $this->createStub(DomainEvent::class);
         $this->listeners->expects($this->never())->method($this->anything());
         $this->dispatcher->dispatch($event);
     }
@@ -394,7 +391,13 @@ final class DeferredDispatcherTest extends TestCase
             return $next($event3);
         };
 
-        $this->middleware
+        $middleware = $this->createMock(PipeContainer::class);
+        $this->dispatcher = new class (
+            listeners: $this->listeners,
+            middleware: $middleware,
+        ) extends DeferredDispatcher {};
+
+        $middleware
             ->expects($this->once())
             ->method('get')
             ->with('Middleware2')

@@ -162,7 +162,7 @@ final class ResultTest extends TestCase
     #[Test]
     public function it_fails_with_a_list_of_errors_implementation(): void
     {
-        $errors = $this->createMock(IListOfErrors::class);
+        $errors = $this->createStub(IListOfErrors::class);
         $errors->method('isNotEmpty')->willReturn(true);
         $result = Result::failed($errors);
 

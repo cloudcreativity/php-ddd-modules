@@ -69,6 +69,10 @@ final class ComponentPublisherTest extends TestCase
             ->method('__invoke')
             ->with($this->identicalTo($event));
 
+        $this->middleware
+            ->expects($this->never())
+            ->method($this->anything());
+
         $this->publisher->publish($event);
     }
 

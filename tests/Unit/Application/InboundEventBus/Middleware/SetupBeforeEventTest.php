@@ -30,7 +30,7 @@ final class SetupBeforeEventTest extends TestCase
     #[Test]
     public function it_sets_up_and_succeeds_without_teardown(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
 
         $middleware = new SetupBeforeEvent(function () {
             $this->sequence[] = 'setup';
@@ -48,7 +48,7 @@ final class SetupBeforeEventTest extends TestCase
     #[Test]
     public function it_sets_up_and_succeeds_with_teardown(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
 
         $middleware = new SetupBeforeEvent(function (): Closure {
             $this->sequence[] = 'setup';
@@ -68,7 +68,7 @@ final class SetupBeforeEventTest extends TestCase
     #[Test]
     public function it_sets_up_and_throws_exception_without_teardown(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
         $exception = new RuntimeException('Something went wrong.');
         $actual = null;
 
@@ -95,7 +95,7 @@ final class SetupBeforeEventTest extends TestCase
     #[Test]
     public function it_sets_up_and_throws_exception_with_teardown(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
         $exception = new RuntimeException('Something went wrong.');
         $actual = null;
 

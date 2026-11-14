@@ -26,8 +26,8 @@ final class FakeOutboundEventPublisherTest extends TestCase
     {
         $publisher = new class () extends FakeOutboundEventPublisher {};
 
-        $event1 = $this->createMock(IntegrationEvent::class);
-        $event2 = $this->createMock(IntegrationEvent::class);
+        $event1 = $this->createStub(IntegrationEvent::class);
+        $event2 = $this->createStub(IntegrationEvent::class);
 
         $publisher->publish($event1);
         $publisher->publish($event2);
@@ -44,7 +44,7 @@ final class FakeOutboundEventPublisherTest extends TestCase
     public function it_returns_sole_event(): void
     {
         $publisher = new class () extends FakeOutboundEventPublisher {};
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
 
         $publisher->publish($event);
 
@@ -66,8 +66,8 @@ final class FakeOutboundEventPublisherTest extends TestCase
     public function it_throws_exception_if_multiple_events(): void
     {
         $publisher = new class () extends FakeOutboundEventPublisher {};
-        $event1 = $this->createMock(IntegrationEvent::class);
-        $event2 = $this->createMock(IntegrationEvent::class);
+        $event1 = $this->createStub(IntegrationEvent::class);
+        $event2 = $this->createStub(IntegrationEvent::class);
 
         $publisher->publish($event1);
         $publisher->publish($event2);

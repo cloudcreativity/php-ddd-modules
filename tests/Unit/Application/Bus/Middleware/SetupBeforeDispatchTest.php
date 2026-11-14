@@ -31,7 +31,7 @@ final class SetupBeforeDispatchTest extends TestCase
     #[Test]
     public function it_sets_up_and_succeeds_without_teardown(): void
     {
-        $message = $this->createMock(Command::class);
+        $message = $this->createStub(Command::class);
         $result = Result::ok();
 
         $middleware = new SetupBeforeDispatch(function () {
@@ -52,7 +52,7 @@ final class SetupBeforeDispatchTest extends TestCase
     #[Test]
     public function it_sets_up_and_succeeds_with_teardown(): void
     {
-        $message = $this->createMock(Query::class);
+        $message = $this->createStub(Query::class);
         $result = Result::ok();
 
         $middleware = new SetupBeforeDispatch(function (): Closure {
@@ -75,7 +75,7 @@ final class SetupBeforeDispatchTest extends TestCase
     #[Test]
     public function it_sets_up_and_fails_without_teardown(): void
     {
-        $message = $this->createMock(Command::class);
+        $message = $this->createStub(Command::class);
         $result = Result::failed('Something went wrong.');
 
         $middleware = new SetupBeforeDispatch(function () {
@@ -96,7 +96,7 @@ final class SetupBeforeDispatchTest extends TestCase
     #[Test]
     public function it_sets_up_and_fails_with_teardown(): void
     {
-        $message = $this->createMock(Command::class);
+        $message = $this->createStub(Command::class);
         $result = Result::failed('Something went wrong.');
 
         $middleware = new SetupBeforeDispatch(function (): Closure {
@@ -119,7 +119,7 @@ final class SetupBeforeDispatchTest extends TestCase
     #[Test]
     public function it_sets_up_and_throws_exception_without_teardown(): void
     {
-        $message = $this->createMock(Command::class);
+        $message = $this->createStub(Command::class);
         $exception = new RuntimeException('Something went wrong.');
         $actual = null;
 
@@ -146,7 +146,7 @@ final class SetupBeforeDispatchTest extends TestCase
     #[Test]
     public function it_sets_up_and_throws_exception_with_teardown(): void
     {
-        $message = $this->createMock(Query::class);
+        $message = $this->createStub(Query::class);
         $exception = new RuntimeException('Something went wrong.');
         $actual = null;
 

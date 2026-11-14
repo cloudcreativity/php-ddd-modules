@@ -62,7 +62,7 @@ final class EntityWithTypedIdTest extends TestCase
     public function it_is_different_class(): void
     {
         $a = new TestEntityWithTypedId(UuidV7::make());
-        $b = $this->createMock(Entity::class);
+        $b = $this->createStub(Entity::class);
         $b->method('getId')->willReturn(UuidV7::from($a->id->toString()));
 
         $this->assertFalse($a->is($b));

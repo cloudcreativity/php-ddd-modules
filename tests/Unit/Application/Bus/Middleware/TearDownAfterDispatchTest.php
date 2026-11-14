@@ -25,7 +25,7 @@ final class TearDownAfterDispatchTest extends TestCase
     #[Test]
     public function it_invokes_callback_after_success(): void
     {
-        $message = $this->createMock(Command::class);
+        $message = $this->createStub(Command::class);
         $result = Result::ok();
         $sequence = [];
 
@@ -46,7 +46,7 @@ final class TearDownAfterDispatchTest extends TestCase
     #[Test]
     public function it_invokes_callback_after_failure(): void
     {
-        $message = $this->createMock(Query::class);
+        $message = $this->createStub(Query::class);
         $result = Result::failed('Something went wrong.');
         $sequence = [];
 
@@ -67,7 +67,7 @@ final class TearDownAfterDispatchTest extends TestCase
     #[Test]
     public function it_invokes_callback_after_exception(): void
     {
-        $message = $this->createMock(Command::class);
+        $message = $this->createStub(Command::class);
         $exception = new RuntimeException('Something went wrong.');
         $actual = null;
         $sequence = [];

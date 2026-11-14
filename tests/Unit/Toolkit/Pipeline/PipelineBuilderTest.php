@@ -26,7 +26,7 @@ final class PipelineBuilderTest extends TestCase
     public function it_builds_a_pipeline(): void
     {
         $expected = new Pipeline(
-            $processor = $this->createMock(Processor::class),
+            $processor = $this->createStub(Processor::class),
             $stages = ['strtoupper', 'strtolower'],
         );
 
@@ -41,8 +41,8 @@ final class PipelineBuilderTest extends TestCase
     #[Test]
     public function it_builds_a_pipeline_with_lazy_pipes_for_service_strings(): void
     {
-        $container = $this->createMock(PipeContainer::class);
-        $processor = $this->createMock(Processor::class);
+        $container = $this->createStub(PipeContainer::class);
+        $processor = $this->createStub(Processor::class);
 
         $expected = new Pipeline($processor, [
             'strtoupper',
