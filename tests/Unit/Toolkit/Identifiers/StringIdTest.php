@@ -21,6 +21,7 @@ use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Ramsey\Uuid\Uuid as RamseyUuid;
 
 final class StringIdTest extends TestCase
 {
@@ -44,6 +45,7 @@ final class StringIdTest extends TestCase
     public function it_can_be_zero(): void
     {
         $id = new StringId('0');
+
         $this->assertSame('0', $id->value);
     }
 
@@ -52,58 +54,62 @@ final class StringIdTest extends TestCase
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Identifier value must be a non-empty string.');
+
         new StringId('');
     }
 
+    // -------------------------------------------------------------------------
+    // from() and tryFrom()
+    // -------------------------------------------------------------------------
+
     #[Test]
-    public function it_is_equals(): void
+    public function it_is_created_from_a_string(): void
     {
-        $this->assertObjectEquals($id = new StringId('99'), $other = StringId::from('99'));
-        $this->assertSame($id, StringId::from($id));
-        $this->assertTrue($id->is($other));
-        $this->assertTrue($id->any(new StringId('foo'), new StringId('bar'), null, $other));
-        $this->assertEquals($id, StringId::tryFrom('99'));
-        $this->assertSame($id, StringId::tryFrom($id));
+        $actual = StringId::from('99');
+
+        $this->assertObjectEquals(new StringId('99'), $actual);
     }
 
     #[Test]
-    public function it_is_not_equal(): void
+    public function it_returns_the_same_instance_when_created_from_a_string_id(): void
     {
         $id = new StringId('99');
-        $this->assertFalse($id->equals($other = new StringId('100')));
-        $this->assertFalse($id->is($other));
-        $this->assertFalse($id->any(new StringId('foo'), new StringId('bar'), null, $other));
-        $this->assertFalse($id->any());
+
+        $actual = StringId::from($id);
+
+        $this->assertSame($id, $actual);
+    }
+
+    #[Test]
+    public function it_tries_to_create_from_a_string(): void
+    {
+        $actual = StringId::tryFrom('99');
+
+        $this->assertNotNull($actual);
+        $this->assertObjectEquals(new StringId('99'), $actual);
+    }
+
+    #[Test]
+    public function it_returns_the_same_instance_when_trying_from_a_string_id(): void
+    {
+        $id = new StringId('99');
+
+        $actual = StringId::tryFrom($id);
+
+        $this->assertSame($id, $actual);
     }
 
     /**
-     * @return array<int, array<Identifier|null>>
+     * @return array<string, array{0: Identifier|null}>
      */
     public static function notStringIdProvider(): array
     {
         return [
-            [null],
-            [new IntegerId(1)],
-            [new Guid('SomeType', new StringId('1'))],
-            [new Uuid(\Ramsey\Uuid\Uuid::uuid4())],
+            'null' => [null],
+            'integer id' => [new IntegerId(1)],
+            'guid' => [new Guid('SomeType', new StringId('1'))],
+            'uuid' => [new Uuid(RamseyUuid::uuid4())],
         ];
-    }
-
-    #[DataProvider('notStringIdProvider')]
-    #[Test]
-    public function it_is_not_equal_to_other_identifier_types(?Identifier $other): void
-    {
-        $id = new StringId('1');
-
-        $this->assertFalse($id->is($other));
-        $this->assertFalse($id->any($other, new StringId('foo'), null));
-    }
-
-    #[DataProvider('notStringIdProvider')]
-    #[Test]
-    public function it_returns_null_when_trying_from_other_identifier_types(?Identifier $other): void
-    {
-        $this->assertNull(StringId::tryFrom($other));
     }
 
     #[DataProvider('notStringIdProvider')]
@@ -112,6 +118,108 @@ final class StringIdTest extends TestCase
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Unexpected identifier type, received: ' . get_debug_type($other));
+
         StringId::from($other);
+    }
+
+    #[DataProvider('notStringIdProvider')]
+    #[Test]
+    public function it_returns_null_when_trying_from_other_identifier_types(?Identifier $other): void
+    {
+        $actual = StringId::tryFrom($other);
+
+        $this->assertNull($actual);
+    }
+
+    // -------------------------------------------------------------------------
+    // is(), any() and equals()
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_equals_a_string_id_with_the_same_value(): void
+    {
+        $id = new StringId('99');
+
+        $this->assertObjectEquals(new StringId('99'), $id);
+    }
+
+    #[Test]
+    public function it_does_not_equal_a_string_id_with_a_different_value(): void
+    {
+        $id = new StringId('99');
+
+        $this->assertObjectNotEquals(new StringId('100'), $id);
+    }
+
+    #[Test]
+    public function it_is_a_string_id_with_the_same_value(): void
+    {
+        $id = new StringId('99');
+
+        $actual = $id->is(new StringId('99'));
+
+        $this->assertTrue($actual);
+    }
+
+    #[Test]
+    public function it_is_not_a_string_id_with_a_different_value(): void
+    {
+        $id = new StringId('99');
+
+        $actual = $id->is(new StringId('100'));
+
+        $this->assertFalse($actual);
+    }
+
+    #[DataProvider('notStringIdProvider')]
+    #[Test]
+    public function it_is_not_equal_to_other_identifier_types(?Identifier $other): void
+    {
+        $id = new StringId('1');
+
+        $actual = $id->is($other);
+
+        $this->assertFalse($actual);
+    }
+
+    #[Test]
+    public function it_is_any_of_the_provided_identifiers_when_one_matches(): void
+    {
+        $id = new StringId('99');
+
+        $actual = $id->any(new StringId('foo'), new StringId('bar'), null, new StringId('99'));
+
+        $this->assertTrue($actual);
+    }
+
+    #[Test]
+    public function it_is_not_any_of_the_provided_identifiers_when_none_match(): void
+    {
+        $id = new StringId('99');
+
+        $actual = $id->any(new StringId('foo'), new StringId('bar'), null, new StringId('100'));
+
+        $this->assertFalse($actual);
+    }
+
+    #[DataProvider('notStringIdProvider')]
+    #[Test]
+    public function it_is_not_any_of_other_identifier_types(?Identifier $other): void
+    {
+        $id = new StringId('1');
+
+        $actual = $id->any($other, new StringId('foo'), null);
+
+        $this->assertFalse($actual);
+    }
+
+    #[Test]
+    public function it_is_not_any_when_no_identifiers_are_provided(): void
+    {
+        $id = new StringId('99');
+
+        $actual = $id->any();
+
+        $this->assertFalse($actual);
     }
 }

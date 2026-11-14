@@ -23,14 +23,21 @@ final class EnqueuerTest extends TestCase
     public function it_pushes_the_command_to_the_inner_enqueuer(): void
     {
         $command = $this->createStub(Command::class);
-        $innerEnqueuer = $this->createMock(TestEnqueuer::class);
+        $innerEnqueuer = new class () extends TestEnqueuer {
+            /**
+             * @var list<Command>
+             */
+            public array $pushed = [];
 
-        $innerEnqueuer
-            ->expects($this->once())
-            ->method('push')
-            ->with($this->identicalTo($command));
-
+            public function push(Command $command): void
+            {
+                $this->pushed[] = $command;
+            }
+        };
         $enqueuer = new Enqueuer($innerEnqueuer);
+
         $enqueuer($command);
+
+        $this->assertSame([$command], $innerEnqueuer->pushed);
     }
 }

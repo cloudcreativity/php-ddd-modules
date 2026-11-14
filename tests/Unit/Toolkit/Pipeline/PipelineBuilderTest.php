@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Pipeline;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipelineBuilder as IPipelineBuilder;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Processor;
 use CloudCreativity\Modules\Toolkit\Pipeline\LazyPipe;
 use CloudCreativity\Modules\Toolkit\Pipeline\Pipeline;
@@ -65,10 +66,54 @@ final class PipelineBuilderTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Cannot use a string pipe name without a pipe container.');
 
-        $pipeline = new PipelineBuilder()
+        $_ = new PipelineBuilder()
             ->add('strtoupper')
             ->add('SomeService')
             ->add('strtolower')
             ->build($processor);
+    }
+
+    #[Test]
+    public function it_makes_a_builder(): void
+    {
+        $container = $this->createStub(PipeContainer::class);
+
+        $actual = PipelineBuilder::make($container);
+
+        $this->assertInstanceOf(IPipelineBuilder::class, $actual);
+        $this->assertEquals(new PipelineBuilder($container), $actual);
+    }
+
+    #[Test]
+    public function it_makes_a_builder_without_a_container(): void
+    {
+        $actual = PipelineBuilder::make();
+
+        $this->assertEquals(new PipelineBuilder(), $actual);
+    }
+
+    #[Test]
+    public function it_builds_a_pipeline_with_the_default_processor(): void
+    {
+        $pipeline = new PipelineBuilder()
+            ->through([
+                static fn (int $value): int => $value * 5,
+                static fn (int $value): int => $value + 2,
+            ])
+            ->build();
+
+        $actual = $pipeline->process(3);
+
+        $this->assertSame(17, $actual);
+    }
+
+    #[Test]
+    public function it_builds_an_empty_pipeline(): void
+    {
+        $processor = $this->createStub(Processor::class);
+
+        $actual = new PipelineBuilder()->build($processor);
+
+        $this->assertEquals(new Pipeline($processor, []), $actual);
     }
 }

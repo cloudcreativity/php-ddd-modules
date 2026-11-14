@@ -13,10 +13,9 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Domain;
 
 use CloudCreativity\Modules\Contracts\Domain\Entity;
-use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 use CloudCreativity\Modules\Toolkit\ContractException;
 use CloudCreativity\Modules\Toolkit\Identifiers\Guid;
-use PHPUnit\Framework\Attributes\Depends;
+use CloudCreativity\Modules\Toolkit\Identifiers\IntegerId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -37,7 +36,7 @@ final class EntityWithNullableGuidTest extends TestCase
     }
 
     #[Test]
-    public function it_has_a_null_id(): TestEntityWithNullableId
+    public function it_has_a_null_id(): void
     {
         $entity = new TestEntityWithNullableId();
 
@@ -45,25 +44,15 @@ final class EntityWithNullableGuidTest extends TestCase
         $this->assertFalse($entity->is(null));
         $this->assertTrue($entity->isNot(null));
         $this->assertFalse($entity->hasId());
-
-        return $entity;
-    }
-
-    #[Depends('it_has_a_null_id')]
-    #[Test]
-    public function it_fails_to_get_the_id_when_it_is_null(TestEntityWithNullableId $entity): void
-    {
-        $this->expectException(\AssertionError::class);
-        $this->expectExceptionMessage('Entity does not have an identifier.');
-
-        $entity->getIdOrFail();
     }
 
     #[Test]
     public function it_sets_the_id(): void
     {
         $entity = new TestEntityWithNullableId();
-        $actual = $entity->setId($guid = Guid::fromInteger('SomeType', 99));
+        $guid = Guid::fromInteger('SomeType', 99);
+
+        $actual = $entity->setId($guid);
 
         $this->assertSame($entity, $actual);
         $this->assertSame($guid, $entity->getId());
@@ -75,25 +64,16 @@ final class EntityWithNullableGuidTest extends TestCase
         $entity = new TestEntityWithNullableId(Guid::fromInteger('SomeType', 1));
 
         $this->expectException(ContractException::class);
+        $this->expectExceptionMessage('Cannot set identity as entity already has an identifier.');
+
         $entity->setId(Guid::fromInteger('SomeType', 2));
     }
 
     #[Test]
     public function it_is_the_same(): void
     {
-        $a = new TestEntityWithNullableId(
-            $id1 = $this->createMock(Identifier::class),
-        );
-
-        $b = new TestEntityWithNullableId(
-            $id2 = $this->createStub(Identifier::class),
-        );
-
-        $id1
-            ->expects($this->exactly(2))
-            ->method('is')
-            ->with($this->identicalTo($id2))
-            ->willReturn(true);
+        $a = new TestEntityWithNullableId(new IntegerId(1));
+        $b = new TestEntityWithNullableId(new IntegerId(1));
 
         $this->assertTrue($a->is($b));
         $this->assertFalse($a->isNot($b));
@@ -103,33 +83,27 @@ final class EntityWithNullableGuidTest extends TestCase
     public function it_is_not_the_same_with_null_id(): void
     {
         $a = new TestEntityWithNullableId();
-
-        $b = new TestEntityWithNullableId(
-            $id1 = $this->createMock(Identifier::class),
-        );
-
-        $id1
-            ->expects($this->never())
-            ->method('is');
+        $b = new TestEntityWithNullableId(new IntegerId(1));
 
         $this->assertFalse($a->is($b));
         $this->assertTrue($a->isNot($b));
     }
 
     #[Test]
-    public function it_is_the_same_when_other_has_null_id(): void
+    public function it_is_not_the_same_when_other_has_null_id(): void
     {
-        $a = new TestEntityWithNullableId(
-            $id1 = $this->createMock(Identifier::class),
-        );
-
+        $a = new TestEntityWithNullableId(new IntegerId(1));
         $b = new TestEntityWithNullableId();
 
-        $id1
-            ->expects($this->exactly(2))
-            ->method('is')
-            ->with(null)
-            ->willReturn(false);
+        $this->assertFalse($a->is($b));
+        $this->assertTrue($a->isNot($b));
+    }
+
+    #[Test]
+    public function it_is_not_the_same_when_both_have_null_ids(): void
+    {
+        $a = new TestEntityWithNullableId();
+        $b = new TestEntityWithNullableId();
 
         $this->assertFalse($a->is($b));
         $this->assertTrue($a->isNot($b));
@@ -138,19 +112,8 @@ final class EntityWithNullableGuidTest extends TestCase
     #[Test]
     public function it_is_not_the_same(): void
     {
-        $a = new TestEntityWithNullableId(
-            $id1 = $this->createMock(Identifier::class),
-        );
-
-        $b = new TestEntityWithNullableId(
-            $id2 = $this->createStub(Identifier::class),
-        );
-
-        $id1
-            ->expects($this->exactly(2))
-            ->method('is')
-            ->with($this->identicalTo($id2))
-            ->willReturn(false);
+        $a = new TestEntityWithNullableId(new IntegerId(1));
+        $b = new TestEntityWithNullableId(new IntegerId(2));
 
         $this->assertFalse($a->is($b));
         $this->assertTrue($a->isNot($b));
@@ -159,16 +122,9 @@ final class EntityWithNullableGuidTest extends TestCase
     #[Test]
     public function it_is_different_class(): void
     {
-        $a = new TestEntityWithNullableId(
-            $id1 = $this->createMock(Identifier::class),
-        );
-
+        $a = new TestEntityWithNullableId(new IntegerId(1));
         $b = $this->createStub(Entity::class);
-        $b->method('getId')->willReturn($this->createStub(Identifier::class));
-
-        $id1
-            ->expects($this->never())
-            ->method('is');
+        $b->method('getId')->willReturn(new IntegerId(1));
 
         $this->assertFalse($a->is($b));
         $this->assertTrue($a->isNot($b));

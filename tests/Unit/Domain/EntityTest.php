@@ -13,8 +13,6 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Domain;
 
 use CloudCreativity\Modules\Contracts\Domain\Entity;
-use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
-use CloudCreativity\Modules\Domain\IsEntity;
 use CloudCreativity\Modules\Toolkit\Identifiers\Guid;
 use CloudCreativity\Modules\Toolkit\Identifiers\IntegerId;
 use PHPUnit\Framework\Attributes\Test;
@@ -36,19 +34,8 @@ final class EntityTest extends TestCase
     #[Test]
     public function it_is_the_same(): void
     {
-        $a = new TestEntity(
-            $id1 = $this->createMock(Identifier::class),
-        );
-
-        $b = new TestEntity(
-            $id2 = $this->createStub(Identifier::class),
-        );
-
-        $id1
-            ->expects($this->exactly(2))
-            ->method('is')
-            ->with($this->identicalTo($id2))
-            ->willReturn(true);
+        $a = new TestEntity(new IntegerId(1));
+        $b = new TestEntity(new IntegerId(1));
 
         $this->assertTrue($a->is($b));
         $this->assertFalse($a->isNot($b));
@@ -57,19 +44,8 @@ final class EntityTest extends TestCase
     #[Test]
     public function it_is_not_the_same(): void
     {
-        $a = new TestEntity(
-            $id1 = $this->createMock(Identifier::class),
-        );
-
-        $b = new TestEntity(
-            $id2 = $this->createStub(Identifier::class),
-        );
-
-        $id1
-            ->expects($this->exactly(2))
-            ->method('is')
-            ->with($this->identicalTo($id2))
-            ->willReturn(false);
+        $a = new TestEntity(new IntegerId(1));
+        $b = new TestEntity(new IntegerId(2));
 
         $this->assertFalse($a->is($b));
         $this->assertTrue($a->isNot($b));
@@ -78,16 +54,9 @@ final class EntityTest extends TestCase
     #[Test]
     public function it_is_different_class(): void
     {
-        $a = new TestEntity(
-            $id1 = $this->createMock(Identifier::class),
-        );
-
+        $a = new TestEntity(new IntegerId(1));
         $b = $this->createStub(Entity::class);
-        $b->method('getId')->willReturn($this->createStub(Identifier::class));
-
-        $id1
-            ->expects($this->never())
-            ->method('is');
+        $b->method('getId')->willReturn(new IntegerId(1));
 
         $this->assertFalse($a->is($b));
         $this->assertTrue($a->isNot($b));
@@ -96,30 +65,19 @@ final class EntityTest extends TestCase
     #[Test]
     public function it_can_use_trait_on_non_readonly_class(): void
     {
-        $id = new IntegerId(123);
-
-        $entity = new class ($id, 'Bob') implements Entity {
-            use IsEntity;
-
-            public function __construct(Identifier $id, private string $name)
-            {
-                $this->id = $id;
-            }
-
-            public function changeName(string $name): void
-            {
-                $this->name = $name;
-            }
-
-            public function getName(): string
-            {
-                return $this->name;
-            }
-        };
+        $entity = new MutableTestEntity($id = new IntegerId(123), 'Bob');
 
         $this->assertSame($id, $entity->getId());
         $this->assertSame('Bob', $entity->getName());
+    }
+
+    #[Test]
+    public function it_can_change_state_on_non_readonly_class(): void
+    {
+        $entity = new MutableTestEntity(new IntegerId(123), 'Bob');
+
         $entity->changeName('Chris');
+
         $this->assertSame('Chris', $entity->getName());
     }
 }

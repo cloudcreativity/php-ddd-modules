@@ -13,47 +13,37 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\DomainEventDispatching;
 
 use Closure;
+use CloudCreativity\Modules\Application\DomainEventDispatching\ListenerContainer;
 use CloudCreativity\Modules\Application\DomainEventDispatching\UnitOfWorkAwareDispatcher;
-use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\ListenerContainer;
-use CloudCreativity\Modules\Contracts\Application\UnitOfWork\DispatchAfterCommit;
-use CloudCreativity\Modules\Contracts\Application\UnitOfWork\DispatchBeforeCommit;
+use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager as UnitOfWorkManagerImpl;
+use CloudCreativity\Modules\Bus\PsrPipeContainer;
+use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\ListenerContainer as IListenerContainer;
 use CloudCreativity\Modules\Contracts\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEventDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
-use PHPUnit\Framework\Attributes\Depends;
+use CloudCreativity\Modules\Testing\FakeLogger;
+use CloudCreativity\Modules\Testing\FakeUnitOfWork;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 
 final class UnitOfWorkAwareDispatcherTest extends TestCase
 {
-    private ListenerContainer&MockObject $listeners;
-
-    private UnitOfWorkAwareDispatcher $dispatcher;
-
-    protected function setUp(): void
+    #[Test]
+    public function it_is_a_domain_event_dispatcher(): void
     {
-        parent::setUp();
+        $dispatcher = $this->makeDispatcher($this->createStub(UnitOfWorkManager::class));
 
-        $this->listeners = $this->createMock(ListenerContainer::class);
-        $this->dispatcher = $this->createDispatcher($this->createStub(UnitOfWorkManager::class));
-    }
-
-    protected function tearDown(): void
-    {
-        unset($this->dispatcher, $this->listeners);
-        parent::tearDown();
+        $this->assertInstanceOf(DomainEventDispatcher::class, $dispatcher);
     }
 
     #[Test]
     public function it_dispatches_immediately(): void
     {
-        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
-        $this->dispatcher = $this->createDispatcher($unitOfWorkManager);
-
         $sequence = [];
         $event = new TestImmediateDomainEvent();
+        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
 
         $listener1 = $this->createMock(TestListener::class);
         $listener2 = $this->createMock(TestListener::class);
@@ -62,21 +52,25 @@ final class UnitOfWorkAwareDispatcherTest extends TestCase
         $listener5 = $this->createMock(TestListenerAfterCommit::class);
         $listener6 = $this->createMock(TestListenerAfterCommit::class);
         $listener7 = $this->createMock(TestListener::class);
-
         $listener2Closure = static fn (DomainEvent $event) => $listener2->handle($event);
 
-        $this->listeners
-            ->expects($this->exactly(5))
-            ->method('get')
-            ->willReturnCallback(fn (string $name) => match ($name) {
-                'Listener1' => $listener1,
-                'Listener3' => $listener3,
-                'Listener4' => $listener4,
-                'Listener5' => $listener5,
-                'Listener6' => $listener6,
-                'Listener7' => $listener7,
-                default => throw new \RuntimeException('Unexpected name: ' . $name),
-            });
+        $dispatcher = $this->makeDispatcher($unitOfWorkManager, [
+            'Listener1' => $listener1,
+            'Listener3' => $listener3,
+            'Listener4' => $listener4,
+            'Listener5' => $listener5,
+            'Listener6' => $listener6,
+            'Listener7' => $listener7,
+        ]);
+        $dispatcher->listen($event::class, [
+            'Listener1',
+            $listener2Closure,
+            'Listener3',
+            'Listener4',
+            'Listener5',
+            'Listener6',
+        ]);
+        $dispatcher->listen(TestDomainEvent::class, 'Listener7');
 
         $listener1
             ->expects($this->once())
@@ -126,36 +120,24 @@ final class UnitOfWorkAwareDispatcherTest extends TestCase
             ->expects($this->exactly(2))
             ->method('afterCommit');
 
-        $this->dispatcher->listen($event::class, [
-            'Listener1',
-            $listener2Closure,
-            'Listener3',
-            'Listener4',
-            'Listener5',
-            'Listener6',
-        ]);
-        $this->dispatcher->listen(TestDomainEvent::class, 'Listener7');
+        $dispatcher->dispatch($event);
 
-        $this->dispatcher->dispatch($event);
-
-        $this->assertInstanceOf(DomainEventDispatcher::class, $this->dispatcher);
-        $this->assertSame($sequence, ['Listener1', 'Listener2', 'Listener3']);
+        $this->assertSame(['Listener1', 'Listener2', 'Listener3'], $sequence);
     }
 
     #[Test]
     public function it_does_not_dispatch_immediately(): void
     {
-        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
-        $this->dispatcher = $this->createDispatcher($unitOfWorkManager);
-
         $event = $this->createStub(DomainEvent::class);
-
+        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
         $listener1 = $this->createMock(TestListener::class);
         $listener2 = $this->createMock(TestListener::class);
 
-        $this->listeners
-            ->expects($this->never())
-            ->method('get');
+        $dispatcher = $this->makeDispatcher($unitOfWorkManager, [
+            'Listener1' => $listener1,
+            'Listener2' => $listener2,
+        ]);
+        $dispatcher->listen($event::class, ['Listener1', 'Listener2']);
 
         $listener1
             ->expects($this->never())
@@ -167,40 +149,28 @@ final class UnitOfWorkAwareDispatcherTest extends TestCase
 
         $unitOfWorkManager
             ->expects($this->once())
-            ->method('beforeCommit');  // we'll prove this works in the subsequent test
+            ->method('beforeCommit');
 
         $unitOfWorkManager
             ->expects($this->never())
             ->method('afterCommit');
 
-        $this->dispatcher->listen($event::class, [
-            'Listener1',
-            'Listener2',
-        ]);
-
-        $this->dispatcher->dispatch($event);
+        $dispatcher->dispatch($event);
     }
 
-    #[Depends('it_does_not_dispatch_immediately')]
     #[Test]
     public function it_dispatches_event_in_before_commit_callback(): void
     {
-        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
-        $this->dispatcher = $this->createDispatcher($unitOfWorkManager);
-
         $event = new class () extends TestDomainEvent {};
-
+        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
         $listener1 = $this->createMock(TestListener::class);
         $listener2 = $this->createMock(TestListener::class);
 
-        $this->listeners
-            ->expects($this->exactly(2))
-            ->method('get')
-            ->willReturnCallback(static fn (string $name) => match ($name) {
-                'Listener1' => $listener1,
-                'Listener2' => $listener2,
-                default => throw new \RuntimeException('Unexpected name: ' . $name),
-            });
+        $dispatcher = $this->makeDispatcher($unitOfWorkManager, [
+            'Listener1' => $listener1,
+            'Listener2' => $listener2,
+        ]);
+        $dispatcher->listen($event::class, ['Listener1', 'Listener2']);
 
         $listener1
             ->expects($this->once())
@@ -215,27 +185,22 @@ final class UnitOfWorkAwareDispatcherTest extends TestCase
         $unitOfWorkManager
             ->expects($this->once())
             ->method('beforeCommit')
-            ->with($this->callback(function (Closure $callback): bool {
+            ->willReturnCallback(function (Closure $callback): void {
                 $callback();
-                return true;
-            }));
+            });
 
-        $this->dispatcher->listen($event::class, [
-            'Listener1',
-            'Listener2',
-        ]);
-
-        $this->dispatcher->dispatch($event);
+        $dispatcher->dispatch($event);
     }
 
     #[Test]
     public function it_dispatches_to_a_before_commit_listener_before_commit(): void
     {
-        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
-        $this->dispatcher = $this->createDispatcher($unitOfWorkManager);
-
         $event = new TestImmediateDomainEvent();
+        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
         $listener = $this->createMock(TestListenerBeforeCommit::class);
+
+        $dispatcher = $this->makeDispatcher($unitOfWorkManager, ['BeforeCommitListener' => $listener]);
+        $dispatcher->listen($event::class, 'BeforeCommitListener');
 
         $listener
             ->expects($this->once())
@@ -245,7 +210,7 @@ final class UnitOfWorkAwareDispatcherTest extends TestCase
         $unitOfWorkManager
             ->expects($this->once())
             ->method('beforeCommit')
-            ->willReturnCallback(function (Closure $callback) {
+            ->willReturnCallback(function (Closure $callback): void {
                 $callback();
             });
 
@@ -253,24 +218,18 @@ final class UnitOfWorkAwareDispatcherTest extends TestCase
             ->expects($this->never())
             ->method('afterCommit');
 
-        $this->listeners
-            ->expects($this->once())
-            ->method('get')
-            ->with('BeforeCommitListener')
-            ->willReturn($listener);
-
-        $this->dispatcher->listen($event::class, 'BeforeCommitListener');
-        $this->dispatcher->dispatch($event);
+        $dispatcher->dispatch($event);
     }
 
     #[Test]
     public function it_dispatches_to_an_after_commit_listener_after_commit(): void
     {
-        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
-        $this->dispatcher = $this->createDispatcher($unitOfWorkManager);
-
         $event = new TestImmediateDomainEvent();
+        $unitOfWorkManager = $this->createMock(UnitOfWorkManager::class);
         $listener = $this->createMock(TestListenerAfterCommit::class);
+
+        $dispatcher = $this->makeDispatcher($unitOfWorkManager, ['AfterCommitListener' => $listener]);
+        $dispatcher->listen($event::class, 'AfterCommitListener');
 
         $listener
             ->expects($this->once())
@@ -280,7 +239,7 @@ final class UnitOfWorkAwareDispatcherTest extends TestCase
         $unitOfWorkManager
             ->expects($this->once())
             ->method('afterCommit')
-            ->willReturnCallback(function (Closure $callback) {
+            ->willReturnCallback(function (Closure $callback): void {
                 $callback();
             });
 
@@ -288,22 +247,24 @@ final class UnitOfWorkAwareDispatcherTest extends TestCase
             ->expects($this->never())
             ->method('beforeCommit');
 
-        $this->listeners
-            ->expects($this->once())
-            ->method('get')
-            ->with('AfterCommitListener')
-            ->willReturn($listener);
-
-        $this->dispatcher->listen($event::class, 'AfterCommitListener');
-        $this->dispatcher->dispatch($event);
+        $dispatcher->dispatch($event);
     }
 
     #[Test]
     public function it_does_nothing_when_there_are_no_listeners(): void
     {
         $event = $this->createStub(DomainEvent::class);
-        $this->listeners->expects($this->never())->method($this->anything());
-        $this->dispatcher->dispatch($event);
+        $listeners = $this->createMock(IListenerContainer::class);
+        $dispatcher = new class (
+            unitOfWorkManager: $this->createStub(UnitOfWorkManager::class),
+            listeners: $listeners,
+        ) extends UnitOfWorkAwareDispatcher {};
+
+        $listeners
+            ->expects($this->never())
+            ->method($this->anything());
+
+        $dispatcher->dispatch($event);
     }
 
     #[Test]
@@ -325,84 +286,102 @@ final class UnitOfWorkAwareDispatcherTest extends TestCase
             return $next($event3);
         };
 
-        $middleware = $this->createMock(PipeContainer::class);
-        $this->dispatcher = $this->createDispatcher($this->createStub(UnitOfWorkManager::class), $middleware);
-
-        $middleware
-            ->expects($this->once())
-            ->method('get')
-            ->with('Middleware2')
-            ->willReturn($b);
-
         $listener = $this->createMock(TestListener::class);
+        $middleware = new PsrPipeContainer();
+        $middleware->bind('Middleware2', fn () => $b);
+
+        $dispatcher = $this->makeDispatcher(
+            $this->createStub(UnitOfWorkManager::class),
+            ['MyListener' => $listener],
+            $middleware,
+        );
+        $dispatcher->through([$a, 'Middleware2']);
+        $dispatcher->listen($event3::class, 'MyListener');
 
         $listener
             ->expects($this->once())
             ->method('handle')
             ->with($this->identicalTo($event3));
 
-        $this->listeners
-            ->expects($this->once())
-            ->method('get')
-            ->with('MyListener')
-            ->willReturn($listener);
-
-        $this->dispatcher->through([$a, 'Middleware2']);
-        $this->dispatcher->listen($event3::class, 'MyListener');
-        $this->dispatcher->dispatch($event1);
+        $dispatcher->dispatch($event1);
     }
 
     #[Test]
-    public function it_fails_when_the_listener_does_not_have_a_handle_method(): void
+    public function it_logs_before_commit_listeners(): void
     {
         $event = new TestImmediateDomainEvent();
+        $listener = $this->createMock(TestListenerBeforeCommit::class);
+        $logger = new FakeLogger();
+        $unitOfWork = new FakeUnitOfWork();
+        $unitOfWorkManager = new UnitOfWorkManagerImpl($unitOfWork);
+        $dispatcher = $this->makeDispatcher($unitOfWorkManager, ['MyListener' => $listener], logger: $logger);
+        $dispatcher->listen($event::class, 'MyListener');
+        $context = ['event' => $event::class, 'listener' => $listener::class];
 
-        $this->listeners
+        $listener
             ->expects($this->once())
-            ->method('get')
-            ->with('Listener1')
-            ->willReturn(new \DateTime());
+            ->method('handle')
+            ->with($this->identicalTo($event));
 
-        $this->expectException(\AssertionError::class);
-        $this->expectExceptionMessage('Listener "DateTime" is not an object with a handle method or a closure.');
+        $unitOfWorkManager->execute(static function () use ($dispatcher, $event): void {
+            $dispatcher->dispatch($event);
+        });
 
-        $this->dispatcher->listen($event::class, 'Listener1');
-        $this->dispatcher->dispatch($event);
+        $this->assertSame([
+            ['level' => LogLevel::DEBUG, 'message' => 'Deferring listener to be handled before commit.', 'context' => $context],
+            ['level' => LogLevel::DEBUG, 'message' => 'Executing listener before commit.', 'context' => $context],
+        ], $logger->log);
+        $this->assertSame(1, $unitOfWork->commits);
     }
 
     #[Test]
-    public function it_fails_when_a_listener_implements_both_before_and_after_commit(): void
+    public function it_logs_after_commit_listeners(): void
     {
-        $listener = new class () implements DispatchBeforeCommit, DispatchAfterCommit {
-            public function handle(): void
-            {
-                // no-op
-            }
-        };
-
-        $this->listeners
-            ->expects($this->once())
-            ->method('get')
-            ->with('InvalidListener')
-            ->willReturn($listener);
-
         $event = new TestImmediateDomainEvent();
-        $this->dispatcher->listen($event::class, 'InvalidListener');
+        $listener = $this->createMock(TestListenerAfterCommit::class);
+        $logger = new FakeLogger();
+        $unitOfWork = new FakeUnitOfWork();
+        $unitOfWorkManager = new UnitOfWorkManagerImpl($unitOfWork);
+        $dispatcher = $this->makeDispatcher($unitOfWorkManager, ['MyListener' => $listener], logger: $logger);
+        $dispatcher->listen($event::class, 'MyListener');
+        $context = ['event' => $event::class, 'listener' => $listener::class];
 
-        $this->expectException(\AssertionError::class);
-        $this->expectExceptionMessage('cannot be dispatched both before and after a unit of work is committed.');
+        $listener
+            ->expects($this->once())
+            ->method('handle')
+            ->with($this->identicalTo($event));
 
-        $this->dispatcher->dispatch($event);
+        $unitOfWorkManager->execute(static function () use ($dispatcher, $event): void {
+            $dispatcher->dispatch($event);
+        });
+
+        $this->assertSame([
+            ['level' => LogLevel::DEBUG, 'message' => 'Deferring listener to be handled after commit.', 'context' => $context],
+            ['level' => LogLevel::DEBUG, 'message' => 'Executing listener after commit.', 'context' => $context],
+        ], $logger->log);
+        $this->assertSame(1, $unitOfWork->commits);
     }
 
-    private function createDispatcher(
+    /**
+     * @param array<non-empty-string, object> $listeners
+     */
+    private function makeDispatcher(
         UnitOfWorkManager $unitOfWorkManager,
+        array $listeners = [],
         ?PipeContainer $middleware = null,
+        ?FakeLogger $logger = null,
     ): UnitOfWorkAwareDispatcher {
+        $container = new ListenerContainer();
+
+        foreach ($listeners as $name => $listener) {
+            $container->bind($name, fn () => $listener);
+        }
+
         return new class (
             unitOfWorkManager: $unitOfWorkManager,
-            listeners: $this->listeners,
-            middleware: $middleware ?? $this->createStub(PipeContainer::class),
+            listeners: $container,
+            middleware: $middleware,
+            logger: $logger,
         ) extends UnitOfWorkAwareDispatcher {};
     }
 }

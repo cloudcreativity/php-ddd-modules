@@ -12,10 +12,11 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Bus;
 
+use CloudCreativity\Modules\Bus\BusException;
 use CloudCreativity\Modules\Bus\PsrPipeContainer;
+use CloudCreativity\Modules\Testing\FakeContainer;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 
 final class PsrPipeContainerTest extends TestCase
 {
@@ -31,8 +32,15 @@ final class PsrPipeContainerTest extends TestCase
 
         $this->assertSame($a, $container->get('PipeA'));
         $this->assertSame($b, $container->get('PipeB'));
+    }
 
-        $this->expectException(\RuntimeException::class);
+    #[Test]
+    public function it_fails_to_resolve_an_unbound_pipe(): void
+    {
+        $container = new PsrPipeContainer();
+        $container->bind('PipeA', fn () => fn () => 1);
+
+        $this->expectException(BusException::class);
         $this->expectExceptionMessage('Unrecognised pipe name: PipeC');
 
         $container->get('PipeC');
@@ -41,24 +49,16 @@ final class PsrPipeContainerTest extends TestCase
     #[Test]
     public function it_falls_back_to_psr_container(): void
     {
-        $psrContainer = $this->createMock(ContainerInterface::class);
-
         $a = fn () => 1;
-        $b = fn () => 2;
         $c = fn () => 3;
+
+        $psrContainer = new FakeContainer();
+        $psrContainer->bind('PipeC', fn () => $c);
 
         $container = new PsrPipeContainer($psrContainer);
         $container->bind('PipeA', fn () => $a);
-        $container->bind('PipeB', fn () => $b);
-
-        $psrContainer
-            ->expects($this->once())
-            ->method('get')
-            ->with('PipeC')
-            ->willReturn($c);
 
         $this->assertSame($a, $container->get('PipeA'));
-        $this->assertSame($b, $container->get('PipeB'));
         $this->assertSame($c, $container->get('PipeC'));
     }
 }

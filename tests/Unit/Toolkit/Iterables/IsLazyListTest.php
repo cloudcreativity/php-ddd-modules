@@ -39,7 +39,9 @@ final class IsLazyListTest extends TestCase
             }
         };
 
-        $this->assertSame($expected, $list->all());
+        $actual = $list->all();
+
+        $this->assertSame($expected, $actual);
     }
 
     #[Test]
@@ -65,6 +67,67 @@ final class IsLazyListTest extends TestCase
             }
         };
 
-        $this->assertSame(['foo', 'bar', 'baz'], $list->all());
+        $actual = $list->all();
+
+        $this->assertSame(['foo', 'bar', 'baz'], $actual);
+    }
+
+    #[Test]
+    public function it_is_empty_when_there_is_no_source(): void
+    {
+        /**
+         * @implements LazyList<string>
+         */
+        $list = new class () implements LazyList {
+            /** @use IsLazyList<string> */
+            use IsLazyList;
+        };
+
+        $actual = $list->all();
+
+        $this->assertSame([], $actual);
+    }
+
+    #[Test]
+    public function it_iterates_over_nothing_when_there_is_no_source(): void
+    {
+        /**
+         * @implements LazyList<string>
+         */
+        $list = new class () implements LazyList {
+            /** @use IsLazyList<string> */
+            use IsLazyList;
+        };
+
+        $actual = iterator_to_array($list);
+
+        $this->assertSame([], $actual);
+    }
+
+    #[Test]
+    public function it_invokes_the_source_each_time_it_is_iterated(): void
+    {
+        /**
+         * @implements LazyList<int>
+         */
+        $list = new class () implements LazyList {
+            /** @use IsLazyList<int> */
+            use IsLazyList;
+
+            public int $calls = 0;
+
+            public function __construct()
+            {
+                $this->source = function () {
+                    $this->calls++;
+                    yield $this->calls;
+                };
+            }
+        };
+
+        $first = $list->all();
+        $second = $list->all();
+
+        $this->assertSame([[1], [2]], [$first, $second]);
     }
 }

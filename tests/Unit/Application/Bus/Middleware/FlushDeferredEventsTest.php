@@ -96,9 +96,9 @@ final class FlushDeferredEventsTest extends TestCase
             return $expected;
         });
 
+        $this->assertSame($expected, $actual);
         $this->assertSame(['next', 'forget'], $this->sequence);
     }
-
 
     #[Test]
     public function it_forgets_deferred_events_on_exception(): void
@@ -117,17 +117,19 @@ final class FlushDeferredEventsTest extends TestCase
             ->expects($this->never())
             ->method('flush');
 
+        $actual = null;
+
         try {
             ($this->middleware)($command, function ($in) use ($command, $expected) {
                 $this->assertSame($command, $in);
                 $this->sequence[] = 'next';
                 throw $expected;
             });
-            $this->fail('No exception thrown.');
         } catch (\LogicException $ex) {
-            $this->assertSame($expected, $ex);
+            $actual = $ex;
         }
 
+        $this->assertSame($expected, $actual);
         $this->assertSame(['next', 'forget'], $this->sequence);
     }
 }

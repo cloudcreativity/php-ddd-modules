@@ -21,14 +21,25 @@ use PHPUnit\Framework\TestCase;
 
 final class MathEventBusTest extends TestCase
 {
-    #[Test]
-    public function it_dispatches_events(): void
-    {
-        $a = new NumbersAddedHandler();
-        $b = new NumbersSubtractedHandler();
-        $c = new DefaultEventHandler();
+    private FakeContainer $container;
 
-        $container = new FakeContainer();
+    private NumbersAddedHandler $addedHandler;
+
+    private NumbersSubtractedHandler $subtractedHandler;
+
+    private DefaultEventHandler $defaultHandler;
+
+    private MathEventBus $bus;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->addedHandler = $a = new NumbersAddedHandler();
+        $this->subtractedHandler = $b = new NumbersSubtractedHandler();
+        $this->defaultHandler = $c = new DefaultEventHandler();
+
+        $this->container = $container = new FakeContainer();
         $container->bind(NumbersAddedHandler::class, fn () => $a);
         $container->bind(NumbersSubtractedHandler::class, fn () => $b);
         $container->bind(DefaultEventHandler::class, fn () => $c);
@@ -37,16 +48,60 @@ final class MathEventBusTest extends TestCase
             new UnitOfWorkManager($container->unitOfWork),
         ));
 
-        $bus = new MathEventBus($container);
+        $this->bus = new MathEventBus($container);
+    }
 
-        $bus->dispatch($ev1 = new NumbersAdded(1, 2, 3));
-        $bus->dispatch($ev2 = new NumbersSubtracted(10, 6, 4));
-        $bus->dispatch($ev3 = new NumbersDivided(12, 3, 4));
+    protected function tearDown(): void
+    {
+        unset(
+            $this->container,
+            $this->addedHandler,
+            $this->subtractedHandler,
+            $this->defaultHandler,
+            $this->bus,
+        );
+        parent::tearDown();
+    }
 
-        $this->assertSame([$ev1], $a->handled);
-        $this->assertSame([$ev2], $b->handled);
-        $this->assertSame([$ev3], $c->handled);
-        $this->assertCount(6, $container->logger);
-        $this->assertSame(1, $container->unitOfWork->commits);
+    #[Test]
+    public function it_dispatches_an_event_to_its_handler(): void
+    {
+        $event = new NumbersAdded(1, 2, 3);
+
+        $this->bus->dispatch($event);
+
+        $this->assertSame([$event], $this->addedHandler->handled);
+        $this->assertSame([], $this->subtractedHandler->handled);
+        $this->assertSame([], $this->defaultHandler->handled);
+        $this->assertCount(2, $this->container->logger);
+        $this->assertSame(0, $this->container->unitOfWork->commits);
+    }
+
+    #[Test]
+    public function it_dispatches_an_event_through_the_handler_middleware(): void
+    {
+        $event = new NumbersSubtracted(10, 6, 4);
+
+        $this->bus->dispatch($event);
+
+        $this->assertSame([], $this->addedHandler->handled);
+        $this->assertSame([$event], $this->subtractedHandler->handled);
+        $this->assertSame([], $this->defaultHandler->handled);
+        $this->assertCount(2, $this->container->logger);
+        $this->assertSame(1, $this->container->unitOfWork->commits);
+    }
+
+    #[Test]
+    public function it_dispatches_an_event_to_the_default_handler(): void
+    {
+        $event = new NumbersDivided(12, 3, 4);
+
+        $this->bus->dispatch($event);
+
+        $this->assertSame([], $this->addedHandler->handled);
+        $this->assertSame([], $this->subtractedHandler->handled);
+        $this->assertSame([$event], $this->defaultHandler->handled);
+        $this->assertCount(2, $this->container->logger);
+        $this->assertSame(0, $this->container->unitOfWork->commits);
     }
 }

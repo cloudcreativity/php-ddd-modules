@@ -20,40 +20,52 @@ use PHPUnit\Framework\TestCase;
 final class QueryHandlerTest extends TestCase
 {
     #[Test]
-    public function it_executes_the_query_and_returns_its_middleware(): void
+    public function it_executes_the_query(): void
     {
         $query = new TestQuery();
-
         $innerHandler = $this->createMock(TestQueryHandler::class);
+        $handler = new QueryHandler($innerHandler);
+
         $innerHandler
             ->expects($this->once())
             ->method('execute')
             ->with($this->identicalTo($query))
             ->willReturn($expected = Result::ok());
 
-        $innerHandler
-            ->expects($this->once())
-            ->method('middleware')
-            ->willReturn($middleware = ['Middleware1', 'Middleware2']);
+        $actual = $handler($query);
 
-        $handler = new QueryHandler($innerHandler);
-
-        $this->assertSame($expected, $handler($query));
-        $this->assertSame($middleware, $handler->middleware());
+        $this->assertSame($expected, $actual);
     }
 
     #[Test]
-    public function it_does_not_have_execute_method(): void
+    public function it_returns_the_middleware_of_the_inner_handler(): void
     {
-        $handler = new QueryHandler(new \DateTime());
-        $query = new TestQuery();
-        $queryClass = $query::class;
+        $innerHandler = $this->createStub(TestQueryHandler::class);
+        $innerHandler->method('middleware')->willReturn(['Middleware1', 'Middleware2']);
+        $handler = new QueryHandler($innerHandler);
 
-        $this->expectException(\AssertionError::class);
-        $this->expectExceptionMessage(
-            "Cannot dispatch \"{$queryClass}\" - handler \"DateTime\" does not have an execute method.",
-        );
+        $actual = $handler->middleware();
 
-        $handler($query);
+        $this->assertSame(['Middleware1', 'Middleware2'], $actual);
+    }
+
+    #[Test]
+    public function it_returns_middleware_from_the_through_attribute(): void
+    {
+        $handler = new QueryHandler(new TestQueryHandlerWithThrough());
+
+        $actual = $handler->middleware();
+
+        $this->assertSame(['Middleware1', 'Middleware2'], $actual);
+    }
+
+    #[Test]
+    public function it_returns_no_middleware_when_none_is_declared(): void
+    {
+        $handler = new QueryHandler(new \stdClass());
+
+        $actual = $handler->middleware();
+
+        $this->assertSame([], $actual);
     }
 }

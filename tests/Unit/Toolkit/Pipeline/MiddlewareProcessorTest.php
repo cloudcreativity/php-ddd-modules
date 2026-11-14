@@ -76,6 +76,37 @@ final class MiddlewareProcessorTest extends TestCase
         $this->assertSame('FOO', $result);
     }
 
+    #[Test]
+    public function it_wraps_a_callable_destination(): void
+    {
+        $processor = MiddlewareProcessor::wrap('strtoupper');
+
+        $result = $processor->process(
+            'foo',
+            static fn (string $value, Closure $next): mixed => $next($value . 'bar'),
+        );
+
+        $this->assertSame('FOOBAR', $result);
+    }
+
+    #[Test]
+    public function it_calls_a_destination_without_returning_its_result(): void
+    {
+        $called = null;
+        $processor = MiddlewareProcessor::call(static function (string $value) use (&$called): string {
+            $called = $value;
+            return 'ignored';
+        });
+
+        $result = $processor->process(
+            'foo',
+            static fn (string $value, Closure $next): mixed => $next($value . 'bar'),
+        );
+
+        $this->assertNull($result);
+        $this->assertSame('foobar', $called);
+    }
+
     private function createMiddleware(string $step): Closure
     {
         return static function (array $values, Closure $next) use ($step) {

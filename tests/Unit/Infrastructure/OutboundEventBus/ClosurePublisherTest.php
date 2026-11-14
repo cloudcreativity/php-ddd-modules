@@ -15,6 +15,9 @@ namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\ClosurePublisher;
+use CloudCreativity\Modules\Testing\FakeContainer;
+use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -66,12 +69,8 @@ final class ClosurePublisherTest extends TestCase
             return $next($event4);
         };
 
-        $middleware = $this->createMock(IPipeContainer::class);
-        $middleware
-            ->expects($this->once())
-            ->method('get')
-            ->with('MySecondMiddleware')
-            ->willReturn($middleware2);
+        $middleware = new PipeContainer();
+        $middleware->bind('MySecondMiddleware', fn () => $middleware2);
 
         $publisher = $this->createPublisher($middleware);
         $publisher->through([
@@ -102,12 +101,8 @@ final class ClosurePublisherTest extends TestCase
             return $next($event3);
         };
 
-        $psrContainer = $this->createMock(ContainerInterface::class);
-        $psrContainer
-            ->expects($this->once())
-            ->method('get')
-            ->with('MySecondMiddleware')
-            ->willReturn($middleware2);
+        $psrContainer = new FakeContainer();
+        $psrContainer->instance('MySecondMiddleware', $middleware2);
 
         $publisher = $this->createPublisher($psrContainer);
         $publisher->through([
@@ -119,7 +114,6 @@ final class ClosurePublisherTest extends TestCase
 
         $this->assertSame([$event3], $this->actual);
     }
-
 
     #[Test]
     public function it_publishes_using_the_handler_bound_to_the_event_class(): void
@@ -145,6 +139,30 @@ final class ClosurePublisherTest extends TestCase
 
         $this->assertEmpty($this->actual);
         $this->assertSame($expected, $actual);
+    }
+
+    #[Test]
+    public function it_publishes_through_middleware_from_the_through_attribute(): void
+    {
+        $event1 = $this->createStub(IntegrationEvent::class);
+        $event2 = $this->createStub(IntegrationEvent::class);
+
+        $middleware = new PipeContainer();
+        $middleware->bind('MyMiddleware', fn () => function ($event, \Closure $next) use ($event1, $event2) {
+            $this->assertSame($event1, $event);
+            return $next($event2);
+        });
+
+        $publisher = new #[Through('MyMiddleware')] class (
+            function (IntegrationEvent $event): void {
+                $this->actual[] = $event;
+            },
+            $middleware,
+        ) extends ClosurePublisher {};
+
+        $publisher->publish($event1);
+
+        $this->assertSame([$event2], $this->actual);
     }
 
     private function createPublisher(ContainerInterface|IPipeContainer|null $middleware = null): ClosurePublisher

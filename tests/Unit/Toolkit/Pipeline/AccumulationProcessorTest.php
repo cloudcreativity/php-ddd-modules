@@ -28,17 +28,17 @@ final class AccumulationProcessorTest extends TestCase
         );
 
         $a = function ($actual) use ($input): int {
-            $this->assertSame($actual, $input);
+            $this->assertSame($input, $actual);
             return 1;
         };
 
         $b = function ($actual) use ($input): int {
-            $this->assertSame($actual, $input);
+            $this->assertSame($input, $actual);
             return 2;
         };
 
         $c = function ($actual) use ($input): int {
-            $this->assertSame($actual, $input);
+            $this->assertSame($input, $actual);
             return 3;
         };
 
@@ -58,17 +58,17 @@ final class AccumulationProcessorTest extends TestCase
         );
 
         $a = function ($actual) use ($input): int {
-            $this->assertSame($actual, $input);
+            $this->assertSame($input, $actual);
             return 1;
         };
 
         $b = function ($actual) use ($input): int {
-            $this->assertSame($actual, $input);
+            $this->assertSame($input, $actual);
             return 2;
         };
 
         $c = function ($actual) use ($input): int {
-            $this->assertSame($actual, $input);
+            $this->assertSame($input, $actual);
             return 3;
         };
 

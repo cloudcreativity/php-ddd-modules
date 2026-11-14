@@ -13,9 +13,10 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\UnitOfWork;
 
 use Closure;
+use CloudCreativity\Modules\Application\ApplicationException;
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
-use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
 use CloudCreativity\Modules\Contracts\Application\Ports\UnitOfWork;
+use CloudCreativity\Modules\Testing\FakeExceptionReporter;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -26,6 +27,8 @@ final class UnitOfWorkManagerTest extends TestCase
 {
     private MockObject&UnitOfWork $unitOfWork;
 
+    private FakeExceptionReporter $reporter;
+
     private UnitOfWorkManager $manager;
 
     protected function setUp(): void
@@ -34,13 +37,13 @@ final class UnitOfWorkManagerTest extends TestCase
 
         $this->manager = new UnitOfWorkManager(
             $this->unitOfWork = $this->createMock(UnitOfWork::class),
-            $this->createStub(ExceptionReporter::class),
+            $this->reporter = new FakeExceptionReporter(),
         );
     }
 
     protected function tearDown(): void
     {
-        unset($this->manager, $this->unitOfWork);
+        unset($this->manager, $this->unitOfWork, $this->reporter);
         parent::tearDown();
     }
 
@@ -48,17 +51,6 @@ final class UnitOfWorkManagerTest extends TestCase
     public function it_executes_callbacks(): void
     {
         $sequence = [];
-
-        $this->unitOfWork
-            ->expects($this->once())
-            ->method('execute')
-            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence) {
-                $this->assertSame(1, $attempts);
-                $sequence[] = 'start';
-                $result = $callback();
-                $sequence[] = 'commit';
-                return $result;
-            });
 
         $before1 = function () use (&$sequence): void {
             $this->assertSame(['start'], $sequence);
@@ -82,6 +74,17 @@ final class UnitOfWorkManagerTest extends TestCase
 
         $expected = new \DateTime();
 
+        $this->unitOfWork
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence) {
+                $this->assertSame(1, $attempts);
+                $sequence[] = 'start';
+                $result = $callback();
+                $sequence[] = 'commit';
+                return $result;
+            });
+
         $actual = $this->manager->execute(function () use ($before1, $before2, $after1, $after2, $expected) {
             $this->manager->beforeCommit($before1);
             $this->manager->afterCommit($after1);
@@ -97,18 +100,9 @@ final class UnitOfWorkManagerTest extends TestCase
     #[Test]
     public function it_executes_callback_when_transaction_fails_to_commit(): void
     {
-        $expected = new \RuntimeException('Boom');
+        $expected = new RuntimeException('Boom');
         $sequence = [];
-
-        $this->unitOfWork
-            ->expects($this->once())
-            ->method('execute')
-            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence, $expected) {
-                $this->assertSame(1, $attempts);
-                $sequence[] = 'start';
-                $callback();
-                throw $expected;
-            });
+        $actual = null;
 
         $before1 = function () use (&$sequence): void {
             $this->assertSame(['start'], $sequence);
@@ -124,17 +118,27 @@ final class UnitOfWorkManagerTest extends TestCase
             $this->fail('Not expecting after callback to be executed.');
         };
 
+        $this->unitOfWork
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence, $expected) {
+                $this->assertSame(1, $attempts);
+                $sequence[] = 'start';
+                $callback();
+                throw $expected;
+            });
+
         try {
             $this->manager->execute(function () use ($before1, $before2, $after) {
                 $this->manager->beforeCommit($before1);
                 $this->manager->afterCommit($after);
                 $this->manager->beforeCommit($before2);
             });
-            $this->fail('No exception thrown.');
-        } catch (\RuntimeException $ex) {
-            $this->assertSame($expected, $ex);
+        } catch (RuntimeException $ex) {
+            $actual = $ex;
         }
 
+        $this->assertSame($expected, $actual);
         $this->assertSame(['start', 'before1', 'before2'], $sequence);
     }
 
@@ -145,17 +149,6 @@ final class UnitOfWorkManagerTest extends TestCase
     public function it_executes_additional_commit_callbacks(): void
     {
         $sequence = [];
-
-        $this->unitOfWork
-            ->expects($this->once())
-            ->method('execute')
-            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence) {
-                $this->assertSame(1, $attempts);
-                $sequence[] = 'start';
-                $result = $callback();
-                $sequence[] = 'commit';
-                return $result;
-            });
 
         $before = [
             function () use (&$sequence): void {
@@ -192,6 +185,17 @@ final class UnitOfWorkManagerTest extends TestCase
 
         $expected = new \DateTime();
 
+        $this->unitOfWork
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence) {
+                $this->assertSame(1, $attempts);
+                $sequence[] = 'start';
+                $result = $callback();
+                $sequence[] = 'commit';
+                return $result;
+            });
+
         $actual = $this->manager->execute(function () use ($before, $after, $expected) {
             $this->manager->beforeCommit($before[0]);
             $this->manager->beforeCommit($before[1]);
@@ -227,32 +231,22 @@ final class UnitOfWorkManagerTest extends TestCase
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
-        $result1 = $this->manager->execute(function () {
+        $this->manager->execute(function () {
             $this->manager->beforeCommit(fn () => null);
             $this->manager->afterCommit(fn () => null);
-            return 1;
         });
 
         // this would error if the manager is not empty at this point (tests below prove that).
-        $result2 = $this->manager->execute(fn () => 2);
+        $actual = $this->manager->execute(fn () => 2);
 
-        $this->assertSame(1, $result1);
-        $this->assertSame(2, $result2);
+        $this->assertSame(2, $actual);
     }
 
     #[Test]
     public function it_flushes_callbacks_on_unsuccessful_transaction(): void
     {
-        $reporter = $this->createMock(ExceptionReporter::class);
-        $this->manager = new UnitOfWorkManager($this->unitOfWork, $reporter);
-
         $ex = new LogicException('Boom');
         $count = 0;
-
-        $reporter
-            ->expects($this->exactly(2)) // only "swallowed" exceptions are reported
-            ->method('report')
-            ->with($this->identicalTo($ex));
 
         $this->unitOfWork
             ->expects($this->exactly(4))
@@ -271,15 +265,15 @@ final class UnitOfWorkManagerTest extends TestCase
                 $this->manager->beforeCommit(fn () => null);
                 $this->manager->afterCommit(fn () => null);
             }, 2);
-            $this->fail('No exception thrown.');
-        } catch (LogicException $ex) {
-            $this->assertSame($ex, $ex);
+        } catch (LogicException) {
+            // expected
         }
 
         // this would error if the manager is not empty at this point (tests below prove that).
-        $result = $this->manager->execute(fn () => true, 2);
+        $actual = $this->manager->execute(fn () => true, 2);
 
-        $this->assertTrue($result);
+        $this->assertTrue($actual);
+        $this->assertSame([$ex, $ex], $this->reporter->reported); // only "swallowed" exceptions are reported
     }
 
     /**
@@ -296,17 +290,9 @@ final class UnitOfWorkManagerTest extends TestCase
     #[Test]
     public function it_handles_callback_executing_multiple_times(): void
     {
-        $reporter = $this->createMock(ExceptionReporter::class);
-        $this->manager = new UnitOfWorkManager($this->unitOfWork, $reporter);
-
         $ex = new LogicException('Boom!');
         $sequence = [];
         $count = 0;
-
-        $reporter
-            ->expects($this->exactly(2))
-            ->method('report')
-            ->with($this->identicalTo($ex));
 
         $before = [
             function () use (&$sequence): void {
@@ -371,6 +357,7 @@ final class UnitOfWorkManagerTest extends TestCase
             'after1',
             'after2',
         ], $sequence);
+        $this->assertSame([$ex, $ex], $this->reporter->reported);
     }
 
     /**
@@ -389,17 +376,9 @@ final class UnitOfWorkManagerTest extends TestCase
     #[Test]
     public function it_handles_unit_of_work_failing_multiple_times(): void
     {
-        $reporter = $this->createMock(ExceptionReporter::class);
-        $this->manager = new UnitOfWorkManager($this->unitOfWork, $reporter);
-
         $ex = new LogicException('Boom!');
         $sequence = [];
         $count = 0;
-
-        $reporter
-            ->expects($this->exactly(2))
-            ->method('report')
-            ->with($this->identicalTo($ex));
 
         $before = [
             function () use (&$sequence): void {
@@ -460,6 +439,7 @@ final class UnitOfWorkManagerTest extends TestCase
             'after1',
             'after2',
         ], $sequence);
+        $this->assertSame([$ex, $ex], $this->reporter->reported);
     }
 
     #[Test]
@@ -469,7 +449,7 @@ final class UnitOfWorkManagerTest extends TestCase
             ->expects($this->never())
             ->method('execute');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ApplicationException::class);
         $this->expectExceptionMessage('Cannot queue a before commit callback when not executing a unit of work.');
 
         $this->manager->beforeCommit(fn () => null);
@@ -482,7 +462,7 @@ final class UnitOfWorkManagerTest extends TestCase
             ->expects($this->never())
             ->method('execute');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ApplicationException::class);
         $this->expectExceptionMessage('Cannot queue an after commit callback when not executing a unit of work.');
 
         $this->manager->afterCommit(fn () => null);
@@ -496,7 +476,7 @@ final class UnitOfWorkManagerTest extends TestCase
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ApplicationException::class);
         $this->expectExceptionMessage(
             'Not expecting unit of work manager to start a unit of work within an existing one.',
         );
@@ -514,7 +494,7 @@ final class UnitOfWorkManagerTest extends TestCase
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ApplicationException::class);
         $this->expectExceptionMessage('Cannot queue a before commit callback as unit of work has been committed.');
 
         $this->manager->execute(function () {
@@ -527,9 +507,6 @@ final class UnitOfWorkManagerTest extends TestCase
     #[Test]
     public function it_fails_if_attempts_is_not_greater_than_zero(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Attempts must be greater than zero.');
-
         /**
          * Simulates an infinite loop if the zero attempts is not rejected.
          */
@@ -538,7 +515,10 @@ final class UnitOfWorkManagerTest extends TestCase
             ->method('execute')
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
+        $this->expectException(ApplicationException::class);
+        $this->expectExceptionMessage('Attempts must be greater than zero.');
+
         /** @phpstan-ignore-next-line */
-        $this->manager->execute(fn () => throw new \LogicException('Boom!'), 0);
+        $this->manager->execute(fn () => throw new LogicException('Boom!'), 0);
     }
 }
