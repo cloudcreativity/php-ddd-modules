@@ -255,6 +255,9 @@ $manager = new UnitOfWorkManager(
 The second constructor argument of the unit of work manager is
 an [exception reporter.](../infrastructure/exception-reporting) This is useful if the unit of work manager is handling
 multiple commit attempts. It allows it to report any exceptions that occur prior to a re-attempt.
+
+Only failures that occur before the unit of work commits are re-attempted. Once the unit of work has committed, an
+exception thrown by an after commit callback is not re-attempted, as this would execute the committed work again.
 :::
 
 ### Singleton Instance
@@ -291,6 +294,11 @@ $manager->afterCommit(function (): void {
     // some deferred work.
 });
 ```
+
+As the transaction has already been committed, a failing after commit callback does not prevent the remaining after
+commit callbacks from being executed. Once they have all been executed, if exactly one of them failed, its exception is
+thrown. If more than one failed, an `AfterCommitCallbacksFailed` exception is thrown instead. Its `exceptions()` method
+returns all the exceptions in the order they were thrown, and its previous exception is the first one.
 
 ## Deferring Domain Events
 

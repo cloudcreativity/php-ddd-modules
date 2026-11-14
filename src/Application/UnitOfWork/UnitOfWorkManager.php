@@ -53,7 +53,16 @@ final class UnitOfWorkManager implements IUnitOfWorkManager
             throw new ApplicationException('Attempts must be greater than zero.');
         }
 
-        return $this->retry($callback, $attempts);
+        try {
+            $result = $this->retry($callback, $attempts);
+            // The after commit callbacks are executed outside the retry scope, as the unit of work
+            // has been committed at this point: so it must not be re-attempted if they fail.
+            $this->committed = true;
+            $this->executeAfterCommit();
+            return $result;
+        } finally {
+            $this->reset();
+        }
     }
 
     private function retry(Closure $callback, int $attempts): mixed
@@ -75,21 +84,25 @@ final class UnitOfWorkManager implements IUnitOfWorkManager
     private function transaction(Closure $callback): mixed
     {
         try {
-            $result = $this->unitOfWork->execute(function () use ($callback) {
+            return $this->unitOfWork->execute(function () use ($callback) {
                 $this->active = true;
                 $value = $callback();
                 $this->executeBeforeCommit();
                 return $value;
             });
-            $this->committed = true;
-            $this->executeAfterCommit();
-            return $result;
-        } finally {
-            $this->active = false;
-            $this->committed = false;
-            $this->beforeCommit = [];
-            $this->afterCommit = [];
+        } catch (Throwable $ex) {
+            // Forget any callbacks registered by the failed attempt, so they are not executed twice.
+            $this->reset();
+            throw $ex;
         }
+    }
+
+    private function reset(): void
+    {
+        $this->active = false;
+        $this->committed = false;
+        $this->beforeCommit = [];
+        $this->afterCommit = [];
     }
 
     public function beforeCommit(callable $callback): void
@@ -125,10 +138,31 @@ final class UnitOfWorkManager implements IUnitOfWorkManager
         }
     }
 
+    /**
+     * Execute the after commit callbacks.
+     *
+     * As the unit of work has been committed, a failing callback must not prevent the
+     * remaining callbacks from being executed. If exactly one callback fails, its exception
+     * is rethrown. If multiple fail, they are wrapped in a single exception.
+     */
     private function executeAfterCommit(): void
     {
+        $exceptions = [];
+
         while ($callback = array_shift($this->afterCommit)) {
-            $callback();
+            try {
+                $callback();
+            } catch (Throwable $ex) {
+                $exceptions[] = $ex;
+            }
+        }
+
+        if (count($exceptions) === 1) {
+            throw $exceptions[0];
+        }
+
+        if (count($exceptions) > 1) {
+            throw new AfterCommitCallbacksFailed($exceptions);
         }
     }
 }
