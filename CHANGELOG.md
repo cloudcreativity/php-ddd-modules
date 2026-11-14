@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file. This projec
 - The `ContractException` thrown by `UuidV4` and `UuidV7` when given a lazy UUID of the wrong version now has a message.
 - `FakeExceptionReporter` now rethrows when more exceptions have already been reported than expected, e.g. when
   `none()` is called after an exception was reported.
+- `FakeLogger::messages()` no longer drops a message of `'0'`.
 
 ## [6.1.0] - 2026-11-14
 
