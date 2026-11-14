@@ -12,11 +12,11 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\Queue\Middleware;
 
+use CloudCreativity\Modules\Contracts\Infrastructure\Queue\QueueMiddleware;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Infrastructure\Queue\Middleware\LogPushedToQueue;
 use CloudCreativity\Modules\Testing\FakeLogger;
 use CloudCreativity\Modules\Tests\Unit\Infrastructure\Queue\TestQueueableCommand;
-use CloudCreativity\Modules\Toolkit\Result\Result;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -43,14 +43,21 @@ final class LogPushedToQueueTest extends TestCase
     }
 
     #[Test]
+    public function it_is_queue_middleware(): void
+    {
+        $middleware = new LogPushedToQueue($this->logger);
+
+        $this->assertInstanceOf(QueueMiddleware::class, $middleware);
+    }
+
+    #[Test]
     public function it_logs_with_the_default_levels(): void
     {
         $passed = null;
         $middleware = new LogPushedToQueue($this->logger);
 
-        $middleware($this->command, function (Command $command) use (&$passed): Result {
+        $middleware($this->command, function (Command $command) use (&$passed): void {
             $passed = $command;
-            return Result::ok();
         });
 
         $context = ['command' => ['name' => 'bar']];
@@ -67,7 +74,8 @@ final class LogPushedToQueueTest extends TestCase
     {
         $middleware = new LogPushedToQueue($this->logger, LogLevel::NOTICE, LogLevel::WARNING);
 
-        $middleware($this->command, fn (): Result => Result::ok());
+        $middleware($this->command, static function (): void {
+        });
 
         $this->assertSame([
             'NOTICE: Queuing command Tests:TestQueueableCommand.',
@@ -82,7 +90,8 @@ final class LogPushedToQueueTest extends TestCase
         $name = $command::class;
         $middleware = new LogPushedToQueue($this->logger);
 
-        $middleware($command, fn (): Result => Result::ok());
+        $middleware($command, static function (): void {
+        });
 
         $this->assertSame([
             "DEBUG: Queuing command {$name}.",
@@ -96,9 +105,8 @@ final class LogPushedToQueueTest extends TestCase
         $messages = null;
         $middleware = new LogPushedToQueue($this->logger);
 
-        $middleware($this->command, function () use (&$messages): Result {
+        $middleware($this->command, function () use (&$messages): void {
             $messages = $this->logger->messages();
-            return Result::ok();
         });
 
         $this->assertSame(['DEBUG: Queuing command Tests:TestQueueableCommand.'], $messages);
