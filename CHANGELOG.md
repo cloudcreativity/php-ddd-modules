@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. This projec
 - `KeyedSetOfErrors::put()` and `merge()` now sort keys case-insensitively, matching the constructor.
 - `Meta::merge()` no longer renumbers numeric string keys.
 - `Error` now accepts a message of `'0'` and no longer converts a key of `'0'` to `null`.
+- The `ContractException` thrown by `UuidV4` and `UuidV7` when given a lazy UUID of the wrong version now has a message.
 
 ## [6.1.0] - 2026-11-14
 

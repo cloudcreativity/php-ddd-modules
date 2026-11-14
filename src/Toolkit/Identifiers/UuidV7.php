@@ -57,7 +57,7 @@ final class UuidV7 implements IUuid
     public function __construct(public readonly BaseUuidV7|LazyUuidFromString $value)
     {
         if ($this->value instanceof LazyUuidFromString) {
-            Contracts::assert($this->value->getVersion() === 7);
+            Contracts::assert($this->value->getVersion() === 7, 'Expecting a version 7 UUID.');
         }
     }
 }

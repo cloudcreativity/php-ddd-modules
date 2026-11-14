@@ -68,6 +68,7 @@ final class UuidV7Test extends TestCase
         $base = new LazyUuidFromString(RamseyUuid::uuid4()->toString());
 
         $this->expectException(ContractException::class);
+        $this->expectExceptionMessage('Expecting a version 7 UUID.');
 
         new UuidV7($base);
     }
