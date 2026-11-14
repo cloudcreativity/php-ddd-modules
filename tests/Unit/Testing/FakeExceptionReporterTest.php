@@ -109,6 +109,21 @@ final class FakeExceptionReporterTest extends TestCase
         $this->reporter->report($expected);
     }
 
+    #[Test]
+    public function it_rethrows_when_the_expected_count_has_been_exceeded(): void
+    {
+        $expected = new RuntimeException('Boom! That was a surprise.');
+        $this->reporter->reported = [
+            new LogicException('Whoops 0!'),
+            new LogicException('Whoops 1!'),
+        ];
+        $this->reporter->expect(1);
+
+        $this->expectExceptionObject($expected);
+
+        $this->reporter->report($expected);
+    }
+
     // -------------------------------------------------------------------------
     // count() and getIterator()
     // -------------------------------------------------------------------------
