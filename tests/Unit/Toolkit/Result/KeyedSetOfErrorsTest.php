@@ -16,11 +16,13 @@ use CloudCreativity\Modules\Tests\TestUnitEnum;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\KeyedSetOfErrors;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class KeyedSetOfErrorsTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_groups_errors_by_key(): void
     {
         $errors = new KeyedSetOfErrors(
             $a = new Error(message: 'Message A', key: 'foo'),
@@ -52,7 +54,8 @@ final class KeyedSetOfErrorsTest extends TestCase
         $this->assertEquals($expected[TestUnitEnum::Baz->name], $errors->get(TestUnitEnum::Baz));
     }
 
-    public function testEmpty(): void
+    #[Test]
+    public function it_can_be_empty(): void
     {
         $errors = new KeyedSetOfErrors();
 
@@ -61,7 +64,8 @@ final class KeyedSetOfErrorsTest extends TestCase
         $this->assertCount(0, $errors);
     }
 
-    public function testPutNewKey(): void
+    #[Test]
+    public function it_puts_an_error_with_a_new_key(): void
     {
         $original = new KeyedSetOfErrors(
             $a = new Error(message: 'Message A', key: 'foo'),
@@ -84,7 +88,8 @@ final class KeyedSetOfErrorsTest extends TestCase
         $this->assertSame(['bar', 'baz', 'foo'], $actual->keys());
     }
 
-    public function testPutExistingKey(): void
+    #[Test]
+    public function it_puts_an_error_with_an_existing_key(): void
     {
         $original = new KeyedSetOfErrors(
             $a = new Error(message: 'Message A', key: 'foo'),
@@ -106,7 +111,8 @@ final class KeyedSetOfErrorsTest extends TestCase
         $this->assertSame(['bar', 'foo'], $actual->keys());
     }
 
-    public function testPutErrorWithoutKey1(): void
+    #[Test]
+    public function it_puts_an_unkeyed_error_when_there_are_no_base_errors(): void
     {
         $original = new KeyedSetOfErrors(
             $a = new Error(message: 'Message A', key: 'foo'),
@@ -129,7 +135,8 @@ final class KeyedSetOfErrorsTest extends TestCase
         $this->assertSame(['_base', 'bar', 'foo'], $actual->keys());
     }
 
-    public function testPutErrorWithoutKey2(): void
+    #[Test]
+    public function it_puts_an_unkeyed_error_when_there_are_base_errors(): void
     {
         $original = new KeyedSetOfErrors(
             $a = new Error(message: 'Message A'),
@@ -151,7 +158,8 @@ final class KeyedSetOfErrorsTest extends TestCase
         $this->assertSame(['_base', 'foo'], $actual->keys());
     }
 
-    public function testMerge(): void
+    #[Test]
+    public function it_merges_another_set(): void
     {
         $set1 = new KeyedSetOfErrors(
             $a = new Error(message: 'Message A', key: 'foo'),

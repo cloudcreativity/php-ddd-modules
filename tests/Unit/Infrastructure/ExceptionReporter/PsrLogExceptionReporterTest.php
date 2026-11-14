@@ -15,6 +15,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\ExceptionReporter;
 use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
 use CloudCreativity\Modules\Infrastructure\ExceptionReporter\PsrLogExceptionReporter;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -34,11 +35,12 @@ final class PsrLogExceptionReporterTest extends TestCase
 
     protected function tearDown(): void
     {
-        parent::tearDown();
         unset($this->logger, $this->reporter);
+        parent::tearDown();
     }
 
-    public function testItReportsException(): void
+    #[Test]
+    public function it_reports_exception(): void
     {
         $exception = new LogicException('Test exception');
 
@@ -55,7 +57,8 @@ final class PsrLogExceptionReporterTest extends TestCase
         $this->assertInstanceOf(ExceptionReporter::class, $this->reporter);
     }
 
-    public function testItReportsDefaultMessageIfExceptionHasEmptyMessage(): void
+    #[Test]
+    public function it_reports_default_message_if_exception_has_empty_message(): void
     {
         $exception = new LogicException();
 
@@ -70,7 +73,8 @@ final class PsrLogExceptionReporterTest extends TestCase
         $this->reporter->report($exception);
     }
 
-    public function testItLogsContextForExceptionThatImplementsContextProvider(): void
+    #[Test]
+    public function it_logs_context_for_exception_that_implements_context_provider(): void
     {
         $exception = new class ('Boom!') extends LogicException {
             /**
@@ -98,7 +102,8 @@ final class PsrLogExceptionReporterTest extends TestCase
         $this->reporter->report($exception);
     }
 
-    public function testItLogsContextForExceptionThatHasContextMethod(): void
+    #[Test]
+    public function it_logs_context_for_exception_that_has_context_method(): void
     {
         $exception = new class ('Boom!') extends LogicException {
             /**

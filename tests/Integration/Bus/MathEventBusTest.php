@@ -16,11 +16,13 @@ use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Bus\Middleware\LogMessageDispatch;
 use CloudCreativity\Modules\Testing\FakeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MathEventBusTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_dispatches_events(): void
     {
         $a = new NumbersAddedHandler();
         $b = new NumbersSubtractedHandler();

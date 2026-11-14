@@ -16,6 +16,7 @@ use CloudCreativity\Modules\Toolkit\Identifiers\IntegerId;
 use CloudCreativity\Modules\Toolkit\Identifiers\PossiblyNumericId;
 use CloudCreativity\Modules\Toolkit\Identifiers\StringId;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PossiblyNumericIdTest extends TestCase
@@ -36,7 +37,8 @@ final class PossiblyNumericIdTest extends TestCase
     }
 
     #[DataProvider('valueProvider')]
-    public function test(int|string $value, int|string $expected): void
+    #[Test]
+    public function it_converts_numeric_strings_to_integers(int|string $value, int|string $expected): void
     {
         $actual = new PossiblyNumericId($value);
         $expectedId = is_string($expected) ? new StringId($expected) : new IntegerId($expected);

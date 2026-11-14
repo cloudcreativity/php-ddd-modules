@@ -21,12 +21,14 @@ use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
 use CloudCreativity\Modules\Toolkit\Identifiers\UuidV4;
 use CloudCreativity\Modules\Toolkit\Identifiers\UuidV7;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid as RamseyUuid;
 
 final class UuidV7Test extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_wraps_a_ramsey_uuid(): void
     {
         $base = RamseyUuid::uuid7();
         $id = UuidV7::from($base);
@@ -43,7 +45,8 @@ final class UuidV7Test extends TestCase
         );
     }
 
-    public function testItIsEquals(): void
+    #[Test]
+    public function it_is_equals(): void
     {
         $base = RamseyUuid::uuid7();
         $id = UuidV7::from($base);
@@ -57,7 +60,8 @@ final class UuidV7Test extends TestCase
         $this->assertTrue($id->is(new Uuid($base)));
     }
 
-    public function testItIsNotEqual(): void
+    #[Test]
+    public function it_is_not_equal(): void
     {
         $id = UuidV7::from(RamseyUuid::fromString('019b7acc-aff8-7f70-adc9-e9c7f632e6df'));
         $this->assertFalse($id->is($other = UuidV7::from(
@@ -83,7 +87,8 @@ final class UuidV7Test extends TestCase
     }
 
     #[DataProvider('notUuidV7Provider')]
-    public function testIsWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_is_not_equal_to_other_identifier_types(?Identifier $other): void
     {
         $id = UuidV7::from(RamseyUuid::fromString('019b7acc-aff8-7f70-adc9-e9c7f632e6df'));
 
@@ -93,7 +98,8 @@ final class UuidV7Test extends TestCase
     }
 
     #[DataProvider('notUuidV7Provider')]
-    public function testFromWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_cannot_be_created_from_other_identifier_types(?Identifier $other): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Unexpected identifier type, received: ' . get_debug_type($other));
@@ -101,19 +107,22 @@ final class UuidV7Test extends TestCase
     }
 
     #[DataProvider('notUuidV7Provider')]
-    public function testTryFromWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_returns_null_when_trying_from_other_identifier_types(?Identifier $other): void
     {
         $this->assertNull(UuidV7::tryFrom($other));
     }
 
-    public function testFromWithString(): void
+    #[Test]
+    public function it_can_be_created_from_a_string(): void
     {
         $base = RamseyUuid::fromString('019b7acc-aff8-7f70-adc9-e9c7f632e6df');
 
         $this->assertTrue(UuidV7::from($base)->is(UuidV7::from($base->toString())));
     }
 
-    public function testTryFromWithString(): void
+    #[Test]
+    public function it_can_try_to_create_from_a_string(): void
     {
         $base = RamseyUuid::fromString('019b7acc-aff8-7f70-adc9-e9c7f632e6df');
 
@@ -121,12 +130,14 @@ final class UuidV7Test extends TestCase
         $this->assertNull(UuidV7::tryFrom('invalid'));
     }
 
-    public function testTryFromWithNull(): void
+    #[Test]
+    public function it_returns_null_when_trying_from_null(): void
     {
         $this->assertNull(Uuid::tryFrom(null));
     }
 
-    public function testCompareTo(): void
+    #[Test]
+    public function it_can_be_compared_for_sorting(): void
     {
         $uuid1 = UuidV7::make();
         $uuid2 = UuidV7::make();

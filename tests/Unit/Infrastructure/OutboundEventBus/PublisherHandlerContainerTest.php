@@ -14,13 +14,15 @@ namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus;
 
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\PublisherHandler;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\PublisherHandlerContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 
 final class PublisherHandlerContainerTest extends TestCase
 {
-    public function testItPublishesViaBindingsWithoutDefaultHandler(): void
+    #[Test]
+    public function it_publishes_via_bindings_without_default_handler(): void
     {
         $a = new class () extends TestPublisher {};
         $b = $this->createStub(TestPublisher::class);
@@ -42,7 +44,8 @@ final class PublisherHandlerContainerTest extends TestCase
         $container->get($event3::class);
     }
 
-    public function testItPublishesViaBindingsWithDefaultHandler(): void
+    #[Test]
+    public function it_publishes_via_bindings_with_default_handler(): void
     {
         $a = new class () extends TestPublisher {};
         $b = $this->createStub(TestPublisher::class);
@@ -59,7 +62,8 @@ final class PublisherHandlerContainerTest extends TestCase
         $this->assertEquals($default, $container->get($event3::class));
     }
 
-    public function testItPublishesViaPsrContainerWithoutDefaultHandler(): void
+    #[Test]
+    public function it_publishes_via_psr_container_without_default_handler(): void
     {
         $a = new class () extends TestPublisher {};
         $b = $this->createStub(TestPublisher::class);
@@ -91,7 +95,8 @@ final class PublisherHandlerContainerTest extends TestCase
         $container->get($event3::class);
     }
 
-    public function testItPublishesViaPsrContainerWithDefaultHandler(): void
+    #[Test]
+    public function it_publishes_via_psr_container_with_default_handler(): void
     {
         $a = new class () extends TestPublisher {};
         $b = $this->createStub(TestPublisher::class);

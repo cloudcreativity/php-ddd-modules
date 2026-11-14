@@ -14,11 +14,13 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Iterables;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Iterables\LazyList;
 use CloudCreativity\Modules\Toolkit\Iterables\IsLazyList;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class IsLazyListTest extends TestCase
 {
-    public function testItIteratesOverList(): void
+    #[Test]
+    public function it_iterates_over_list(): void
     {
         $expected = ['one', 'two', 'three'];
 
@@ -40,7 +42,8 @@ final class IsLazyListTest extends TestCase
         $this->assertSame($expected, $list->all());
     }
 
-    public function testItYieldsListFromKeyedSet(): void
+    #[Test]
+    public function it_yields_list_from_keyed_set(): void
     {
         $expected = ['one' => 'foo', 'two' => 'bar', 'three' => 'baz'];
 

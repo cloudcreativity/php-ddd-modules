@@ -16,12 +16,14 @@ use CloudCreativity\Modules\Bus\BusException;
 use CloudCreativity\Modules\Bus\CommandHandler;
 use CloudCreativity\Modules\Bus\CommandHandlerContainer;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
 final class CommandHandlerContainerTest extends TestCase
 {
-    public function testItResolvesUsingClosureBindings(): void
+    #[Test]
+    public function it_resolves_using_closure_bindings(): void
     {
         $a = new class () extends TestCommandHandler {};
         $b = $this->createStub(TestCommandHandler::class);
@@ -43,7 +45,8 @@ final class CommandHandlerContainerTest extends TestCase
         $container->get($command3::class);
     }
 
-    public function testItResolvesViaPsrContainer(): void
+    #[Test]
+    public function it_resolves_via_psr_container(): void
     {
         $a = new class () extends TestCommandHandler {};
         $b = $this->createStub(TestCommandHandler::class);

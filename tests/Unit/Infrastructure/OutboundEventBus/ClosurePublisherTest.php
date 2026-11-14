@@ -15,6 +15,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer as IPipeContainer;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\ClosurePublisher;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
@@ -27,11 +28,12 @@ final class ClosurePublisherTest extends TestCase
 
     protected function tearDown(): void
     {
-        parent::tearDown();
         unset($this->actual);
+        parent::tearDown();
     }
 
-    public function test(): void
+    #[Test]
+    public function it_publishes_an_event(): void
     {
         $event = $this->createStub(IntegrationEvent::class);
 
@@ -41,7 +43,8 @@ final class ClosurePublisherTest extends TestCase
         $this->assertSame([$event], $this->actual);
     }
 
-    public function testWithMiddleware(): void
+    #[Test]
+    public function it_publishes_an_event_through_middleware(): void
     {
         $event1 = $this->createStub(IntegrationEvent::class);
         $event2 = $this->createStub(IntegrationEvent::class);
@@ -82,7 +85,8 @@ final class ClosurePublisherTest extends TestCase
         $this->assertSame([$event4], $this->actual);
     }
 
-    public function testWithMiddlewareViaPsrContainer(): void
+    #[Test]
+    public function it_publishes_through_middleware_resolved_from_a_psr_container(): void
     {
         $event1 = $this->createStub(IntegrationEvent::class);
         $event2 = $this->createStub(IntegrationEvent::class);
@@ -117,7 +121,8 @@ final class ClosurePublisherTest extends TestCase
     }
 
 
-    public function testWithAlternativeHandlers(): void
+    #[Test]
+    public function it_publishes_using_the_handler_bound_to_the_event_class(): void
     {
         $expected = new class () extends TestOutboundEvent {};
         $stub = $this->createStub(IntegrationEvent::class);

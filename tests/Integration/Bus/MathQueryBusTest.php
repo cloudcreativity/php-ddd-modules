@@ -15,11 +15,13 @@ namespace CloudCreativity\Modules\Tests\Integration\Bus;
 use Closure;
 use CloudCreativity\Modules\Bus\Middleware\LogMessageDispatch;
 use CloudCreativity\Modules\Testing\FakeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MathQueryBusTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_dispatches_queries(): void
     {
         $container = new FakeContainer();
         $container->bind(SubtractQueryHandler::class, fn () => new SubtractQueryHandler(3));

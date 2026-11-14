@@ -16,11 +16,13 @@ use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Bus\Middleware\LogMessageDispatch;
 use CloudCreativity\Modules\Testing\FakeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MathCommandBusTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_dispatches_commands(): void
     {
         $container = new FakeContainer();
         $container->bind(AddCommandHandler::class, fn () => new AddCommandHandler(3));

@@ -18,6 +18,7 @@ use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\Listene
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEventDispatcher;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -39,7 +40,14 @@ final class DispatcherTest extends TestCase
         ) extends Dispatcher {};
     }
 
-    public function testItDispatchesImmediately(): void
+    protected function tearDown(): void
+    {
+        unset($this->dispatcher, $this->listeners, $this->middleware);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_dispatches_immediately(): void
     {
         $sequence = [];
         $event1 = new TestImmediateDomainEvent();
@@ -102,14 +110,16 @@ final class DispatcherTest extends TestCase
         $this->assertSame($sequence, ['Listener1', 'Listener2', 'Listener3']);
     }
 
-    public function testNoListeners(): void
+    #[Test]
+    public function it_does_nothing_when_there_are_no_listeners(): void
     {
         $event = $this->createMock(DomainEvent::class);
         $this->listeners->expects($this->never())->method($this->anything());
         $this->dispatcher->dispatch($event);
     }
 
-    public function testItDispatchesThroughMiddleware(): void
+    #[Test]
+    public function it_dispatches_through_middleware(): void
     {
         $event1 = new class () extends TestDomainEvent {};
         ;
@@ -153,7 +163,8 @@ final class DispatcherTest extends TestCase
         $this->dispatcher->dispatch($event1);
     }
 
-    public function testListenerDoesNotHaveHandleMethod(): void
+    #[Test]
+    public function it_fails_when_the_listener_does_not_have_a_handle_method(): void
     {
         $event = new TestImmediateDomainEvent();
 

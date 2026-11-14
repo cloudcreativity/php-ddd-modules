@@ -16,6 +16,7 @@ use CloudCreativity\Modules\Application\DomainEventDispatching\Middleware\LogDom
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
 use DateTimeImmutable;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -54,7 +55,14 @@ final class LogDomainEventDispatchTest extends TestCase
         };
     }
 
-    public function testWithDefaultLevels(): void
+    protected function tearDown(): void
+    {
+        unset($this->logger, $this->event);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_logs_with_the_default_levels(): void
     {
         $eventName = $this->event::class;
         $logs = [];
@@ -78,7 +86,8 @@ final class LogDomainEventDispatchTest extends TestCase
         ], $logs);
     }
 
-    public function testWithCustomLevels(): void
+    #[Test]
+    public function it_logs_with_custom_levels(): void
     {
         $eventName = $this->event::class;
         $logs = [];
@@ -102,7 +111,8 @@ final class LogDomainEventDispatchTest extends TestCase
         ], $logs);
     }
 
-    public function testItLogsAfterTheNextClosureIsInvoked(): void
+    #[Test]
+    public function it_logs_after_the_next_closure_is_invoked(): void
     {
         $expected = new LogicException();
         $eventName = $this->event::class;

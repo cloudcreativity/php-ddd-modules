@@ -16,11 +16,13 @@ use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Testing\FakeQueue;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class FakeQueueTest extends TestCase
 {
-    public function testItQueuesCommands(): void
+    #[Test]
+    public function it_queues_commands(): void
     {
         $queue = new class () extends FakeQueue {};
         $queue->push($command1 = $this->createMock(Command::class));
@@ -34,7 +36,8 @@ final class FakeQueueTest extends TestCase
         $this->assertSame($command2, $queue[1]);
     }
 
-    public function testItHasSoleCommand(): void
+    #[Test]
+    public function it_has_sole_command(): void
     {
         $queue = new class () extends FakeQueue {};
         $queue->push($command = $this->createMock(Command::class));
@@ -42,7 +45,8 @@ final class FakeQueueTest extends TestCase
         $this->assertSame($command, $queue->sole());
     }
 
-    public function testItFailsWhenThereIsNoSoleCommand(): void
+    #[Test]
+    public function it_fails_when_there_is_no_sole_command(): void
     {
         $this->expectExceptionMessage('Expected one command in the queue but there are 0 commands.');
         $this->expectException(LogicException::class);
@@ -51,7 +55,8 @@ final class FakeQueueTest extends TestCase
         $queue->sole();
     }
 
-    public function testItFailsWhenThereIsMoreThanOneSoleCommand(): void
+    #[Test]
+    public function it_fails_when_there_is_more_than_one_sole_command(): void
     {
         $this->expectExceptionMessage('Expected one command in the queue but there are 2 commands.');
         $this->expectException(LogicException::class);

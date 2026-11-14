@@ -19,6 +19,7 @@ use CloudCreativity\Modules\Toolkit\Identifiers\UuidFactory;
 use CloudCreativity\Modules\Toolkit\Identifiers\UuidV4;
 use CloudCreativity\Modules\Toolkit\Identifiers\UuidV7;
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Type\Hexadecimal;
@@ -42,7 +43,14 @@ final class UuidFactoryTest extends TestCase
         );
     }
 
-    public function testFromWithBaseUuid(): void
+    protected function tearDown(): void
+    {
+        unset($this->factory, $this->baseFactory);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_wraps_a_base_uuid(): void
     {
         $this->baseFactory
             ->expects($this->never())
@@ -54,7 +62,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($base, $uuid->value);
     }
 
-    public function testFromWithUuid(): void
+    #[Test]
+    public function it_returns_the_same_uuid_instance(): void
     {
         $this->baseFactory
             ->expects($this->never())
@@ -65,7 +74,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testFromWithIdentifierInterface(): void
+    #[Test]
+    public function it_rejects_a_non_uuid_identifier(): void
     {
         $this->baseFactory
             ->expects($this->never())
@@ -78,7 +88,8 @@ final class UuidFactoryTest extends TestCase
         );
     }
 
-    public function testFromBytes(): void
+    #[Test]
+    public function it_creates_from_bytes(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -92,7 +103,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testFromDateTime(): void
+    #[Test]
+    public function it_creates_from_a_date_time(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -110,7 +122,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testFromInteger(): void
+    #[Test]
+    public function it_creates_from_an_integer(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -124,7 +137,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testFromString(): void
+    #[Test]
+    public function it_creates_from_a_string(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -138,7 +152,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testUuid1(): void
+    #[Test]
+    public function it_creates_a_uuid_v1(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -155,7 +170,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testUuid2(): void
+    #[Test]
+    public function it_creates_a_uuid_v2(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -174,7 +190,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testUuid3(): void
+    #[Test]
+    public function it_creates_a_uuid_v3(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -191,7 +208,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testUuid4(): void
+    #[Test]
+    public function it_creates_a_uuid_v4(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -204,7 +222,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testUuid5(): void
+    #[Test]
+    public function it_creates_a_uuid_v5(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -221,7 +240,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testUuid6(): void
+    #[Test]
+    public function it_creates_a_uuid_v6(): void
     {
         $this->baseFactory
             ->expects($this->once())
@@ -238,7 +258,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testUuid7(): void
+    #[Test]
+    public function it_creates_a_uuid_v7(): void
     {
         $date = new \DateTimeImmutable();
 
@@ -254,7 +275,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testUuid7NotSupported(): void
+    #[Test]
+    public function it_throws_if_uuid_v7_is_not_supported(): void
     {
         $factory = new UuidFactory(
             $this->createMock(BaseUuidFactoryInterface::class),
@@ -266,7 +288,8 @@ final class UuidFactoryTest extends TestCase
         $factory->uuid7();
     }
 
-    public function testUuid8(): void
+    #[Test]
+    public function it_creates_a_uuid_v8(): void
     {
         $bytes = 'blah!';
 
@@ -282,7 +305,8 @@ final class UuidFactoryTest extends TestCase
         $this->assertSame($uuid->value, $base);
     }
 
-    public function testUuid8NotSupported(): void
+    #[Test]
+    public function it_throws_if_uuid_v8_is_not_supported(): void
     {
         $factory = new UuidFactory(
             $this->createMock(BaseUuidFactoryInterface::class),

@@ -22,6 +22,7 @@ use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
 use CloudCreativity\Modules\Toolkit\Result\Meta;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 use PHPUnit\Framework\Attributes\Depends;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use UnitEnum;
 
@@ -29,7 +30,8 @@ use function CloudCreativity\Modules\Toolkit\enum_string;
 
 final class ResultTest extends TestCase
 {
-    public function testOk(): void
+    #[Test]
+    public function it_creates_a_successful_result_without_a_value(): void
     {
         $result = Result::ok();
         $result->abort();
@@ -47,7 +49,8 @@ final class ResultTest extends TestCase
         $this->assertNull($result->code());
     }
 
-    public function testOkWithValue(): void
+    #[Test]
+    public function it_creates_a_successful_result_with_a_value(): void
     {
         $result = Result::ok($value = 99);
 
@@ -64,7 +67,8 @@ final class ResultTest extends TestCase
     /**
      * @return Result<null>
      */
-    public function testFailed(): Result
+    #[Test]
+    public function it_creates_a_failed_result(): Result
     {
         $errors = new ListOfErrors(new Error(null, 'Something went wrong.'));
         $result = Result::failed($errors);
@@ -88,8 +92,9 @@ final class ResultTest extends TestCase
     /**
      * @param Result<mixed> $result
      */
-    #[Depends('testFailed')]
-    public function testAbort(Result $result): void
+    #[Depends('it_creates_a_failed_result')]
+    #[Test]
+    public function it_throws_when_aborting_a_failed_result(Result $result): void
     {
         try {
             $result->abort();
@@ -99,7 +104,8 @@ final class ResultTest extends TestCase
         }
     }
 
-    public function testErrorWithMultipleErrors(): void
+    #[Test]
+    public function it_returns_the_first_message_and_code_from_multiple_errors(): void
     {
         $errors = new ListOfErrors(
             new Error(code: TestBackedEnum::Foo),
@@ -115,7 +121,8 @@ final class ResultTest extends TestCase
         $this->assertSame(TestBackedEnum::Foo, $result->code());
     }
 
-    public function testErrorWithMultipleCodedErrors(): void
+    #[Test]
+    public function it_resolves_the_message_when_errors_only_have_codes(): void
     {
         $errors = new ListOfErrors(
             new Error(code: TestBackedEnum::Foo),
@@ -140,8 +147,9 @@ final class ResultTest extends TestCase
     /**
      * @param Result<null> $result
      */
-    #[Depends('testFailed')]
-    public function testItThrowsWhenGettingValueOnFailedResult(Result $result): void
+    #[Depends('it_creates_a_failed_result')]
+    #[Test]
+    public function it_throws_when_getting_value_on_failed_result(Result $result): void
     {
         try {
             $result->value();
@@ -151,7 +159,8 @@ final class ResultTest extends TestCase
         }
     }
 
-    public function testFailedWithListOfErrorsInterface(): void
+    #[Test]
+    public function it_fails_with_a_list_of_errors_implementation(): void
     {
         $errors = $this->createMock(IListOfErrors::class);
         $errors->method('isNotEmpty')->willReturn(true);
@@ -163,7 +172,8 @@ final class ResultTest extends TestCase
         $this->assertEquals($result, Result::fail($errors));
     }
 
-    public function testFailedWithError(): void
+    #[Test]
+    public function it_fails_with_an_error(): void
     {
         $error = new Error(null, 'Something went wrong.');
         $result = Result::failed($error);
@@ -172,7 +182,8 @@ final class ResultTest extends TestCase
         $this->assertEquals($result, Result::fail($error));
     }
 
-    public function testFailedWithString(): void
+    #[Test]
+    public function it_fails_with_a_string_error(): void
     {
         $error = new Error(null, 'Something went wrong.');
         $result = Result::failed($error->message());
@@ -181,7 +192,8 @@ final class ResultTest extends TestCase
         $this->assertEquals($result, Result::fail($error->message()));
     }
 
-    public function testFailedWithArray(): void
+    #[Test]
+    public function it_fails_with_an_array_of_errors(): void
     {
         $error = new Error(null, 'Something went wrong.');
         $result = Result::failed([$error]);
@@ -190,7 +202,8 @@ final class ResultTest extends TestCase
         $this->assertEquals($result, Result::fail([$error]));
     }
 
-    public function testFailedWithBackedEnum(): void
+    #[Test]
+    public function it_fails_with_an_enum_error_code(): void
     {
         $error = new Error(code: $code = TestBackedEnum::Foo);
         $result = Result::failed($code);
@@ -199,19 +212,22 @@ final class ResultTest extends TestCase
         $this->assertEquals($result, Result::fail($code));
     }
 
-    public function testFailedWithoutErrors(): void
+    #[Test]
+    public function it_requires_errors_when_calling_failed(): void
     {
         $this->expectException(\AssertionError::class);
         Result::failed(new ListOfErrors());
     }
 
-    public function testFailWithoutErrors(): void
+    #[Test]
+    public function it_requires_errors_when_calling_fail(): void
     {
         $this->expectException(\AssertionError::class);
         Result::fail(new ListOfErrors());
     }
 
-    public function testWithMeta(): void
+    #[Test]
+    public function it_sets_meta(): void
     {
         $meta = new Meta(['foo' => 'bar']);
         $result = Result::ok()->withMeta($meta);
@@ -219,7 +235,8 @@ final class ResultTest extends TestCase
         $this->assertEquals($meta, $result->meta());
     }
 
-    public function testWithMetaArray(): void
+    #[Test]
+    public function it_sets_meta_from_an_array(): void
     {
         $meta = new Meta(['foo' => 'bar']);
         $result = Result::ok()->withMeta($meta->all());
@@ -227,7 +244,8 @@ final class ResultTest extends TestCase
         $this->assertEquals($meta, $result->meta());
     }
 
-    public function testWithMetaMergesValues(): void
+    #[Test]
+    public function it_merges_meta_values(): void
     {
         $result1 = Result::ok()
             ->withMeta($values = ['foo' => 'bar', 'baz' => 'bat', 'foobar' => null]);

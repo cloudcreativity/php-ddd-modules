@@ -17,6 +17,7 @@ use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\PublisherH
 use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\PublisherHandlerContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\ComponentPublisher;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -52,7 +53,8 @@ final class ComponentPublisherTest extends TestCase
         parent::tearDown();
     }
 
-    public function testPublish(): void
+    #[Test]
+    public function it_publishes_an_event(): void
     {
         $event = new class () extends TestOutboundEvent {};
 
@@ -70,7 +72,8 @@ final class ComponentPublisherTest extends TestCase
         $this->publisher->publish($event);
     }
 
-    public function testPublishWithMiddleware(): void
+    #[Test]
+    public function it_publishes_an_event_through_middleware(): void
     {
         $event1 = new class () extends TestOutboundEvent {};
         $event2 = new class () extends TestOutboundEvent {};

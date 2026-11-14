@@ -18,6 +18,7 @@ use CloudCreativity\Modules\Contracts\Bus\QueryHandlerContainer;
 use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -56,7 +57,8 @@ final class QueryDispatcherTest extends TestCase
         parent::tearDown();
     }
 
-    public function test(): void
+    #[Test]
+    public function it_dispatches_a_query(): void
     {
         $query = $this->createMock(Query::class);
 
@@ -77,7 +79,8 @@ final class QueryDispatcherTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testWithMiddleware(): void
+    #[Test]
+    public function it_dispatches_a_query_through_middleware(): void
     {
         $query1 = new TestQuery();
         $query2 = new TestQuery();

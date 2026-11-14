@@ -13,11 +13,13 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Application\InboundEventBus;
 
 use CloudCreativity\Modules\Bus\EventHandler;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class EventHandlerTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_handles_the_event_and_returns_its_middleware(): void
     {
         $event = new TestInboundEvent();
 
@@ -38,7 +40,8 @@ final class EventHandlerTest extends TestCase
         $this->assertSame($middleware, $handler->middleware());
     }
 
-    public function testItDoesNotHaveExecuteMethod(): void
+    #[Test]
+    public function it_does_not_have_execute_method(): void
     {
         $handler = new EventHandler(new \DateTime());
         $event = new TestInboundEvent();

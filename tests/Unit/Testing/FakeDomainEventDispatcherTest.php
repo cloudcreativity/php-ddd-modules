@@ -16,11 +16,13 @@ use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEventDispatcher;
 use CloudCreativity\Modules\Testing\FakeDomainEventDispatcher;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class FakeDomainEventDispatcherTest extends TestCase
 {
-    public function testItPublishesEvents(): void
+    #[Test]
+    public function it_publishes_events(): void
     {
         $dispatcher = new class () extends FakeDomainEventDispatcher {};
 
@@ -40,7 +42,8 @@ final class FakeDomainEventDispatcherTest extends TestCase
         $this->assertSame($event2, $dispatcher[1]);
     }
 
-    public function testItReturnsSoleEvent(): void
+    #[Test]
+    public function it_returns_sole_event(): void
     {
         $dispatcher = new class () extends FakeDomainEventDispatcher {};
         $event = $this->createMock(DomainEvent::class);
@@ -50,7 +53,8 @@ final class FakeDomainEventDispatcherTest extends TestCase
         $this->assertSame($event, $dispatcher->sole());
     }
 
-    public function testItThrowsExceptionIfNoEvents(): void
+    #[Test]
+    public function it_throws_exception_if_no_events(): void
     {
         $dispatcher = new class () extends FakeDomainEventDispatcher {};
 
@@ -60,7 +64,8 @@ final class FakeDomainEventDispatcherTest extends TestCase
         $dispatcher->sole();
     }
 
-    public function testItThrowsExceptionIfMultipleEvents(): void
+    #[Test]
+    public function it_throws_exception_if_multiple_events(): void
     {
         $dispatcher = new class () extends FakeDomainEventDispatcher {};
         $event1 = $this->createMock(DomainEvent::class);

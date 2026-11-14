@@ -16,11 +16,13 @@ use CloudCreativity\Modules\Contracts\Application\Ports\OutboundEventPublisher;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Testing\FakeOutboundEventPublisher;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class FakeOutboundEventPublisherTest extends TestCase
 {
-    public function testItPublishesEvents(): void
+    #[Test]
+    public function it_publishes_events(): void
     {
         $publisher = new class () extends FakeOutboundEventPublisher {};
 
@@ -38,7 +40,8 @@ final class FakeOutboundEventPublisherTest extends TestCase
         $this->assertSame($event2, $publisher[1]);
     }
 
-    public function testItReturnsSoleEvent(): void
+    #[Test]
+    public function it_returns_sole_event(): void
     {
         $publisher = new class () extends FakeOutboundEventPublisher {};
         $event = $this->createMock(IntegrationEvent::class);
@@ -48,7 +51,8 @@ final class FakeOutboundEventPublisherTest extends TestCase
         $this->assertSame($event, $publisher->sole());
     }
 
-    public function testItThrowsExceptionIfNoEvents(): void
+    #[Test]
+    public function it_throws_exception_if_no_events(): void
     {
         $publisher = new class () extends FakeOutboundEventPublisher {};
 
@@ -58,7 +62,8 @@ final class FakeOutboundEventPublisherTest extends TestCase
         $publisher->sole();
     }
 
-    public function testItThrowsExceptionIfMultipleEvents(): void
+    #[Test]
+    public function it_throws_exception_if_multiple_events(): void
     {
         $publisher = new class () extends FakeOutboundEventPublisher {};
         $event1 = $this->createMock(IntegrationEvent::class);

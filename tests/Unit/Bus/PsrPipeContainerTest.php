@@ -13,12 +13,14 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Bus;
 
 use CloudCreativity\Modules\Bus\PsrPipeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
 final class PsrPipeContainerTest extends TestCase
 {
-    public function testItResolvesBoundPipes(): void
+    #[Test]
+    public function it_resolves_bound_pipes(): void
     {
         $a = fn () => 1;
         $b = fn () => 2;
@@ -36,7 +38,8 @@ final class PsrPipeContainerTest extends TestCase
         $container->get('PipeC');
     }
 
-    public function testItFallsBackToPsrContainer(): void
+    #[Test]
+    public function it_falls_back_to_psr_container(): void
     {
         $psrContainer = $this->createMock(ContainerInterface::class);
 

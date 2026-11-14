@@ -14,6 +14,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
 use CloudCreativity\Modules\Application\Bus\CommandQueuer;
 use CloudCreativity\Modules\Contracts\Application\Ports\Queue;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -38,7 +39,8 @@ final class CommandQueuerTest extends TestCase
         parent::tearDown();
     }
 
-    public function test(): void
+    #[Test]
+    public function it_queues_the_command(): void
     {
         $this->queue
             ->expects($this->once())

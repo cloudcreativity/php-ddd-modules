@@ -21,6 +21,7 @@ use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -50,7 +51,14 @@ final class ValidateMessageTest extends TestCase
         };
     }
 
-    public function testItSucceeds(): void
+    protected function tearDown(): void
+    {
+        unset($this->validator, $this->middleware);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_succeeds(): void
     {
         $rules = [];
         $command = $this->createStub(Command::class);
@@ -90,7 +98,8 @@ final class ValidateMessageTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItFails(): void
+    #[Test]
+    public function it_fails(): void
     {
         $this->validator
             ->expects($this->once())
@@ -119,7 +128,8 @@ final class ValidateMessageTest extends TestCase
         $this->assertSame($errors, $result->errors());
     }
 
-    public function testItStopsOnFirstFailureViaBail(): void
+    #[Test]
+    public function it_stops_on_first_failure_via_bail(): void
     {
         $this->middleware = new class ($this->validator) extends ValidateMessage implements Bail {
             /**
@@ -158,7 +168,8 @@ final class ValidateMessageTest extends TestCase
         $this->assertSame($errors, $result->errors());
     }
 
-    public function testItStopsOnFirstFailure(): void
+    #[Test]
+    public function it_stops_on_first_failure(): void
     {
         $command = $this->createStub(Command::class);
 

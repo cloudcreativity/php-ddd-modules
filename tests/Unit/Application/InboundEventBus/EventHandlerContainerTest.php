@@ -16,12 +16,14 @@ use CloudCreativity\Modules\Bus\BusException;
 use CloudCreativity\Modules\Bus\EventHandler;
 use CloudCreativity\Modules\Bus\EventHandlerContainer;
 use CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus\TestOutboundEvent;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
 final class EventHandlerContainerTest extends TestCase
 {
-    public function testItHasHandlerBindings(): void
+    #[Test]
+    public function it_has_handler_bindings(): void
     {
         $a = new class () extends TestEventHandler {};
         $b = $this->createStub(TestEventHandler::class);
@@ -34,7 +36,8 @@ final class EventHandlerContainerTest extends TestCase
         $this->assertEquals(new EventHandler($b), $container->get(TestOutboundEvent::class));
     }
 
-    public function testItUsesPsrContainer(): void
+    #[Test]
+    public function it_uses_psr_container(): void
     {
         $a = new class () extends TestEventHandler {};
         $b = $this->createStub(TestEventHandler::class);
@@ -57,7 +60,8 @@ final class EventHandlerContainerTest extends TestCase
         $this->assertEquals(new EventHandler($b), $container->get(TestOutboundEvent::class));
     }
 
-    public function testItHasBoundDefaultHandler(): void
+    #[Test]
+    public function it_has_bound_default_handler(): void
     {
         $a = new class () extends TestEventHandler {};
         $b = $this->createStub(TestEventHandler::class);
@@ -69,7 +73,8 @@ final class EventHandlerContainerTest extends TestCase
         $this->assertEquals(new EventHandler($b), $container->get(TestOutboundEvent::class));
     }
 
-    public function testItHasDefaultHandlerInPsrContainer(): void
+    #[Test]
+    public function it_has_default_handler_in_psr_container(): void
     {
         $a = new class () extends TestEventHandler {};
         $b = $this->createStub(TestEventHandler::class);
@@ -89,7 +94,8 @@ final class EventHandlerContainerTest extends TestCase
     }
 
 
-    public function testItDoesNotHaveHandler(): void
+    #[Test]
+    public function it_does_not_have_handler(): void
     {
         $container = new EventHandlerContainer();
         $container->bind(TestInboundEvent::class, fn () => new class () extends TestEventHandler {});

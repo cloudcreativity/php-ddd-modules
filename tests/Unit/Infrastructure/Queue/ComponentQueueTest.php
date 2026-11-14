@@ -17,6 +17,7 @@ use CloudCreativity\Modules\Contracts\Infrastructure\Queue\EnqueuerContainer;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Infrastructure\Queue\ComponentQueue;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -49,7 +50,8 @@ final class ComponentQueueTest extends TestCase
         parent::tearDown();
     }
 
-    public function test(): void
+    #[Test]
+    public function it_queues_a_command(): void
     {
         $command = $this->createMock(Command::class);
 
@@ -67,7 +69,8 @@ final class ComponentQueueTest extends TestCase
         $this->queue->push($command);
     }
 
-    public function testItQueuesThroughMiddleware(): void
+    #[Test]
+    public function it_queues_through_middleware(): void
     {
         $command1 = $this->createMock(Command::class);
         $command2 = $this->createMock(Command::class);

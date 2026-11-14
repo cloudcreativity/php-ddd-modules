@@ -13,11 +13,13 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Pipeline;
 
 use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PipeContainerTest extends TestCase
 {
-    public function testItResolvesBoundPipes(): void
+    #[Test]
+    public function it_resolves_bound_pipes(): void
     {
         $a = fn () => 1;
         $b = fn () => 2;

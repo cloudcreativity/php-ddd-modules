@@ -17,11 +17,13 @@ use CloudCreativity\Modules\Testing\FakeContainer;
 use CloudCreativity\Modules\Tests\Integration\Bus\NumbersAdded;
 use CloudCreativity\Modules\Tests\Integration\Bus\NumbersDivided;
 use CloudCreativity\Modules\Tests\Integration\Bus\NumbersSubtracted;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MathEventPublisherTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_publishes_events(): void
     {
         $a = new NumbersAddedPublisher();
         $b = new NumbersSubtractedPublisher();

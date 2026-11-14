@@ -16,12 +16,14 @@ use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Infrastructure\Queue\Enqueuer;
 use CloudCreativity\Modules\Infrastructure\Queue\EnqueuerContainer;
 use CloudCreativity\Modules\Tests\Unit\Application\Bus\TestCommand;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
 final class EnqueuerContainerTest extends TestCase
 {
-    public function testItUsesBindings(): void
+    #[Test]
+    public function it_uses_bindings(): void
     {
         $command1 = new class () implements Command {};
         $command2 = new class () implements Command {};
@@ -39,7 +41,8 @@ final class EnqueuerContainerTest extends TestCase
         $this->assertEquals(new Enqueuer($default), $container->get(TestCommand::class));
     }
 
-    public function testItUsesPsrContainer(): void
+    #[Test]
+    public function it_uses_psr_container(): void
     {
         $command1 = new class () implements Command {};
         $command2 = new class () implements Command {};

@@ -14,11 +14,13 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Pipeline;
 
 use Closure;
 use CloudCreativity\Modules\Toolkit\Pipeline\MiddlewareProcessor;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MiddlewareProcessorTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_processes_middleware_in_order(): void
     {
         $processor = new MiddlewareProcessor();
 
@@ -32,7 +34,8 @@ final class MiddlewareProcessorTest extends TestCase
         $this->assertSame(['A1', 'B1', 'C1', 'C2', 'B2', 'A2'], $result);
     }
 
-    public function testWithDestination(): void
+    #[Test]
+    public function it_processes_middleware_with_a_destination(): void
     {
         $processor = new MiddlewareProcessor(
             static fn (array $values): array => array_map(
@@ -51,7 +54,8 @@ final class MiddlewareProcessorTest extends TestCase
         $this->assertSame(['a1', 'b1', 'c1', 'C2', 'B2', 'A2'], $result);
     }
 
-    public function testNoStages(): void
+    #[Test]
+    public function it_returns_the_payload_when_there_are_no_stages(): void
     {
         $processor = new MiddlewareProcessor();
 
@@ -60,7 +64,8 @@ final class MiddlewareProcessorTest extends TestCase
         $this->assertSame('foo', $result);
     }
 
-    public function testNoStagesWithDestination(): void
+    #[Test]
+    public function it_passes_the_payload_to_the_destination_when_there_are_no_stages(): void
     {
         $processor = new MiddlewareProcessor(
             static fn (string $value): string => strtoupper($value),

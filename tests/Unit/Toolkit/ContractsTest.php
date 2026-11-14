@@ -14,11 +14,13 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit;
 
 use CloudCreativity\Modules\Toolkit\ContractException;
 use CloudCreativity\Modules\Toolkit\Contracts;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ContractsTest extends TestCase
 {
-    public function testItDoesNotThrowWhenPreconditionIsTrue(): void
+    #[Test]
+    public function it_does_not_throw_when_precondition_is_true(): void
     {
         /** @phpstan-ignore-next-line */
         Contracts::assert(true, 'Not expected error.');
@@ -27,7 +29,8 @@ final class ContractsTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function testItDoesNotThrowWhenPreconditionIsTrueWithLazyMessage(): void
+    #[Test]
+    public function it_does_not_throw_when_precondition_is_true_with_lazy_message(): void
     {
         /** @phpstan-ignore-next-line */
         Contracts::assert(true, fn () => $this->fail('Not expected error.'));
@@ -36,7 +39,8 @@ final class ContractsTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function testItThrowsWhenPreconditionIsFalse(): void
+    #[Test]
+    public function it_throws_when_precondition_is_false(): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage($expected = 'The expected message.');
@@ -45,7 +49,8 @@ final class ContractsTest extends TestCase
         Contracts::assert(false, $expected);
     }
 
-    public function testItThrowsWhenPreconditionIsFalseWithLazyMessage(): void
+    #[Test]
+    public function it_throws_when_precondition_is_false_with_lazy_message(): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage($expected = 'The expected message.');

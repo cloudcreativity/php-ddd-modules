@@ -17,6 +17,7 @@ use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
 use CloudCreativity\Modules\Contracts\Application\Ports\UnitOfWork;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -39,7 +40,14 @@ final class UnitOfWorkManagerTest extends TestCase
         );
     }
 
-    public function testItExecutesCallbacks(): void
+    protected function tearDown(): void
+    {
+        unset($this->manager, $this->unitOfWork, $this->reporter);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_executes_callbacks(): void
     {
         $sequence = [];
 
@@ -88,7 +96,8 @@ final class UnitOfWorkManagerTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItExecutesCallbackWhenTransactionFailsToCommit(): void
+    #[Test]
+    public function it_executes_callback_when_transaction_fails_to_commit(): void
     {
         $expected = new \RuntimeException('Boom');
         $sequence = [];
@@ -134,7 +143,8 @@ final class UnitOfWorkManagerTest extends TestCase
     /**
      * If any callbacks get registered by other callbacks, they are executed.
      */
-    public function testItExecutesAdditionalCommitCallbacks(): void
+    #[Test]
+    public function it_executes_additional_commit_callbacks(): void
     {
         $sequence = [];
 
@@ -211,7 +221,8 @@ final class UnitOfWorkManagerTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItFlushesCallbacksOnSuccessfulTransaction(): void
+    #[Test]
+    public function it_flushes_callbacks_on_successful_transaction(): void
     {
         $this->unitOfWork
             ->method('execute')
@@ -230,7 +241,8 @@ final class UnitOfWorkManagerTest extends TestCase
         $this->assertSame(2, $result2);
     }
 
-    public function testItFlushesCallbacksOnUnsuccessfulTransaction(): void
+    #[Test]
+    public function it_flushes_callbacks_on_unsuccessful_transaction(): void
     {
         $ex = new LogicException('Boom');
         $count = 0;
@@ -279,7 +291,8 @@ final class UnitOfWorkManagerTest extends TestCase
      * is thrown should be forgotten. Otherwise, if the callback is retried, the before
      * callbacks will be executed twice.
      */
-    public function testItHandlesCallbackExecutingMultipleTimes(): void
+    #[Test]
+    public function it_handles_callback_executing_multiple_times(): void
     {
         $ex = new LogicException('Boom!');
         $sequence = [];
@@ -368,7 +381,8 @@ final class UnitOfWorkManagerTest extends TestCase
      * because any that are registered on one of the failed attempts should havbe been
      * forgotten.
      */
-    public function testItHandlesUnitOfWorkFailingMultipleTimes(): void
+    #[Test]
+    public function it_handles_unit_of_work_failing_multiple_times(): void
     {
         $ex = new LogicException('Boom!');
         $sequence = [];
@@ -439,7 +453,8 @@ final class UnitOfWorkManagerTest extends TestCase
         ], $sequence);
     }
 
-    public function testItFailsIfBeforeCallbacksAreQueuedBeforeTransaction(): void
+    #[Test]
+    public function it_fails_if_before_callbacks_are_queued_before_transaction(): void
     {
         $this->unitOfWork
             ->expects($this->never())
@@ -451,7 +466,8 @@ final class UnitOfWorkManagerTest extends TestCase
         $this->manager->beforeCommit(fn () => null);
     }
 
-    public function testItFailsIfAfterCallbacksAreQueuedBeforeTransaction(): void
+    #[Test]
+    public function it_fails_if_after_callbacks_are_queued_before_transaction(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Cannot queue an after commit callback when not executing a unit of work.');
@@ -459,7 +475,8 @@ final class UnitOfWorkManagerTest extends TestCase
         $this->manager->afterCommit(fn () => null);
     }
 
-    public function testItCannotStartTransactionWithinAnExistingOne(): void
+    #[Test]
+    public function it_cannot_start_transaction_within_an_existing_one(): void
     {
         $this->unitOfWork
             ->expects($this->once())
@@ -476,7 +493,8 @@ final class UnitOfWorkManagerTest extends TestCase
         });
     }
 
-    public function testItFailsIfAfterCommitCallbackRegistersBeforeCommitCallback(): void
+    #[Test]
+    public function it_fails_if_after_commit_callback_registers_before_commit_callback(): void
     {
         $this->unitOfWork
             ->method('execute')
@@ -492,7 +510,8 @@ final class UnitOfWorkManagerTest extends TestCase
         });
     }
 
-    public function testAttemptsMustBeGreaterThanZero(): void
+    #[Test]
+    public function it_fails_if_attempts_is_not_greater_than_zero(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Attempts must be greater than zero.');
