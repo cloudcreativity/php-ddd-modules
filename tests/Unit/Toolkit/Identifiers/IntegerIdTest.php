@@ -20,11 +20,13 @@ use CloudCreativity\Modules\Toolkit\Identifiers\StringId;
 use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class IntegerIdTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_wraps_an_integer(): void
     {
         $id = new IntegerId(99);
 
@@ -39,14 +41,16 @@ final class IntegerIdTest extends TestCase
         );
     }
 
-    public function testItMustBeGreaterThanZero(): void
+    #[Test]
+    public function it_must_be_greater_than_zero(): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Identifier value must be greater than zero.');
         new IntegerId(0);
     }
 
-    public function testItIsEquals(): void
+    #[Test]
+    public function it_is_equals(): void
     {
         $this->assertObjectEquals($id = new IntegerId(99), $other = IntegerId::from(99));
         $this->assertSame($id, IntegerId::from($id));
@@ -56,7 +60,8 @@ final class IntegerIdTest extends TestCase
         $this->assertSame($id, IntegerId::tryFrom($id));
     }
 
-    public function testItIsNotEqual(): void
+    #[Test]
+    public function it_is_not_equal(): void
     {
         $id = new IntegerId(99);
         $this->assertFalse($id->equals($other = new IntegerId(100)));
@@ -79,7 +84,8 @@ final class IntegerIdTest extends TestCase
     }
 
     #[DataProvider('notIntegerIdProvider')]
-    public function testIsWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_is_not_equal_to_other_identifier_types(?Identifier $other): void
     {
         $id = new IntegerId(1);
 
@@ -88,12 +94,14 @@ final class IntegerIdTest extends TestCase
     }
 
     #[DataProvider('notIntegerIdProvider')]
-    public function testTryFromWithInvalidValue(?Identifier $other): void
+    #[Test]
+    public function it_returns_null_when_trying_from_other_identifier_types(?Identifier $other): void
     {
         $this->assertNull(IntegerId::tryFrom($other));
     }
 
-    public function testIsWithNull(): void
+    #[Test]
+    public function it_is_not_equal_to_null(): void
     {
         $id = new IntegerId(1);
 
@@ -101,7 +109,8 @@ final class IntegerIdTest extends TestCase
     }
 
     #[DataProvider('notIntegerIdProvider')]
-    public function testFromWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_cannot_be_created_from_other_identifier_types(?Identifier $other): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Unexpected identifier type, received: ' . get_debug_type($other));

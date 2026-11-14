@@ -17,6 +17,7 @@ use CloudCreativity\Modules\Contracts\Bus\EventHandler;
 use CloudCreativity\Modules\Contracts\Bus\EventHandlerContainer;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -49,7 +50,8 @@ final class InboundEventDispatcherTest extends TestCase
         parent::tearDown();
     }
 
-    public function test(): void
+    #[Test]
+    public function it_dispatches_an_event(): void
     {
         $event = $this->createMock(IntegrationEvent::class);
 
@@ -67,7 +69,8 @@ final class InboundEventDispatcherTest extends TestCase
         $this->dispatcher->dispatch($event);
     }
 
-    public function testWithMiddleware(): void
+    #[Test]
+    public function it_dispatches_an_event_through_middleware(): void
     {
         $event1 = new TestInboundEvent();
         $event2 = new TestInboundEvent();

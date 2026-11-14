@@ -19,6 +19,7 @@ use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Toolkit\Result\Result;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -52,11 +53,12 @@ final class LogMessageDispatchTest extends TestCase
 
     protected function tearDown(): void
     {
-        parent::tearDown();
         unset($this->logger, $this->message, $this->logs);
+        parent::tearDown();
     }
 
-    public function testWithDefaultLevels(): void
+    #[Test]
+    public function it_logs_with_the_default_levels(): void
     {
         $expected = Result::ok();
         $name = $this->message::class;
@@ -74,7 +76,8 @@ final class LogMessageDispatchTest extends TestCase
         ], $this->logs);
     }
 
-    public function testWithCustomLevels(): void
+    #[Test]
+    public function it_logs_with_custom_levels(): void
     {
         $expected = Result::failed('Something went wrong.');
         $name = $this->message::class;
@@ -92,7 +95,8 @@ final class LogMessageDispatchTest extends TestCase
         ], $this->logs);
     }
 
-    public function testItLogsAfterTheNextClosureIsInvoked(): void
+    #[Test]
+    public function it_logs_after_the_next_closure_is_invoked(): void
     {
         $expected = new LogicException();
         $message = $this->createMock(Query::class);

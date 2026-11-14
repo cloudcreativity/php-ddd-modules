@@ -15,11 +15,13 @@ namespace CloudCreativity\Modules\Tests\Integration\Infrastructure\Queue;
 use CloudCreativity\Modules\Infrastructure\Queue\Middleware\LogPushedToQueue;
 use CloudCreativity\Modules\Testing\FakeContainer;
 use CloudCreativity\Modules\Tests\Integration\Bus\AddCommand;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TestClosureQueueTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_queues_a_command(): void
     {
         $queued = [];
 

@@ -15,6 +15,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Pipeline;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Pipeline;
 use CloudCreativity\Modules\Toolkit\Pipeline\LazyPipe;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -31,7 +32,14 @@ final class LazyPipeTest extends TestCase
         $this->container = $this->createMock(PipeContainer::class);
     }
 
-    public function test(): void
+    protected function tearDown(): void
+    {
+        unset($this->container);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_resolves_the_pipe_from_the_container_and_invokes_it(): void
     {
         $this->container
             ->expects($this->once())
@@ -51,7 +59,8 @@ final class LazyPipeTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItRethrowsException(): void
+    #[Test]
+    public function it_rethrows_exception(): void
     {
         $this->container
             ->expects($this->once())

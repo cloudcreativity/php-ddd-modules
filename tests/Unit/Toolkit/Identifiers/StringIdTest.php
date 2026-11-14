@@ -19,11 +19,13 @@ use CloudCreativity\Modules\Toolkit\Identifiers\IntegerId;
 use CloudCreativity\Modules\Toolkit\Identifiers\StringId;
 use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class StringIdTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_wraps_a_string(): void
     {
         $id = new StringId('99');
 
@@ -38,20 +40,23 @@ final class StringIdTest extends TestCase
         );
     }
 
-    public function testItCanBeZero(): void
+    #[Test]
+    public function it_can_be_zero(): void
     {
         $id = new StringId('0');
         $this->assertSame('0', $id->value);
     }
 
-    public function testItMustNotBeEmpty(): void
+    #[Test]
+    public function it_must_not_be_empty(): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Identifier value must be a non-empty string.');
         new StringId('');
     }
 
-    public function testItIsEquals(): void
+    #[Test]
+    public function it_is_equals(): void
     {
         $this->assertObjectEquals($id = new StringId('99'), $other = StringId::from('99'));
         $this->assertSame($id, StringId::from($id));
@@ -61,7 +66,8 @@ final class StringIdTest extends TestCase
         $this->assertSame($id, StringId::tryFrom($id));
     }
 
-    public function testItIsNotEqual(): void
+    #[Test]
+    public function it_is_not_equal(): void
     {
         $id = new StringId('99');
         $this->assertFalse($id->equals($other = new StringId('100')));
@@ -84,7 +90,8 @@ final class StringIdTest extends TestCase
     }
 
     #[DataProvider('notStringIdProvider')]
-    public function testIsWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_is_not_equal_to_other_identifier_types(?Identifier $other): void
     {
         $id = new StringId('1');
 
@@ -93,13 +100,15 @@ final class StringIdTest extends TestCase
     }
 
     #[DataProvider('notStringIdProvider')]
-    public function testTryFromWithInvalid(?Identifier $other): void
+    #[Test]
+    public function it_returns_null_when_trying_from_other_identifier_types(?Identifier $other): void
     {
         $this->assertNull(StringId::tryFrom($other));
     }
 
     #[DataProvider('notStringIdProvider')]
-    public function testFromWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_cannot_be_created_from_other_identifier_types(?Identifier $other): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Unexpected identifier type, received: ' . get_debug_type($other));

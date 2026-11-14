@@ -14,11 +14,13 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
 use CloudCreativity\Modules\Bus\QueryHandler;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class QueryHandlerTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_executes_the_query_and_returns_its_middleware(): void
     {
         $query = new TestQuery();
 
@@ -40,7 +42,8 @@ final class QueryHandlerTest extends TestCase
         $this->assertSame($middleware, $handler->middleware());
     }
 
-    public function testItDoesNotHaveExecuteMethod(): void
+    #[Test]
+    public function it_does_not_have_execute_method(): void
     {
         $handler = new QueryHandler(new \DateTime());
         $query = new TestQuery();

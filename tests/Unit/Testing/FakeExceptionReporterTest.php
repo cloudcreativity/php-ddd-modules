@@ -15,12 +15,14 @@ namespace CloudCreativity\Modules\Tests\Unit\Testing;
 use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
 use CloudCreativity\Modules\Testing\FakeExceptionReporter;
 use LogicException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 final class FakeExceptionReporterTest extends TestCase
 {
-    public function testItReportsExceptions(): void
+    #[Test]
+    public function it_reports_exceptions(): void
     {
         $reporter = new FakeExceptionReporter();
         $reporter->report($ex1 = new RuntimeException('Whoops!'));
@@ -34,7 +36,8 @@ final class FakeExceptionReporterTest extends TestCase
         $this->assertSame($ex2, $reporter[1]);
     }
 
-    public function testItDoesNotExpectExceptions(): void
+    #[Test]
+    public function it_does_not_expect_exceptions(): void
     {
         $expected = new RuntimeException('Boom! That was a surprise.');
 
@@ -45,7 +48,8 @@ final class FakeExceptionReporterTest extends TestCase
         $reporter->report($expected);
     }
 
-    public function testItExpectsExceptions(): void
+    #[Test]
+    public function it_expects_exceptions(): void
     {
         $expected = new RuntimeException('Boom! That was a surprise.');
 
@@ -62,7 +66,8 @@ final class FakeExceptionReporterTest extends TestCase
         $reporter->report($expected);
     }
 
-    public function testItHasSoleException(): void
+    #[Test]
+    public function it_has_sole_exception(): void
     {
         $reporter = new FakeExceptionReporter();
         $reporter->report($ex = new RuntimeException('Whoops!'));
@@ -70,7 +75,8 @@ final class FakeExceptionReporterTest extends TestCase
         $this->assertSame($ex, $reporter->sole());
     }
 
-    public function testItFailsWhenThereIsNoSoleException(): void
+    #[Test]
+    public function it_fails_when_there_is_no_sole_exception(): void
     {
         $this->expectExceptionMessage('Expected one exception to be reported but there are 0 exceptions.');
         $this->expectException(LogicException::class);
@@ -79,7 +85,8 @@ final class FakeExceptionReporterTest extends TestCase
         $reporter->sole();
     }
 
-    public function testItFailsWhenThereIsMoreThanOneSoleException(): void
+    #[Test]
+    public function it_fails_when_there_is_more_than_one_sole_exception(): void
     {
         $this->expectExceptionMessage('Expected one exception to be reported but there are 2 exceptions.');
         $this->expectException(LogicException::class);

@@ -20,6 +20,7 @@ use CloudCreativity\Modules\Toolkit\Identifiers\IntegerId;
 use CloudCreativity\Modules\Toolkit\Identifiers\StringId;
 use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid as RamseyUuid;
 
@@ -27,11 +28,12 @@ final class UuidTest extends TestCase
 {
     protected function tearDown(): void
     {
-        parent::tearDown();
         Uuid::setFactory(null);
+        parent::tearDown();
     }
 
-    public function test(): void
+    #[Test]
+    public function it_wraps_a_ramsey_uuid(): void
     {
         $base = RamseyUuid::uuid4();
         $id = new Uuid($base);
@@ -48,7 +50,8 @@ final class UuidTest extends TestCase
         );
     }
 
-    public function testItIsEquals(): void
+    #[Test]
+    public function it_is_equals(): void
     {
         $base = RamseyUuid::uuid4();
         $id = new Uuid($base);
@@ -61,7 +64,8 @@ final class UuidTest extends TestCase
         $this->assertSame($id, Uuid::tryFrom($id));
     }
 
-    public function testItIsNotEqual(): void
+    #[Test]
+    public function it_is_not_equal(): void
     {
         $id = new Uuid(RamseyUuid::fromString('6dcbad65-ed92-4e60-973b-9ba58a022816'));
         $this->assertFalse($id->is($other = new Uuid(
@@ -85,7 +89,8 @@ final class UuidTest extends TestCase
     }
 
     #[DataProvider('notUuidProvider')]
-    public function testIsWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_is_not_equal_to_other_identifier_types(?Identifier $other): void
     {
         $id = new Uuid(RamseyUuid::fromString('6dcbad65-ed92-4e60-973b-9ba58a022816'));
 
@@ -95,7 +100,8 @@ final class UuidTest extends TestCase
     }
 
     #[DataProvider('notUuidProvider')]
-    public function testFromWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_cannot_be_created_from_other_identifier_types(?Identifier $other): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Unexpected identifier type, received: ' . get_debug_type($other));
@@ -103,12 +109,14 @@ final class UuidTest extends TestCase
     }
 
     #[DataProvider('notUuidProvider')]
-    public function testTryFromWithOtherIdentifiers(?Identifier $other): void
+    #[Test]
+    public function it_returns_null_when_trying_from_other_identifier_types(?Identifier $other): void
     {
         $this->assertNull(Uuid::tryFrom($other));
     }
 
-    public function testFromWithString(): void
+    #[Test]
+    public function it_can_be_created_from_a_string(): void
     {
         Uuid::setFactory($factory = $this->createMock(UuidFactory::class));
 
@@ -121,7 +129,8 @@ final class UuidTest extends TestCase
         $this->assertSame($expected, Uuid::from($str));
     }
 
-    public function testTryFromWithString(): void
+    #[Test]
+    public function it_can_try_to_create_from_a_string(): void
     {
         Uuid::setFactory($factory = $this->createMock(UuidFactory::class));
 
@@ -135,7 +144,8 @@ final class UuidTest extends TestCase
         $this->assertNull(Uuid::tryFrom('invalid'));
     }
 
-    public function testFromAndTryFromWithBaseUuid(): void
+    #[Test]
+    public function it_can_be_created_from_a_base_uuid(): void
     {
         Uuid::setFactory($factory = $this->createMock(UuidFactory::class));
 
@@ -149,7 +159,8 @@ final class UuidTest extends TestCase
         $this->assertSame($expected, Uuid::tryFrom($base));
     }
 
-    public function testTryFromWithNull(): void
+    #[Test]
+    public function it_returns_null_when_trying_from_null(): void
     {
         Uuid::setFactory($factory = $this->createMock(UuidFactory::class));
 
@@ -160,7 +171,8 @@ final class UuidTest extends TestCase
         $this->assertNull(Uuid::tryFrom(null));
     }
 
-    public function testNil(): void
+    #[Test]
+    public function it_creates_a_nil_uuid(): void
     {
         $base = RamseyUuid::fromString(RamseyUuid::NIL);
         $actual = Uuid::nil();
@@ -168,7 +180,8 @@ final class UuidTest extends TestCase
         $this->assertTrue($actual->toBase()->equals($base));
     }
 
-    public function testCompareTo(): void
+    #[Test]
+    public function it_can_be_compared_for_sorting(): void
     {
         $uuid1 = Uuid::random();
         $uuid2 = Uuid::random();

@@ -16,6 +16,7 @@ use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Infrastructure\Queue\ClosureQueue;
 use CloudCreativity\Modules\Tests\Unit\Application\Bus\TestCommand;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -44,11 +45,12 @@ final class ClosureQueueTest extends TestCase
 
     protected function tearDown(): void
     {
-        parent::tearDown();
         unset($this->queue, $this->middleware, $this->actual);
+        parent::tearDown();
     }
 
-    public function test(): void
+    #[Test]
+    public function it_queues_a_command(): void
     {
         $command = $this->createMock(Command::class);
 
@@ -57,7 +59,8 @@ final class ClosureQueueTest extends TestCase
         $this->assertSame([$command], $this->actual);
     }
 
-    public function testWithMiddleware(): void
+    #[Test]
+    public function it_queues_a_command_through_middleware(): void
     {
         $command1 = $this->createMock(Command::class);
         $command2 = $this->createMock(Command::class);
@@ -97,7 +100,8 @@ final class ClosureQueueTest extends TestCase
     }
 
 
-    public function testWithAlternativeHandlers(): void
+    #[Test]
+    public function it_queues_using_the_handler_bound_to_the_command_class(): void
     {
         $expected = new TestCommand();
         $mock = $this->createMock(Command::class);

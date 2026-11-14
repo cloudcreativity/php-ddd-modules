@@ -18,6 +18,7 @@ use CloudCreativity\Modules\Contracts\Bus\CommandHandlerContainer;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -50,7 +51,8 @@ final class CommandDispatcherTest extends TestCase
         parent::tearDown();
     }
 
-    public function test(): void
+    #[Test]
+    public function it_dispatches_a_command(): void
     {
         $command = $this->createMock(Command::class);
 
@@ -71,7 +73,8 @@ final class CommandDispatcherTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testWithMiddleware(): void
+    #[Test]
+    public function it_dispatches_a_command_through_middleware(): void
     {
         $command1 = new TestCommand();
         $command2 = new TestCommand();

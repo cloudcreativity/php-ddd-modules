@@ -20,11 +20,13 @@ use CloudCreativity\Modules\Toolkit\Identifiers\Guid;
 use CloudCreativity\Modules\Toolkit\Identifiers\GuidTypeMap;
 use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
 use PHPUnit\Framework\Attributes\Depends;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class GuidTypeMapTest extends TestCase
 {
-    public function testItReturnsExpectedType(): GuidTypeMap
+    #[Test]
+    public function it_returns_expected_type(): GuidTypeMap
     {
         $map = new GuidTypeMap([
             'SomeTypeA' => 'SomeOtherTypeA',
@@ -41,8 +43,9 @@ final class GuidTypeMapTest extends TestCase
         return $map;
     }
 
-    #[Depends('testItReturnsExpectedType')]
-    public function testItReturnsExpectedGuid(GuidTypeMap $map): void
+    #[Depends('it_returns_expected_type')]
+    #[Test]
+    public function it_returns_expected_guid(GuidTypeMap $map): void
     {
         $this->assertEquals(
             Guid::fromInteger('SomeOtherTypeA', 99),
@@ -55,8 +58,9 @@ final class GuidTypeMapTest extends TestCase
         );
     }
 
-    #[Depends('testItReturnsExpectedType')]
-    public function testItThrowsIfTypeIsNotValidString(GuidTypeMap $map): void
+    #[Depends('it_returns_expected_type')]
+    #[Test]
+    public function it_throws_if_type_is_not_valid_string(GuidTypeMap $map): void
     {
         $this->expectException(AssertionError::class);
         $this->expectExceptionMessage('Expecting type for alias "NotString" to be a non-empty string.');
@@ -64,8 +68,9 @@ final class GuidTypeMapTest extends TestCase
         $map->typeFor('NotString');
     }
 
-    #[Depends('testItReturnsExpectedType')]
-    public function testItThrowsIfTypeIsEmptyString(GuidTypeMap $map): void
+    #[Depends('it_returns_expected_type')]
+    #[Test]
+    public function it_throws_if_type_is_empty_string(GuidTypeMap $map): void
     {
         $this->expectException(AssertionError::class);
         $this->expectExceptionMessage('Expecting type for alias "EmptyString" to be a non-empty string.');
@@ -73,8 +78,9 @@ final class GuidTypeMapTest extends TestCase
         $map->typeFor('EmptyString');
     }
 
-    #[Depends('testItReturnsExpectedType')]
-    public function testItThrowsIfTypeIsNotDefined(GuidTypeMap $map): void
+    #[Depends('it_returns_expected_type')]
+    #[Test]
+    public function it_throws_if_type_is_not_defined(GuidTypeMap $map): void
     {
         $this->expectException(AssertionError::class);
         $this->expectExceptionMessage('Alias "NotDefined" is not defined in the type map.');
@@ -82,7 +88,8 @@ final class GuidTypeMapTest extends TestCase
         $map->typeFor('NotDefined');
     }
 
-    public function testItReturnsExpectedTypeWithEnums(): void
+    #[Test]
+    public function it_returns_expected_type_with_enums(): void
     {
         $map = new GuidTypeMap();
         $map->define(TestBackedEnum::Foo, 'SomeFooType');

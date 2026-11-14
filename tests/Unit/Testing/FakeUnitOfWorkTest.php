@@ -14,12 +14,14 @@ namespace CloudCreativity\Modules\Tests\Unit\Testing;
 
 use CloudCreativity\Modules\Contracts\Application\Ports\UnitOfWork;
 use CloudCreativity\Modules\Testing\FakeUnitOfWork;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 final class FakeUnitOfWorkTest extends TestCase
 {
-    public function testItIsSuccessfulOnFirstAttempt(): void
+    #[Test]
+    public function it_is_successful_on_first_attempt(): void
     {
         $unitOfWork = new FakeUnitOfWork();
         $result = $unitOfWork->execute(fn () => 'result');
@@ -33,7 +35,8 @@ final class FakeUnitOfWorkTest extends TestCase
         $this->assertSame(0, $unitOfWork->rollbacks);
     }
 
-    public function testItIsSuccessfulBeforeMaxAttempts(): void
+    #[Test]
+    public function it_is_successful_before_max_attempts(): void
     {
         $ex1 = new RuntimeException('An error occurred.');
         $ex2 = new RuntimeException('Another error occurred.');
@@ -64,7 +67,8 @@ final class FakeUnitOfWorkTest extends TestCase
         $this->assertSame(2, $unitOfWork->rollbacks);
     }
 
-    public function testItIsSuccessfulOnMaxAttempts(): void
+    #[Test]
+    public function it_is_successful_on_max_attempts(): void
     {
         $ex1 = new RuntimeException('An error occurred.');
         $ex2 = new RuntimeException('Another error occurred.');
@@ -95,7 +99,8 @@ final class FakeUnitOfWorkTest extends TestCase
         $this->assertSame(2, $unitOfWork->rollbacks);
     }
 
-    public function testItIsNotSuccessful(): void
+    #[Test]
+    public function it_is_not_successful(): void
     {
         $ex1 = new RuntimeException('An error occurred.');
         $ex2 = new RuntimeException('Another error occurred.');

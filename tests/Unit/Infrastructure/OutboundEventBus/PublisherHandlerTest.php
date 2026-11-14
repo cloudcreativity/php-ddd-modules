@@ -14,11 +14,13 @@ namespace CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus;
 
 use CloudCreativity\Modules\Contracts\Infrastructure\OutboundEventBus\PublisherHandler as IPublisherHandler;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\PublisherHandler;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PublisherHandlerTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_publishes_the_event_via_the_inner_publisher(): void
     {
         $event = new class () extends TestOutboundEvent {};
         $innerHandler = $this->createMock(TestPublisher::class);

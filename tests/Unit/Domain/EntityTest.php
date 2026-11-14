@@ -17,11 +17,13 @@ use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 use CloudCreativity\Modules\Domain\IsEntity;
 use CloudCreativity\Modules\Toolkit\Identifiers\Guid;
 use CloudCreativity\Modules\Toolkit\Identifiers\IntegerId;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class EntityTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_has_an_id(): void
     {
         $entity = new TestEntity($guid = Guid::fromInteger('SomeType', 1));
 
@@ -31,7 +33,8 @@ final class EntityTest extends TestCase
         $this->assertTrue($entity->isNot(null));
     }
 
-    public function testItIsTheSame(): void
+    #[Test]
+    public function it_is_the_same(): void
     {
         $a = new TestEntity(
             $id1 = $this->createMock(Identifier::class),
@@ -51,7 +54,8 @@ final class EntityTest extends TestCase
         $this->assertFalse($a->isNot($b));
     }
 
-    public function testItIsNotTheSame(): void
+    #[Test]
+    public function it_is_not_the_same(): void
     {
         $a = new TestEntity(
             $id1 = $this->createMock(Identifier::class),
@@ -71,7 +75,8 @@ final class EntityTest extends TestCase
         $this->assertTrue($a->isNot($b));
     }
 
-    public function testItIsDifferentClass(): void
+    #[Test]
+    public function it_is_different_class(): void
     {
         $a = new TestEntity(
             $id1 = $this->createMock(Identifier::class),
@@ -88,7 +93,8 @@ final class EntityTest extends TestCase
         $this->assertTrue($a->isNot($b));
     }
 
-    public function testItCanUseTraitOnNonReadonlyClass(): void
+    #[Test]
+    public function it_can_use_trait_on_non_readonly_class(): void
     {
         $id = new IntegerId(123);
 

@@ -17,11 +17,13 @@ use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\Processor;
 use CloudCreativity\Modules\Toolkit\Pipeline\LazyPipe;
 use CloudCreativity\Modules\Toolkit\Pipeline\Pipeline;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipelineBuilder;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PipelineBuilderTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_builds_a_pipeline(): void
     {
         $expected = new Pipeline(
             $processor = $this->createMock(Processor::class),
@@ -36,7 +38,8 @@ final class PipelineBuilderTest extends TestCase
         $this->assertEquals($expected, $actual);
     }
 
-    public function testServiceString(): void
+    #[Test]
+    public function it_builds_a_pipeline_with_lazy_pipes_for_service_strings(): void
     {
         $container = $this->createMock(PipeContainer::class);
         $processor = $this->createMock(Processor::class);
@@ -54,7 +57,8 @@ final class PipelineBuilderTest extends TestCase
         $this->assertEquals($expected, $actual);
     }
 
-    public function testServiceStringWithoutContainer(): void
+    #[Test]
+    public function it_fails_to_build_with_a_service_string_without_a_container(): void
     {
         $processor = $this->createStub(Processor::class);
 

@@ -20,6 +20,7 @@ use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
@@ -41,7 +42,8 @@ final class ValidatorTest extends TestCase
      * @param class-string<Message> $class
      */
     #[DataProvider('messageProvider')]
-    public function testItValidatesMessage(string $class): void
+    #[Test]
+    public function it_validates_message(string $class): void
     {
         $message = $this->createStub($class);
         $error1 = new Error(null, 'Message 1');
@@ -86,7 +88,8 @@ final class ValidatorTest extends TestCase
      * @param class-string<Message> $class
      */
     #[DataProvider('messageProvider')]
-    public function testItValidatesMessageUsingPsrContainer(string $class): void
+    #[Test]
+    public function it_validates_message_using_psr_container(string $class): void
     {
         $message = $this->createStub($class);
         $error1 = new Error(null, 'Message 1');
@@ -131,7 +134,8 @@ final class ValidatorTest extends TestCase
      * @param class-string<Message> $class
      */
     #[DataProvider('messageProvider')]
-    public function testItStopsOnFirstFailure(string $class): void
+    #[Test]
+    public function it_stops_on_first_failure(string $class): void
     {
         $message = $this->createStub($class);
         $error = new Error(null, 'Message 1');
@@ -160,7 +164,8 @@ final class ValidatorTest extends TestCase
         $this->assertSame([$error], $actual->all());
     }
 
-    public function testItHasNoRules(): void
+    #[Test]
+    public function it_has_no_rules(): void
     {
         $query = $this->createStub(Query::class);
         $validator = new Validator();

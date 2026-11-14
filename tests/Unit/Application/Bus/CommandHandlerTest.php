@@ -14,11 +14,13 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
 use CloudCreativity\Modules\Bus\CommandHandler;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CommandHandlerTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_executes_the_command_and_returns_its_middleware(): void
     {
         $command = new TestCommand();
 
@@ -40,7 +42,8 @@ final class CommandHandlerTest extends TestCase
         $this->assertSame($middleware, $handler->middleware());
     }
 
-    public function testItDoesNotHaveExecuteMethod(): void
+    #[Test]
+    public function it_does_not_have_execute_method(): void
     {
         $handler = new CommandHandler(new \DateTime());
         $command = new TestCommand();

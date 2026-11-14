@@ -16,6 +16,7 @@ use CloudCreativity\Modules\Application\Bus\Middleware\FlushDeferredEvents;
 use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\DeferredDispatcher;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -39,7 +40,14 @@ final class FlushDeferredEventsTest extends TestCase
         );
     }
 
-    public function testItFlushesDeferredEvents(): void
+    protected function tearDown(): void
+    {
+        unset($this->middleware, $this->dispatcher);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_flushes_deferred_events(): void
     {
         $command = $this->createMock(Command::class);
         $expected = Result::ok();
@@ -65,7 +73,8 @@ final class FlushDeferredEventsTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    public function testItForgetsDeferredEventsOnFailedResult(): void
+    #[Test]
+    public function it_forgets_deferred_events_on_failed_result(): void
     {
         $command = $this->createMock(Command::class);
         $expected = Result::failed('Something went wrong.');
@@ -91,7 +100,8 @@ final class FlushDeferredEventsTest extends TestCase
     }
 
 
-    public function testItForgetsDeferredEventsOnException(): void
+    #[Test]
+    public function it_forgets_deferred_events_on_exception(): void
     {
         $command = $this->createMock(Command::class);
         $expected = new \LogicException('Boom!');

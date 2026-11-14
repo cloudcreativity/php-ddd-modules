@@ -15,6 +15,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Depends;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ModuleBasenameTest extends TestCase
@@ -124,7 +125,8 @@ final class ModuleBasenameTest extends TestCase
     }
 
     #[DataProvider('moduleProvider')]
-    public function testFromModule(string $value, string $context, string $message): void
+    #[Test]
+    public function it_parses_a_class_name_with_a_module(string $value, string $context, string $message): void
     {
         $name = ModuleBasename::from($value);
 
@@ -137,7 +139,8 @@ final class ModuleBasenameTest extends TestCase
     }
 
     #[DataProvider('withoutModuleProvider')]
-    public function testFromWithoutModule(string $value, string $message): void
+    #[Test]
+    public function it_parses_a_class_name_without_a_module(string $value, string $message): void
     {
         $name = ModuleBasename::from($value);
 
@@ -149,7 +152,8 @@ final class ModuleBasenameTest extends TestCase
         $this->assertSame($message, (string) $name);
     }
 
-    public function testToArray(): ModuleBasename
+    #[Test]
+    public function it_converts_to_an_array(): ModuleBasename
     {
         $value = ModuleBasename::from(
             'CloudCreativity\Application\Modules\WaitList\BoundedContext\Application\Commands\ScheduleDelayedProcess\ScheduleDelayedProcessCommand',
@@ -163,8 +167,9 @@ final class ModuleBasenameTest extends TestCase
         return $value;
     }
 
-    #[Depends('testToArray')]
-    public function testJsonSerialize(ModuleBasename $value): void
+    #[Depends('it_converts_to_an_array')]
+    #[Test]
+    public function it_serializes_to_json(ModuleBasename $value): void
     {
         $expected = json_encode([
             'module' => $value->module,
@@ -174,14 +179,16 @@ final class ModuleBasenameTest extends TestCase
         $this->assertJsonStringEqualsJsonString($expected, json_encode($value, JSON_THROW_ON_ERROR));
     }
 
-    public function testTryFromWithInvalid(): void
+    #[Test]
+    public function it_returns_null_when_trying_from_an_invalid_value(): void
     {
         $name = ModuleBasename::tryFrom(ModuleBasename::class);
 
         $this->assertNull($name);
     }
 
-    public function testFromWithInvalid(): void
+    #[Test]
+    public function it_throws_when_parsing_an_invalid_value(): void
     {
         $this->expectException(\UnexpectedValueException::class);
 

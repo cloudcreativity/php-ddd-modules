@@ -17,6 +17,7 @@ use CloudCreativity\Modules\Bus\Middleware\SetupBeforeDispatch;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -27,7 +28,8 @@ final class SetupBeforeDispatchTest extends TestCase
      */
     private array $sequence = [];
 
-    public function testItSetsUpAndSucceedsWithoutTeardown(): void
+    #[Test]
+    public function it_sets_up_and_succeeds_without_teardown(): void
     {
         $message = $this->createMock(Command::class);
         $result = Result::ok();
@@ -47,7 +49,8 @@ final class SetupBeforeDispatchTest extends TestCase
         $this->assertSame(['setup', 'next'], $this->sequence);
     }
 
-    public function testItSetsUpAndSucceedsWithTeardown(): void
+    #[Test]
+    public function it_sets_up_and_succeeds_with_teardown(): void
     {
         $message = $this->createMock(Query::class);
         $result = Result::ok();
@@ -69,7 +72,8 @@ final class SetupBeforeDispatchTest extends TestCase
         $this->assertSame(['setup', 'next', 'teardown'], $this->sequence);
     }
 
-    public function testItSetsUpAndFailsWithoutTeardown(): void
+    #[Test]
+    public function it_sets_up_and_fails_without_teardown(): void
     {
         $message = $this->createMock(Command::class);
         $result = Result::failed('Something went wrong.');
@@ -89,7 +93,8 @@ final class SetupBeforeDispatchTest extends TestCase
         $this->assertSame(['setup', 'next'], $this->sequence);
     }
 
-    public function testItSetsUpAndFailsWithTeardown(): void
+    #[Test]
+    public function it_sets_up_and_fails_with_teardown(): void
     {
         $message = $this->createMock(Command::class);
         $result = Result::failed('Something went wrong.');
@@ -111,7 +116,8 @@ final class SetupBeforeDispatchTest extends TestCase
         $this->assertSame(['setup', 'next', 'teardown'], $this->sequence);
     }
 
-    public function testItSetsUpAndThrowsExceptionWithoutTeardown(): void
+    #[Test]
+    public function it_sets_up_and_throws_exception_without_teardown(): void
     {
         $message = $this->createMock(Command::class);
         $exception = new RuntimeException('Something went wrong.');
@@ -137,7 +143,8 @@ final class SetupBeforeDispatchTest extends TestCase
         $this->assertSame(['setup', 'next'], $this->sequence);
     }
 
-    public function testItSetsUpAndThrowsExceptionWithTeardown(): void
+    #[Test]
+    public function it_sets_up_and_throws_exception_with_teardown(): void
     {
         $message = $this->createMock(Query::class);
         $exception = new RuntimeException('Something went wrong.');

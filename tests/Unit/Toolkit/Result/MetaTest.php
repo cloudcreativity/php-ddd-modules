@@ -13,11 +13,13 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Result;
 
 use CloudCreativity\Modules\Toolkit\Result\Meta;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MetaTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_holds_values(): void
     {
         $meta = new Meta($values = [
             'foo' => 'bar',
@@ -37,7 +39,8 @@ final class MetaTest extends TestCase
         $this->assertFalse($meta->isEmpty());
     }
 
-    public function testItIsIterable(): void
+    #[Test]
+    public function it_is_iterable(): void
     {
         $meta = new Meta($values = [
             'foo' => 'bar',
@@ -48,7 +51,8 @@ final class MetaTest extends TestCase
         $this->assertSame($values, iterator_to_array($meta));
     }
 
-    public function testEmpty(): void
+    #[Test]
+    public function it_can_be_empty(): void
     {
         $meta = new Meta();
 
@@ -57,7 +61,8 @@ final class MetaTest extends TestCase
         $this->assertFalse($meta->isNotEmpty());
     }
 
-    public function testArrayAccess(): void
+    #[Test]
+    public function it_supports_array_access(): void
     {
         $meta = new Meta(['foo' => 'bar', 'baz' => 'bat', 'foobar' => null]);
 
@@ -67,7 +72,8 @@ final class MetaTest extends TestCase
         $this->assertFalse(isset($meta['blah']));
     }
 
-    public function testOffsetUnset(): void
+    #[Test]
+    public function it_cannot_unset_values(): void
     {
         $meta = new Meta(['foo' => 'bar']);
 
@@ -75,7 +81,8 @@ final class MetaTest extends TestCase
         unset($meta['foo']);
     }
 
-    public function testOffsetSet(): void
+    #[Test]
+    public function it_cannot_set_values_via_array_access(): void
     {
         $meta = new Meta(['foo' => 'bar']);
 
@@ -83,7 +90,8 @@ final class MetaTest extends TestCase
         $meta['foo'] = 'foobar';
     }
 
-    public function testPut(): void
+    #[Test]
+    public function it_puts_a_value_immutably(): void
     {
         $original = new Meta(['foo' => 'bar', 'baz' => 'bat']);
         $actual = $original->put('foo', 'foobar');
@@ -93,7 +101,8 @@ final class MetaTest extends TestCase
         $this->assertSame(['foo' => 'foobar', 'baz' => 'bat'], $actual->all());
     }
 
-    public function testMergeArray(): void
+    #[Test]
+    public function it_merges_an_array(): void
     {
         $original = new Meta(['foo' => 'bar', 'baz' => 'bat']);
         $actual = $original->merge(['foo' => null, 'foobar' => 'bazbat']);
@@ -103,7 +112,8 @@ final class MetaTest extends TestCase
         $this->assertSame(['foo' => null, 'baz' => 'bat', 'foobar' => 'bazbat'], $actual->all());
     }
 
-    public function testMergeMeta(): void
+    #[Test]
+    public function it_merges_another_meta(): void
     {
         $original = new Meta(['foo' => 'bar', 'baz' => 'bat']);
         $actual = $original->merge(new Meta(['foo' => null, 'foobar' => 'bazbat']));

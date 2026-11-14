@@ -16,12 +16,14 @@ use CloudCreativity\Modules\Bus\BusException;
 use CloudCreativity\Modules\Bus\QueryHandler;
 use CloudCreativity\Modules\Bus\QueryHandlerContainer;
 use CloudCreativity\Modules\Contracts\Messaging\Query;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
 final class QueryHandlerContainerTest extends TestCase
 {
-    public function testItResolvesClosureBindings(): void
+    #[Test]
+    public function it_resolves_closure_bindings(): void
     {
         $a = new class () extends TestQueryHandler {};
         $b = $this->createStub(TestQueryHandler::class);
@@ -43,7 +45,8 @@ final class QueryHandlerContainerTest extends TestCase
         $container->get($query3::class);
     }
 
-    public function testItResolvesViaPsrContainer(): void
+    #[Test]
+    public function it_resolves_via_psr_container(): void
     {
         $a = new class () extends TestQueryHandler {};
         $b = $this->createStub(TestQueryHandler::class);

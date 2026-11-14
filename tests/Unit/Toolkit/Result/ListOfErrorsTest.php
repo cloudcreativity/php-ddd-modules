@@ -19,11 +19,13 @@ use CloudCreativity\Modules\Tests\TestUnitEnum;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\KeyedSetOfErrors;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ListOfErrorsTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_holds_errors(): void
     {
         $errors = new ListOfErrors(
             $a = new Error(null, 'Message A'),
@@ -39,7 +41,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertFalse($errors->isEmpty());
     }
 
-    public function testEmpty(): void
+    #[Test]
+    public function it_can_be_empty(): void
     {
         $errors = new ListOfErrors();
 
@@ -50,7 +53,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertEmpty($errors->codes());
     }
 
-    public function testPush(): void
+    #[Test]
+    public function it_pushes_an_error(): void
     {
         $original = new ListOfErrors(
             $a = new Error(null, 'Message A'),
@@ -64,7 +68,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertSame([$a, $b, $c], $actual->all());
     }
 
-    public function testMerge(): void
+    #[Test]
+    public function it_merges_another_list(): void
     {
         $stack1 = new ListOfErrors(
             $a = new Error(null, 'Message A'),
@@ -85,7 +90,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertSame([$a, $b, $c, $d], $actual->all());
     }
 
-    public function testFirst(): void
+    #[Test]
+    public function it_returns_the_first_error(): void
     {
         $errors = new ListOfErrors(
             $a = new Error(null, 'Message A'),
@@ -96,7 +102,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertSame($a, $errors->first());
     }
 
-    public function testFind(): void
+    #[Test]
+    public function it_finds_an_error(): void
     {
         $errors = new ListOfErrors(
             new Error(null, 'Message A'),
@@ -112,7 +119,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertNull($errors->find(TestUnitEnum::Baz));
     }
 
-    public function testAny(): void
+    #[Test]
+    public function it_checks_if_any_error_matches(): void
     {
         $errors = new ListOfErrors(
             new Error(message: 'Message A'),
@@ -127,7 +135,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertFalse($errors->any(TestUnitEnum::Bat));
     }
 
-    public function testEvery(): void
+    #[Test]
+    public function it_checks_if_every_error_matches(): void
     {
         $errors1 = new ListOfErrors(
             new Error(message: 'Message A'),
@@ -151,7 +160,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertFalse($errors2->every(TestUnitEnum::Bat));
     }
 
-    public function testSoleWithExactlyOne(): void
+    #[Test]
+    public function it_returns_the_sole_error(): void
     {
         $errors1 = new ListOfErrors(
             $expected = new Error(message: 'Message A', code: $code = TestUnitEnum::Baz),
@@ -173,7 +183,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertSame($expected, $errors2->sole($fn));
     }
 
-    public function testSoleWithNone(): void
+    #[Test]
+    public function it_throws_when_there_is_no_sole_error(): void
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Expected exactly one error but there are 0.');
@@ -183,7 +194,8 @@ final class ListOfErrorsTest extends TestCase
         $errors->sole();
     }
 
-    public function testSoleWithMany(): void
+    #[Test]
+    public function it_throws_when_there_are_many_errors_for_sole(): void
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Expected exactly one error but there are 3.');
@@ -197,7 +209,8 @@ final class ListOfErrorsTest extends TestCase
         $errors->sole();
     }
 
-    public function testSoleWithNoneMatching(): void
+    #[Test]
+    public function it_throws_when_no_error_matches_the_sole_callback(): void
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Expected exactly one error matching the criteria but there are 0.');
@@ -211,7 +224,8 @@ final class ListOfErrorsTest extends TestCase
         $errors->sole(fn (IError $error) => 'Message D' === $error->message());
     }
 
-    public function testSoleWithManyMatching(): void
+    #[Test]
+    public function it_throws_when_many_errors_match_the_sole_callback(): void
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Expected exactly one error matching the criteria but there are 2.');
@@ -225,7 +239,8 @@ final class ListOfErrorsTest extends TestCase
         $errors->sole(fn (IError $error) => 'Message A' === $error->message());
     }
 
-    public function testSoleWithNoneMatchingEnum(): void
+    #[Test]
+    public function it_throws_when_no_error_matches_the_sole_code(): void
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Expected exactly one error with code "Baz" but there are 0.');
@@ -239,7 +254,8 @@ final class ListOfErrorsTest extends TestCase
         $errors->sole(TestUnitEnum::Baz);
     }
 
-    public function testSoleWithManyMatchingEnum(): void
+    #[Test]
+    public function it_throws_when_many_errors_match_the_sole_code(): void
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Expected exactly one error with code "Bat" but there are 2.');
@@ -253,7 +269,8 @@ final class ListOfErrorsTest extends TestCase
         $errors->sole(TestUnitEnum::Bat);
     }
 
-    public function testFilter(): void
+    #[Test]
+    public function it_filters_the_list(): void
     {
         $errors = new ListOfErrors(
             new Error(message: 'Message A'),
@@ -272,7 +289,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertEmpty($errors->filter(TestBackedEnum::Bar));
     }
 
-    public function testCodes(): void
+    #[Test]
+    public function it_returns_unique_codes(): void
     {
         $errors1 = new ListOfErrors(
             new Error(message: 'Message A'),
@@ -290,7 +308,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertEmpty($errors2->codes());
     }
 
-    public function testCode(): void
+    #[Test]
+    public function it_returns_the_first_code(): void
     {
         $errors1 = new ListOfErrors(
             new Error(message: 'Message A'),
@@ -308,7 +327,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertNull($errors2->code());
     }
 
-    public function testMessages(): void
+    #[Test]
+    public function it_returns_unique_messages(): void
     {
         $errors = new ListOfErrors(
             new Error(message: 'Message A'),
@@ -321,7 +341,8 @@ final class ListOfErrorsTest extends TestCase
         $this->assertSame(['Message A', 'Message B', 'Message C'], $errors->messages());
     }
 
-    public function testMessage(): void
+    #[Test]
+    public function it_returns_the_first_message(): void
     {
         $errors1 = new ListOfErrors(
             new Error(message: 'Message A'),

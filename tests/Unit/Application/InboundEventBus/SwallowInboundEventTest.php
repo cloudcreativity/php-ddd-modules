@@ -14,13 +14,15 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\InboundEventBus;
 
 use CloudCreativity\Modules\Bus\SwallowInboundEvent;
 use CloudCreativity\Modules\Toolkit\ModuleBasename;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 final class SwallowInboundEventTest extends TestCase
 {
-    public function testItDoesNothing(): void
+    #[Test]
+    public function it_does_nothing(): void
     {
         $handler = new SwallowInboundEvent();
         $handler->handle(new TestInboundEvent());
@@ -28,7 +30,8 @@ final class SwallowInboundEventTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function testItLogsThatItDoesNothing(): void
+    #[Test]
+    public function it_logs_that_it_does_nothing(): void
     {
         $event = new TestInboundEvent();
         $name = ModuleBasename::from($event);
@@ -46,7 +49,8 @@ final class SwallowInboundEventTest extends TestCase
         $handler->handle($event);
     }
 
-    public function testItLogsThatItDoesNothingWithSpecifiedLogLevel(): void
+    #[Test]
+    public function it_logs_that_it_does_nothing_with_specified_log_level(): void
     {
         $event = new TestInboundEvent();
         $name = ModuleBasename::from($event);

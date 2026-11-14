@@ -18,6 +18,7 @@ use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\Deferre
 use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\ListenerContainer;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
 use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -42,7 +43,14 @@ final class DeferredDispatcherTest extends TestCase
         ) extends DeferredDispatcher {};
     }
 
-    public function testItDispatchesImmediately(): void
+    protected function tearDown(): void
+    {
+        unset($this->dispatcher, $this->listeners, $this->middleware);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_dispatches_immediately(): void
     {
         $sequence = [];
         $event = new TestImmediateDomainEvent();
@@ -105,7 +113,8 @@ final class DeferredDispatcherTest extends TestCase
         $this->assertSame($sequence, ['Listener1', 'Listener2', 'Listener3']);
     }
 
-    public function testItFlushesDeferredEvents(): void
+    #[Test]
+    public function it_flushes_deferred_events(): void
     {
         $sequence = [];
         $event1 = new class () extends TestDomainEvent {};
@@ -176,7 +185,8 @@ final class DeferredDispatcherTest extends TestCase
         $this->assertSame($sequence, ['Listener1', 'Listener2', 'Listener3', 'Listener4']);
     }
 
-    public function testItFlushesDeferredEventsIncludingEventsDispatchedByListeners(): void
+    #[Test]
+    public function it_flushes_deferred_events_including_events_dispatched_by_listeners(): void
     {
         $sequence = [];
         $event1 = new class () extends TestDomainEvent {};
@@ -232,7 +242,8 @@ final class DeferredDispatcherTest extends TestCase
         $this->assertSame($sequence, ['Listener1', 'Listener2', 'Listener3']);
     }
 
-    public function testItForgetsDeferredEvents(): void
+    #[Test]
+    public function it_forgets_deferred_events(): void
     {
         $sequence = [];
         $deferred = new class () extends TestDomainEvent {};
@@ -293,7 +304,8 @@ final class DeferredDispatcherTest extends TestCase
         $this->assertSame($step3, ['Listener1', 'Listener2']);
     }
 
-    public function testItForgetsDeferredEventsAfterException(): void
+    #[Test]
+    public function it_forgets_deferred_events_after_exception(): void
     {
         $sequence = [];
         $event1 = new class () extends TestDomainEvent {};
@@ -355,14 +367,16 @@ final class DeferredDispatcherTest extends TestCase
         $this->dispatcher->flush(); // flush again, not expecting any events to be triggered.
     }
 
-    public function testNoListeners(): void
+    #[Test]
+    public function it_does_nothing_when_there_are_no_listeners(): void
     {
         $event = $this->createMock(DomainEvent::class);
         $this->listeners->expects($this->never())->method($this->anything());
         $this->dispatcher->dispatch($event);
     }
 
-    public function testItDispatchesThroughMiddleware(): void
+    #[Test]
+    public function it_dispatches_through_middleware(): void
     {
         $event1 = new TestImmediateDomainEvent();
         $event2 = new TestImmediateDomainEvent();
@@ -404,7 +418,8 @@ final class DeferredDispatcherTest extends TestCase
         $this->dispatcher->dispatch($event1);
     }
 
-    public function testListenerDoesNotHaveHandleMethod(): void
+    #[Test]
+    public function it_fails_when_the_listener_does_not_have_a_handle_method(): void
     {
         $event = new TestImmediateDomainEvent();
 

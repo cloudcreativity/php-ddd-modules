@@ -15,11 +15,13 @@ namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Result;
 use CloudCreativity\Modules\Tests\TestUnitEnum;
 use CloudCreativity\Modules\Toolkit\Result\FailedResultException;
 use CloudCreativity\Modules\Toolkit\Result\Result;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class FailedResultExceptionTest extends TestCase
 {
-    public function testItFailsWithMessage(): void
+    #[Test]
+    public function it_fails_with_message(): void
     {
         $result = Result::failed('Something went wrong.')
             ->withMeta(['foo' => 'bar']);
@@ -30,7 +32,8 @@ final class FailedResultExceptionTest extends TestCase
         $this->assertSame('Something went wrong.', $exception->getMessage());
     }
 
-    public function testItFailsWithErrorCode(): void
+    #[Test]
+    public function it_fails_with_error_code(): void
     {
         $result = Result::failed(TestUnitEnum::Bat);
 
@@ -42,7 +45,8 @@ final class FailedResultExceptionTest extends TestCase
         $this->assertSame($expected, $exception->getMessage());
     }
 
-    public function testItHasCodeAndPreviousException(): void
+    #[Test]
+    public function it_has_code_and_previous_exception(): void
     {
         $result = Result::failed('Something went wrong.');
         $previous = new \LogicException('Boom!');

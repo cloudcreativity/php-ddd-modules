@@ -17,11 +17,13 @@ use CloudCreativity\Modules\Testing\FakeContainer;
 use CloudCreativity\Modules\Tests\Integration\Bus\AddCommand;
 use CloudCreativity\Modules\Tests\Integration\Bus\FloorCommand;
 use CloudCreativity\Modules\Tests\Integration\Bus\MultiplyCommand;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MathQueueTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_queues_commands(): void
     {
         $a = new AddCommandEnqueuer();
         $b = new MultiplyCommandEnqueuer();

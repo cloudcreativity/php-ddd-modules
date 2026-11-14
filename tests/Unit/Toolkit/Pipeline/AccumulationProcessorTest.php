@@ -13,11 +13,13 @@ declare(strict_types=1);
 namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Pipeline;
 
 use CloudCreativity\Modules\Toolkit\Pipeline\AccumulationProcessor;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AccumulationProcessorTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_accumulates_stage_results(): void
     {
         $input = new \DateTime();
 
@@ -45,7 +47,8 @@ final class AccumulationProcessorTest extends TestCase
         $this->assertSame(6, $result);
     }
 
-    public function testWithInitialValue(): void
+    #[Test]
+    public function it_accumulates_stage_results_with_an_initial_value(): void
     {
         $input = new \DateTime();
 
@@ -74,7 +77,8 @@ final class AccumulationProcessorTest extends TestCase
         $this->assertSame(16, $result);
     }
 
-    public function testNoStagesWithoutInitialValue(): void
+    #[Test]
+    public function it_returns_null_when_there_are_no_stages_or_initial_value(): void
     {
         $processor = new AccumulationProcessor(function () {
             $this->fail('Callback should not be executed on an empty stack.');
@@ -83,7 +87,8 @@ final class AccumulationProcessorTest extends TestCase
         $this->assertNull($processor->process('foobar'));
     }
 
-    public function testNoStagesWithInitialValue(): void
+    #[Test]
+    public function it_returns_the_initial_value_when_there_are_no_stages(): void
     {
         $processor = new AccumulationProcessor(function () {
             $this->fail('Callback should not be executed on an empty stack.');

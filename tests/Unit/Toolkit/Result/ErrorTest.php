@@ -17,11 +17,13 @@ use CloudCreativity\Modules\Tests\TestBackedEnum;
 use CloudCreativity\Modules\Tests\TestUnitEnum;
 use CloudCreativity\Modules\Toolkit\ContractException;
 use CloudCreativity\Modules\Toolkit\Result\Error;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ErrorTest extends TestCase
 {
-    public function test(): void
+    #[Test]
+    public function it_has_a_key_message_and_code(): void
     {
         $error = new Error(key: 'foo', message: 'Bar', code: TestUnitEnum::Baz);
 
@@ -33,7 +35,8 @@ final class ErrorTest extends TestCase
         $this->assertFalse($error->is(TestUnitEnum::Bat));
     }
 
-    public function testOnlyMessage(): void
+    #[Test]
+    public function it_can_have_only_a_message(): void
     {
         $error = new Error(message: 'Hello World');
 
@@ -42,7 +45,8 @@ final class ErrorTest extends TestCase
         $this->assertNull($error->code());
     }
 
-    public function testOnlyCode(): void
+    #[Test]
+    public function it_can_have_only_a_code(): void
     {
         $error = new Error(code: TestBackedEnum::Foo);
 
@@ -51,7 +55,8 @@ final class ErrorTest extends TestCase
         $this->assertSame(TestBackedEnum::Foo, $error->code());
     }
 
-    public function testNoMessageOrCode(): void
+    #[Test]
+    public function it_requires_a_message_or_a_code(): void
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Error must have a message or a code.');
