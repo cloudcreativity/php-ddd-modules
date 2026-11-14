@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. This projec
 
 - `EnqueuerContainer::bind()` now throws an `InfrastructureException` when given a string binding without a PSR
   container, instead of failing later when the enqueuer is resolved.
+- `KeyedSetOfErrors::put()` and `merge()` now sort keys case-insensitively, matching the constructor.
 
 ## [6.1.0] - 2026-11-14
 
