@@ -25,8 +25,8 @@ final readonly class Error implements IError
         private string $message = '',
         string|UnitEnum|null $key = null,
     ) {
-        Contracts::assert(!empty($message) || $code !== null, 'Error must have a message or a code.');
-        $this->key = $key ?: null;
+        Contracts::assert($message !== '' || $code !== null, 'Error must have a message or a code.');
+        $this->key = $key === '' ? null : $key;
     }
 
     public function key(): string|UnitEnum|null

@@ -99,6 +99,22 @@ final class ErrorTest extends TestCase
     }
 
     #[Test]
+    public function it_can_have_a_message_of_zero(): void
+    {
+        $error = new Error(message: '0');
+
+        $this->assertSame('0', $error->message());
+    }
+
+    #[Test]
+    public function it_can_have_a_key_of_zero(): void
+    {
+        $error = new Error(message: 'Hello World', key: '0');
+
+        $this->assertSame('0', $error->key());
+    }
+
+    #[Test]
     public function it_is_not_a_code_when_it_has_no_code(): void
     {
         $error = new Error(message: 'Hello World');
