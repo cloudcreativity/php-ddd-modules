@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [6.1.0] - 2026-11-14
+
+### Added
+
+- New `IsEntityWithTypedId` trait for use on entities that strictly type their id.
+
 ## [6.0.1] - 2026-06-13
 
 ### Fixed
@@ -652,6 +658,10 @@ All notable changes to this project will be documented in this file. This projec
 ## [0.1.0] - 2023-11-18
 
 Initial release.
+
+[6.1.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.0.1...v6.1.0
+
+[6.0.1]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.0.0...v6.0.1
 
 [6.0.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v5.2.0...v6.0.0
 
