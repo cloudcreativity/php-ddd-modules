@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file. This projec
 - `FakeLogger::messages()` no longer drops a message of `'0'`.
 - `LogPushedToQueue` now implements the `QueueMiddleware` interface, instead of `CommandMiddleware`. Its `__invoke()`
   method now has a `void` return type, matching the queue middleware contract.
+- `FakeContainer` now allows the built-in exception reporter, logger and unit of work services to be overridden via
+  `bind()` or `instance()`. Its `has()` method also no longer resolves the binding to check if it exists.
 
 ## [6.1.0] - 2026-11-14
 

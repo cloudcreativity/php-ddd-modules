@@ -50,29 +50,25 @@ final class FakeContainer implements ContainerInterface
 
     public function get(string $id)
     {
-        $stub = match ($id) {
+        if (isset($this->bindings[$id])) {
+            return $this->bindings[$id]() ?? $this->abort($id);
+        }
+
+        return match ($id) {
             ExceptionReporter::class => $this->reporter,
             LoggerInterface::class => $this->logger,
             UnitOfWork::class => $this->unitOfWork,
-            default => null,
+            default => $this->abort($id),
         };
-
-        if ($stub === null) {
-            $binding = $this->bindings[$id] ?? null;
-            $stub = $binding ? $binding() : null;
-        }
-
-        return $stub ?? $this->abort($id);
     }
 
     public function has(string $id): bool
     {
-        try {
-            $this->get($id);
-            return true;
-        } catch (NotFoundExceptionInterface) {
-            return false;
-        }
+        return isset($this->bindings[$id]) || in_array($id, [
+            ExceptionReporter::class,
+            LoggerInterface::class,
+            UnitOfWork::class,
+        ], true);
     }
 
     protected function abort(string $id): never

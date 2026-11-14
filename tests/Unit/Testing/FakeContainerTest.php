@@ -81,6 +81,21 @@ final class FakeContainerTest extends TestCase
         $this->assertSame($this->container->unitOfWork, $actual);
     }
 
+    /**
+     * @param class-string $id
+     */
+    #[DataProvider('builtInServiceProvider')]
+    #[Test]
+    public function it_resolves_a_binding_that_overrides_a_built_in_service(string $id): void
+    {
+        $instance = new stdClass();
+        $this->container->instance($id, $instance);
+
+        $actual = $this->container->get($id);
+
+        $this->assertSame($instance, $actual);
+    }
+
     #[Test]
     public function it_resolves_a_binding_each_time_it_is_requested(): void
     {
@@ -200,5 +215,20 @@ final class FakeContainerTest extends TestCase
         $actual = $this->container->has('foo');
 
         $this->assertFalse($actual);
+    }
+
+    #[Test]
+    public function it_does_not_resolve_a_binding_when_checking_if_it_exists(): void
+    {
+        $resolved = false;
+        $this->container->bind('foo', function () use (&$resolved): string {
+            $resolved = true;
+            return 'bar';
+        });
+
+        $actual = $this->container->has('foo');
+
+        $this->assertTrue($actual);
+        $this->assertFalse($resolved);
     }
 }
