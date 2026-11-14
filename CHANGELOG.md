@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Added
+
+- New `IsEntityWithTypedId` trait for use on entities that strictly type their id.
+
 ## [6.0.1] - 2026-06-13
 
 ### Fixed
