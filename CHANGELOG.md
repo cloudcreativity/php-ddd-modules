@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [6.1.1] - 2026-11-14
+
 ### Fixed
 
 - `EnqueuerContainer::bind()` now throws an `InfrastructureException` when given a string binding without a PSR
@@ -674,6 +676,8 @@ All notable changes to this project will be documented in this file. This projec
 ## [0.1.0] - 2023-11-18
 
 Initial release.
+
+[6.1.1]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.1.0...v6.1.1
 
 [6.1.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.0.1...v6.1.0
 
