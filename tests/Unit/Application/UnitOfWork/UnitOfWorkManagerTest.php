@@ -14,6 +14,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\UnitOfWork;
 
 use Closure;
 use CloudCreativity\Modules\Application\ApplicationException;
+use CloudCreativity\Modules\Application\UnitOfWork\AfterCommitCallbacksFailed;
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Contracts\Application\Ports\UnitOfWork;
 use CloudCreativity\Modules\Testing\FakeExceptionReporter;
@@ -440,6 +441,162 @@ final class UnitOfWorkManagerTest extends TestCase
             'after2',
         ], $sequence);
         $this->assertSame([$ex, $ex], $this->reporter->reported);
+    }
+
+    /**
+     * Scenario where an after commit callback fails.
+     *
+     * The unit of work has already been committed at this point, so the callback must not be
+     * retried. The remaining after commit callbacks must still be executed, and the exception
+     * from the after commit callback must be thrown as-is.
+     */
+    #[Test]
+    public function it_does_not_retry_when_after_commit_callback_fails(): void
+    {
+        $ex = new LogicException('Boom!');
+        $sequence = [];
+        $actual = null;
+
+        $this->unitOfWork
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function (Closure $closure) use (&$sequence): mixed {
+                $sequence[] = 'begin';
+                $result = $closure();
+                $sequence[] = 'committed';
+                return $result;
+            });
+
+        try {
+            $this->manager->execute(function () use ($ex, &$sequence): void {
+                $sequence[] = 'callback';
+                $this->manager->afterCommit(function () use ($ex, &$sequence): void {
+                    $sequence[] = 'after1';
+                    throw $ex;
+                });
+                $this->manager->afterCommit(function () use (&$sequence): void {
+                    $sequence[] = 'after2';
+                });
+            }, 3);
+        } catch (LogicException $e) {
+            $actual = $e;
+        }
+
+        $this->assertSame($ex, $actual);
+        $this->assertSame(['begin', 'callback', 'committed', 'after1', 'after2'], $sequence);
+        $this->assertSame([], $this->reporter->reported);
+    }
+
+    #[Test]
+    public function it_executes_all_after_commit_callbacks_when_several_fail(): void
+    {
+        $ex1 = new LogicException('Boom 1!');
+        $ex2 = new RuntimeException('Boom 2!');
+        $sequence = [];
+        $actual = null;
+
+        $this->unitOfWork
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(fn (Closure $closure): mixed => $closure());
+
+        try {
+            $this->manager->execute(function () use ($ex1, $ex2, &$sequence): void {
+                $this->manager->afterCommit(function () use ($ex1, &$sequence): void {
+                    $sequence[] = 'after1';
+                    $this->manager->afterCommit(function () use (&$sequence): void {
+                        $sequence[] = 'after4';
+                    });
+                    throw $ex1;
+                });
+                $this->manager->afterCommit(function () use (&$sequence): void {
+                    $sequence[] = 'after2';
+                });
+                $this->manager->afterCommit(function () use ($ex2, &$sequence): void {
+                    $sequence[] = 'after3';
+                    throw $ex2;
+                });
+            }, 3);
+        } catch (AfterCommitCallbacksFailed $e) {
+            $actual = $e;
+        }
+
+        $this->assertInstanceOf(AfterCommitCallbacksFailed::class, $actual);
+        $this->assertSame('2 after commit callbacks failed.', $actual->getMessage());
+        $this->assertSame([$ex1, $ex2], $actual->exceptions());
+        $this->assertSame($ex1, $actual->getPrevious());
+        $this->assertSame(['after1', 'after2', 'after3', 'after4'], $sequence);
+        $this->assertSame([], $this->reporter->reported);
+    }
+
+    /**
+     * Scenario where the first attempt fails before commit, the second attempt commits,
+     * and then an after commit callback fails.
+     */
+    #[Test]
+    public function it_does_not_retry_after_commit_following_a_failed_attempt(): void
+    {
+        $first = new RuntimeException('First attempt failed.');
+        $ex = new LogicException('After commit failed.');
+        $sequence = [];
+        $count = 0;
+        $actual = null;
+
+        $this->unitOfWork
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnCallback(function (Closure $closure) use (&$sequence): mixed {
+                try {
+                    $sequence[] = 'begin';
+                    $result = $closure();
+                    $sequence[] = 'committed';
+                    return $result;
+                } catch (\Throwable $ex) {
+                    $sequence[] = 'rollback';
+                    throw $ex;
+                }
+            });
+
+        try {
+            $this->manager->execute(function () use ($first, $ex, &$sequence, &$count): void {
+                $count++;
+                $this->manager->afterCommit(function () use ($ex, &$sequence): void {
+                    $sequence[] = 'after1';
+                    throw $ex;
+                });
+                if ($count === 1) {
+                    throw $first;
+                }
+            }, 3);
+        } catch (LogicException $e) {
+            $actual = $e;
+        }
+
+        $this->assertSame($ex, $actual);
+        $this->assertSame(['begin', 'rollback', 'begin', 'committed', 'after1'], $sequence);
+        $this->assertSame([$first], $this->reporter->reported);
+    }
+
+    #[Test]
+    public function it_flushes_callbacks_when_after_commit_callback_fails(): void
+    {
+        $this->unitOfWork
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnCallback(fn (Closure $callback) => $callback());
+
+        try {
+            $this->manager->execute(function () {
+                $this->manager->afterCommit(fn () => throw new LogicException('Boom!'));
+            }, 2);
+        } catch (LogicException) {
+            // expected
+        }
+
+        // this would error if the manager is not empty at this point.
+        $actual = $this->manager->execute(fn () => 2);
+
+        $this->assertSame(2, $actual);
     }
 
     #[Test]

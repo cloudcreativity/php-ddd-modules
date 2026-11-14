@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Added
+
+- New `AfterCommitCallbacksFailed` exception, thrown by the unit of work manager when more than one after commit
+  callback fails.
+
+### Fixed
+
+- [#46](https://github.com/cloudcreativity/php-ddd-modules/issues/46) `UnitOfWorkManager` no longer re-attempts the unit
+  of work when an after commit callback throws, as the unit of work has already been committed. A failing after commit
+  callback also no longer prevents the remaining after commit callbacks from being executed. If one callback fails its
+  exception is thrown; if more than one fails, an `AfterCommitCallbacksFailed` exception is thrown.
+
 ## [6.1.1] - 2026-11-14
 
 ### Fixed
