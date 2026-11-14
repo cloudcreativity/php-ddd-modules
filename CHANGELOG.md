@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [6.1.2] - 2026-11-14
+
 ### Added
 
 - New `AfterCommitCallbacksFailed` exception, thrown by the unit of work manager when more than one after commit
@@ -688,6 +690,8 @@ All notable changes to this project will be documented in this file. This projec
 ## [0.1.0] - 2023-11-18
 
 Initial release.
+
+[6.1.2]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.1.1...v6.1.2
 
 [6.1.1]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.1.0...v6.1.1
 
