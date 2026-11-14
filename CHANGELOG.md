@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file. This projec
 - `FakeExceptionReporter` now rethrows when more exceptions have already been reported than expected, e.g. when
   `none()` is called after an exception was reported.
 - `FakeLogger::messages()` no longer drops a message of `'0'`.
+- `LogPushedToQueue` now implements the `QueueMiddleware` interface, instead of `CommandMiddleware`. Its `__invoke()`
+  method now has a `void` return type, matching the queue middleware contract.
 
 ## [6.1.0] - 2026-11-14
 
