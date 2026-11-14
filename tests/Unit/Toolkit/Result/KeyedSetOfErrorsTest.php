@@ -257,6 +257,26 @@ final class KeyedSetOfErrorsTest extends TestCase
     }
 
     #[Test]
+    public function it_sorts_keys_case_insensitively_when_putting_an_error(): void
+    {
+        $errors = new KeyedSetOfErrors(new Error(message: 'Message A', key: 'bar'));
+
+        $actual = $errors->put(new Error(message: 'Message B', key: 'Foo'))->keys();
+
+        $this->assertSame(['bar', 'Foo'], $actual);
+    }
+
+    #[Test]
+    public function it_sorts_keys_case_insensitively_when_merging(): void
+    {
+        $errors = new KeyedSetOfErrors(new Error(message: 'Message A', key: 'bar'));
+
+        $actual = $errors->merge(new KeyedSetOfErrors(new Error(message: 'Message B', key: 'Foo')))->keys();
+
+        $this->assertSame(['bar', 'Foo'], $actual);
+    }
+
+    #[Test]
     public function it_returns_an_empty_list_for_a_key_that_does_not_exist(): void
     {
         $errors = new KeyedSetOfErrors(new Error(message: 'Message A', key: 'foo'));
