@@ -186,6 +186,17 @@ final class MetaTest extends TestCase
     }
 
     #[Test]
+    public function it_preserves_numeric_string_keys_when_merging(): void
+    {
+        $original = new Meta(['x' => 'y'])->put('1', 'a');
+        $values = new Meta(['x' => 'z'])->put('2', 'b');
+
+        $actual = $original->merge($values);
+
+        $this->assertSame(['x' => 'z', 1 => 'a', 2 => 'b'], $actual->all());
+    }
+
+    #[Test]
     public function it_merges_another_meta(): void
     {
         $original = new Meta(['foo' => 'bar', 'baz' => 'bat']);

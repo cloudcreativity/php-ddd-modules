@@ -110,7 +110,7 @@ final class Meta implements ArrayAccess, KeyedSet
         }
 
         $copy = clone $this;
-        $copy->stack = array_merge($this->stack, $values);
+        $copy->stack = array_replace($this->stack, $values);
 
         return $copy;
     }
