@@ -16,27 +16,26 @@ use CloudCreativity\Modules\Toolkit\ContractException;
 use CloudCreativity\Modules\Toolkit\Contracts;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 final class ContractsTest extends TestCase
 {
     #[Test]
     public function it_does_not_throw_when_precondition_is_true(): void
     {
-        /** @phpstan-ignore-next-line */
-        Contracts::assert(true, 'Not expected error.');
+        $this->expectNotToPerformAssertions();
 
         /** @phpstan-ignore-next-line */
-        $this->assertTrue(true);
+        Contracts::assert(true, 'Not expected error.');
     }
 
     #[Test]
     public function it_does_not_throw_when_precondition_is_true_with_lazy_message(): void
     {
-        /** @phpstan-ignore-next-line */
-        Contracts::assert(true, fn () => $this->fail('Not expected error.'));
+        $this->expectNotToPerformAssertions();
 
         /** @phpstan-ignore-next-line */
-        $this->assertTrue(true);
+        Contracts::assert(true, fn () => $this->fail('Not expected error.'));
     }
 
     #[Test]
@@ -57,5 +56,23 @@ final class ContractsTest extends TestCase
 
         /** @phpstan-ignore-next-line */
         Contracts::assert(false, fn () => $expected);
+    }
+
+    #[Test]
+    public function it_throws_with_an_empty_message_by_default(): void
+    {
+        $this->expectException(ContractException::class);
+        $this->expectExceptionMessageMatches('/^$/');
+
+        /** @phpstan-ignore-next-line */
+        Contracts::assert(false);
+    }
+
+    #[Test]
+    public function it_cannot_be_instantiated(): void
+    {
+        $reflection = new ReflectionClass(Contracts::class);
+
+        $this->assertFalse($reflection->isInstantiable());
     }
 }

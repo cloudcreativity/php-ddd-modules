@@ -14,20 +14,16 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\DomainEventDispatching\
 
 use CloudCreativity\Modules\Application\DomainEventDispatching\Middleware\LogDomainEventDispatch;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
+use CloudCreativity\Modules\Testing\FakeLogger;
 use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 final class LogDomainEventDispatchTest extends TestCase
 {
-    /**
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface $logger;
+    private FakeLogger $logger;
 
     private DomainEvent $event;
 
@@ -35,7 +31,7 @@ final class LogDomainEventDispatchTest extends TestCase
     {
         parent::setUp();
 
-        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->logger = new FakeLogger();
 
         /**
          * Do not expect any public properties to be logged as context.
@@ -65,50 +61,32 @@ final class LogDomainEventDispatchTest extends TestCase
     public function it_logs_with_the_default_levels(): void
     {
         $eventName = $this->event::class;
-        $logs = [];
-
-        $this->logger
-            ->expects($this->exactly(2))
-            ->method('log')
-            ->willReturnCallback(function ($level, $message, $context) use (&$logs): bool {
-                $logs[] = [$level, $message, $context];
-                return true;
-            });
-
         $middleware = new LogDomainEventDispatch($this->logger);
+
         $middleware($this->event, function (DomainEvent $received) {
             $this->assertSame($this->event, $received);
         });
 
         $this->assertSame([
-            [LogLevel::DEBUG, "Dispatching domain event {$eventName}.", []],
-            [LogLevel::INFO, "Dispatched domain event {$eventName}.", []],
-        ], $logs);
+            ['level' => LogLevel::DEBUG, 'message' => "Dispatching domain event {$eventName}.", 'context' => []],
+            ['level' => LogLevel::INFO, 'message' => "Dispatched domain event {$eventName}.", 'context' => []],
+        ], $this->logger->log);
     }
 
     #[Test]
     public function it_logs_with_custom_levels(): void
     {
         $eventName = $this->event::class;
-        $logs = [];
-
-        $this->logger
-            ->expects($this->exactly(2))
-            ->method('log')
-            ->willReturnCallback(function ($level, $message) use (&$logs): bool {
-                $logs[] = [$level, $message];
-                return true;
-            });
-
         $middleware = new LogDomainEventDispatch($this->logger, LogLevel::NOTICE, LogLevel::WARNING);
+
         $middleware($this->event, function (DomainEvent $received) {
             $this->assertSame($this->event, $received);
         });
 
         $this->assertSame([
-            [LogLevel::NOTICE, "Dispatching domain event {$eventName}."],
-            [LogLevel::WARNING, "Dispatched domain event {$eventName}."],
-        ], $logs);
+            ['level' => LogLevel::NOTICE, 'message' => "Dispatching domain event {$eventName}.", 'context' => []],
+            ['level' => LogLevel::WARNING, 'message' => "Dispatched domain event {$eventName}.", 'context' => []],
+        ], $this->logger->log);
     }
 
     #[Test]
@@ -116,21 +94,20 @@ final class LogDomainEventDispatchTest extends TestCase
     {
         $expected = new LogicException();
         $eventName = $this->event::class;
-
-        $this->logger
-            ->expects($this->once())
-            ->method('log')
-            ->with(LogLevel::DEBUG, "Dispatching domain event {$eventName}.");
-
         $middleware = new LogDomainEventDispatch($this->logger);
+        $actual = null;
 
         try {
             $middleware($this->event, static function () use ($expected) {
                 throw $expected;
             });
-            $this->fail('No exception thrown.');
         } catch (LogicException $ex) {
-            $this->assertSame($expected, $ex);
+            $actual = $ex;
         }
+
+        $this->assertSame($expected, $actual);
+        $this->assertSame([
+            ['level' => LogLevel::DEBUG, 'message' => "Dispatching domain event {$eventName}.", 'context' => []],
+        ], $this->logger->log);
     }
 }

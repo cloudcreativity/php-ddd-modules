@@ -12,22 +12,22 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Application\Bus;
 
+use CloudCreativity\Modules\Bus\PsrPipeContainer;
 use CloudCreativity\Modules\Bus\Validation\Validator;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Messaging\Query;
-use CloudCreativity\Modules\Contracts\Toolkit\Pipeline\PipeContainer;
+use CloudCreativity\Modules\Testing\FakeContainer;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 
 final class ValidatorTest extends TestCase
 {
     /**
-     * @return array<array<class-string>>
+     * @return list<array{class-string<Message>}>
      */
     public static function messageProvider(): array
     {
@@ -65,23 +65,15 @@ final class ValidatorTest extends TestCase
             return new ListOfErrors($error2, $error3);
         };
 
-        $rules = $this->createMock(PipeContainer::class);
-        $rules
-            ->expects($this->exactly(2))
-            ->method('get')
-            ->willReturnCallback(fn (string $name) => match ($name) {
-                'Rule2' => $b,
-                'Rule3' => $c,
-                default => $this->fail('Unexpected rule name: ' . $name),
-            });
+        $rules = new PsrPipeContainer();
+        $rules->bind('Rule2', fn () => $b);
+        $rules->bind('Rule3', fn () => $c);
 
-        $validator = new Validator(rules: $rules);
-        $actual = $validator
-            ->using([$a, 'Rule2', 'Rule3'])
-            ->validate($message);
+        $validator = new Validator(rules: $rules)->using([$a, 'Rule2', 'Rule3']);
 
-        $this->assertInstanceOf(ListOfErrors::class, $actual);
-        $this->assertSame([$error1, $error2, $error3], $actual->all());
+        $actual = $validator->validate($message);
+
+        $this->assertEquals(new ListOfErrors($error1, $error2, $error3), $actual);
     }
 
     /**
@@ -111,23 +103,15 @@ final class ValidatorTest extends TestCase
             return new ListOfErrors($error2, $error3);
         };
 
-        $rules = $this->createMock(ContainerInterface::class);
-        $rules
-            ->expects($this->exactly(2))
-            ->method('get')
-            ->willReturnCallback(fn (string $name) => match ($name) {
-                'Rule2' => $b,
-                'Rule3' => $c,
-                default => $this->fail('Unexpected rule name: ' . $name),
-            });
+        $rules = new FakeContainer();
+        $rules->instance('Rule2', $b);
+        $rules->instance('Rule3', $c);
 
-        $validator = new Validator(rules: $rules);
-        $actual = $validator
-            ->using([$a, 'Rule2', 'Rule3'])
-            ->validate($message);
+        $validator = new Validator(rules: $rules)->using([$a, 'Rule2', 'Rule3']);
 
-        $this->assertInstanceOf(ListOfErrors::class, $actual);
-        $this->assertSame([$error1, $error2, $error3], $actual->all());
+        $actual = $validator->validate($message);
+
+        $this->assertEquals(new ListOfErrors($error1, $error2, $error3), $actual);
     }
 
     /**
@@ -154,14 +138,13 @@ final class ValidatorTest extends TestCase
             $this->fail('Not expecting to be called.');
         };
 
-        $validator = new Validator();
-        $actual = $validator
+        $validator = new Validator()
             ->using([$a, $b, $c])
-            ->stopOnFirstFailure()
-            ->validate($message);
+            ->stopOnFirstFailure();
 
-        $this->assertInstanceOf(ListOfErrors::class, $actual);
-        $this->assertSame([$error], $actual->all());
+        $actual = $validator->validate($message);
+
+        $this->assertEquals(new ListOfErrors($error), $actual);
     }
 
     #[Test]
@@ -170,6 +153,8 @@ final class ValidatorTest extends TestCase
         $query = $this->createStub(Query::class);
         $validator = new Validator();
 
-        $this->assertEquals(new ListOfErrors(), $validator->validate($query));
+        $actual = $validator->validate($query);
+
+        $this->assertEquals(new ListOfErrors(), $actual);
     }
 }

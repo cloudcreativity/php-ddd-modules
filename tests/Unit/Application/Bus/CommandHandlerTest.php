@@ -20,40 +20,52 @@ use PHPUnit\Framework\TestCase;
 final class CommandHandlerTest extends TestCase
 {
     #[Test]
-    public function it_executes_the_command_and_returns_its_middleware(): void
+    public function it_executes_the_command(): void
     {
         $command = new TestCommand();
-
         $innerHandler = $this->createMock(TestCommandHandler::class);
+        $handler = new CommandHandler($innerHandler);
+
         $innerHandler
             ->expects($this->once())
             ->method('execute')
             ->with($this->identicalTo($command))
             ->willReturn($expected = Result::ok());
 
-        $innerHandler
-            ->expects($this->once())
-            ->method('middleware')
-            ->willReturn($middleware = ['Middleware1', 'Middleware2']);
+        $actual = $handler($command);
 
-        $handler = new CommandHandler($innerHandler);
-
-        $this->assertSame($expected, $handler($command));
-        $this->assertSame($middleware, $handler->middleware());
+        $this->assertSame($expected, $actual);
     }
 
     #[Test]
-    public function it_does_not_have_execute_method(): void
+    public function it_returns_the_middleware_of_the_inner_handler(): void
     {
-        $handler = new CommandHandler(new \DateTime());
-        $command = new TestCommand();
-        $commandClass = $command::class;
+        $innerHandler = $this->createStub(TestCommandHandler::class);
+        $innerHandler->method('middleware')->willReturn(['Middleware1', 'Middleware2']);
+        $handler = new CommandHandler($innerHandler);
 
-        $this->expectException(\AssertionError::class);
-        $this->expectExceptionMessage(
-            "Cannot dispatch \"{$commandClass}\" - handler \"DateTime\" does not have an execute method.",
-        );
+        $actual = $handler->middleware();
 
-        $handler($command);
+        $this->assertSame(['Middleware1', 'Middleware2'], $actual);
+    }
+
+    #[Test]
+    public function it_returns_middleware_from_the_through_attribute(): void
+    {
+        $handler = new CommandHandler(new TestCommandHandlerWithThrough());
+
+        $actual = $handler->middleware();
+
+        $this->assertSame(['Middleware1', 'Middleware2'], $actual);
+    }
+
+    #[Test]
+    public function it_returns_no_middleware_when_none_is_declared(): void
+    {
+        $handler = new CommandHandler(new \stdClass());
+
+        $actual = $handler->middleware();
+
+        $this->assertSame([], $actual);
     }
 }

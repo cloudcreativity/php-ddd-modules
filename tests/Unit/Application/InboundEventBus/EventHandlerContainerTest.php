@@ -15,10 +15,9 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\InboundEventBus;
 use CloudCreativity\Modules\Bus\BusException;
 use CloudCreativity\Modules\Bus\EventHandler;
 use CloudCreativity\Modules\Bus\EventHandlerContainer;
-use CloudCreativity\Modules\Tests\Unit\Infrastructure\OutboundEventBus\TestOutboundEvent;
+use CloudCreativity\Modules\Testing\FakeContainer;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 
 final class EventHandlerContainerTest extends TestCase
 {
@@ -30,10 +29,10 @@ final class EventHandlerContainerTest extends TestCase
 
         $container = new EventHandlerContainer();
         $container->bind(TestInboundEvent::class, fn () => $a);
-        $container->bind(TestOutboundEvent::class, fn () => $b);
+        $container->bind(TestOtherInboundEvent::class, fn () => $b);
 
         $this->assertEquals(new EventHandler($a), $container->get(TestInboundEvent::class));
-        $this->assertEquals(new EventHandler($b), $container->get(TestOutboundEvent::class));
+        $this->assertEquals(new EventHandler($b), $container->get(TestOtherInboundEvent::class));
     }
 
     #[Test]
@@ -42,57 +41,55 @@ final class EventHandlerContainerTest extends TestCase
         $a = new class () extends TestEventHandler {};
         $b = $this->createStub(TestEventHandler::class);
 
-        $psrContainer = $this->createMock(ContainerInterface::class);
-        $psrContainer
-            ->expects($this->exactly(2))
-            ->method('get')
-            ->willReturnCallback(fn (string $class) => match ($class) {
-                $a::class => $a,
-                $b::class => $b,
-                default => $this->fail('Unexpected class requested: ' . $class),
-            });
+        $psrContainer = new FakeContainer();
+        $psrContainer->instance($a::class, $a);
+        $psrContainer->instance($b::class, $b);
 
         $container = new EventHandlerContainer(container: $psrContainer);
         $container->bind(TestInboundEvent::class, $a::class);
-        $container->bind(TestOutboundEvent::class, $b::class);
+        $container->bind(TestOtherInboundEvent::class, $b::class);
 
         $this->assertEquals(new EventHandler($a), $container->get(TestInboundEvent::class));
-        $this->assertEquals(new EventHandler($b), $container->get(TestOutboundEvent::class));
+        $this->assertEquals(new EventHandler($b), $container->get(TestOtherInboundEvent::class));
+    }
+
+    #[Test]
+    public function it_prefers_a_bound_handler_over_the_default_handler(): void
+    {
+        $handler = new class () extends TestEventHandler {};
+        $container = new EventHandlerContainer(default: fn () => new class () extends TestEventHandler {});
+        $container->bind(TestInboundEvent::class, fn () => $handler);
+
+        $actual = $container->get(TestInboundEvent::class);
+
+        $this->assertEquals(new EventHandler($handler), $actual);
     }
 
     #[Test]
     public function it_has_bound_default_handler(): void
     {
-        $a = new class () extends TestEventHandler {};
-        $b = $this->createStub(TestEventHandler::class);
+        $default = $this->createStub(TestEventHandler::class);
+        $container = new EventHandlerContainer(default: fn () => $default);
+        $container->bind(TestInboundEvent::class, fn () => new class () extends TestEventHandler {});
 
-        $container = new EventHandlerContainer(default: fn () => $b);
-        $container->bind(TestInboundEvent::class, fn () => $a);
+        $actual = $container->get(TestOtherInboundEvent::class);
 
-        $this->assertEquals(new EventHandler($a), $container->get(TestInboundEvent::class));
-        $this->assertEquals(new EventHandler($b), $container->get(TestOutboundEvent::class));
+        $this->assertEquals(new EventHandler($default), $actual);
     }
 
     #[Test]
     public function it_has_default_handler_in_psr_container(): void
     {
-        $a = new class () extends TestEventHandler {};
-        $b = $this->createStub(TestEventHandler::class);
-
-        $psrContainer = $this->createMock(ContainerInterface::class);
-        $psrContainer
-            ->expects($this->once())
-            ->method('get')
-            ->with('default-handler')
-            ->willReturn($b);
-
+        $default = $this->createStub(TestEventHandler::class);
+        $psrContainer = new FakeContainer();
+        $psrContainer->instance('default-handler', $default);
         $container = new EventHandlerContainer(default: 'default-handler', container: $psrContainer);
-        $container->bind(TestInboundEvent::class, fn () => $a);
+        $container->bind(TestInboundEvent::class, fn () => new class () extends TestEventHandler {});
 
-        $this->assertEquals(new EventHandler($a), $container->get(TestInboundEvent::class));
-        $this->assertEquals(new EventHandler($b), $container->get(TestOutboundEvent::class));
+        $actual = $container->get(TestOtherInboundEvent::class);
+
+        $this->assertEquals(new EventHandler($default), $actual);
     }
-
 
     #[Test]
     public function it_does_not_have_handler(): void
@@ -102,9 +99,43 @@ final class EventHandlerContainerTest extends TestCase
 
         $this->expectException(BusException::class);
         $this->expectExceptionMessage(
-            'No handler bound for integration event: ' . TestOutboundEvent::class,
+            'No handler bound for integration event: ' . TestOtherInboundEvent::class,
         );
 
-        $container->get(TestOutboundEvent::class);
+        $container->get(TestOtherInboundEvent::class);
+    }
+
+    #[Test]
+    public function it_throws_when_binding_a_string_without_a_psr_container(): void
+    {
+        $container = new EventHandlerContainer();
+
+        $this->expectException(BusException::class);
+        $this->expectExceptionMessage('Cannot use a string event handler binding without a PSR container.');
+
+        $container->bind(TestInboundEvent::class, TestEventHandler::class);
+    }
+
+    #[Test]
+    public function it_binds_a_default_handler(): void
+    {
+        $handler = new class () extends TestEventHandler {};
+        $container = new EventHandlerContainer();
+        $container->withDefault(fn () => $handler);
+
+        $actual = $container->get(TestInboundEvent::class);
+
+        $this->assertEquals(new EventHandler($handler), $actual);
+    }
+
+    #[Test]
+    public function it_throws_when_the_default_handler_is_already_set(): void
+    {
+        $container = new EventHandlerContainer(default: fn () => new class () extends TestEventHandler {});
+
+        $this->expectException(BusException::class);
+        $this->expectExceptionMessage('Default event handler binding is already set.');
+
+        $container->withDefault(fn () => new class () extends TestEventHandler {});
     }
 }

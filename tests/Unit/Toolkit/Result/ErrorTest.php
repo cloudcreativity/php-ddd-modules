@@ -31,8 +31,26 @@ final class ErrorTest extends TestCase
         $this->assertSame('foo', $error->key());
         $this->assertSame('Bar', $error->message());
         $this->assertSame(TestUnitEnum::Baz, $error->code());
-        $this->assertTrue($error->is(TestUnitEnum::Baz));
-        $this->assertFalse($error->is(TestUnitEnum::Bat));
+    }
+
+    #[Test]
+    public function it_is_its_code(): void
+    {
+        $error = new Error(code: TestUnitEnum::Baz);
+
+        $actual = $error->is(TestUnitEnum::Baz);
+
+        $this->assertTrue($actual);
+    }
+
+    #[Test]
+    public function it_is_not_another_code(): void
+    {
+        $error = new Error(code: TestUnitEnum::Baz);
+
+        $actual = $error->is(TestUnitEnum::Bat);
+
+        $this->assertFalse($actual);
     }
 
     #[Test]
@@ -62,5 +80,31 @@ final class ErrorTest extends TestCase
         $this->expectExceptionMessage('Error must have a message or a code.');
 
         new Error(key: 'foo');
+    }
+
+    #[Test]
+    public function it_can_have_an_enum_key(): void
+    {
+        $error = new Error(message: 'Hello World', key: TestUnitEnum::Bat);
+
+        $this->assertSame(TestUnitEnum::Bat, $error->key());
+    }
+
+    #[Test]
+    public function it_converts_an_empty_key_to_null(): void
+    {
+        $error = new Error(message: 'Hello World', key: '');
+
+        $this->assertNull($error->key());
+    }
+
+    #[Test]
+    public function it_is_not_a_code_when_it_has_no_code(): void
+    {
+        $error = new Error(message: 'Hello World');
+
+        $actual = $error->is(TestUnitEnum::Baz);
+
+        $this->assertFalse($actual);
     }
 }

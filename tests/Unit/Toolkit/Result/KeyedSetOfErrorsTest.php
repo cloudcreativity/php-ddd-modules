@@ -12,12 +12,15 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Tests\Unit\Toolkit\Result;
 
+use CloudCreativity\Modules\Contracts\Toolkit\Iterables\KeyedSet;
 use CloudCreativity\Modules\Tests\TestUnitEnum;
 use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\KeyedSetOfErrors;
 use CloudCreativity\Modules\Toolkit\Result\ListOfErrors;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use UnitEnum;
 
 final class KeyedSetOfErrorsTest extends TestCase
 {
@@ -50,8 +53,38 @@ final class KeyedSetOfErrorsTest extends TestCase
         $this->assertCount(8, $errors);
         $this->assertTrue($errors->isNotEmpty());
         $this->assertFalse($errors->isEmpty());
-        $this->assertEquals($expected['bar'], $errors->get('bar'));
-        $this->assertEquals($expected[TestUnitEnum::Baz->name], $errors->get(TestUnitEnum::Baz));
+    }
+
+    /**
+     * @return array<string, array{0: string|UnitEnum, 1: ListOfErrors}>
+     */
+    public static function getProvider(): array
+    {
+        return [
+            'string key' => ['bar', new ListOfErrors(new Error(message: 'Message B', key: 'bar'))],
+            'enum key' => [TestUnitEnum::Baz, new ListOfErrors(
+                new Error(message: 'Message C', key: TestUnitEnum::Baz),
+                new Error(message: 'Message E', key: TestUnitEnum::Baz),
+            )],
+        ];
+    }
+
+    #[DataProvider('getProvider')]
+    #[Test]
+    public function it_gets_errors_by_key(string|UnitEnum $key, ListOfErrors $expected): void
+    {
+        $errors = new KeyedSetOfErrors(
+            new Error(message: 'Message A', key: 'foo'),
+            new Error(message: 'Message B', key: 'bar'),
+            new Error(message: 'Message C', key: TestUnitEnum::Baz),
+            new Error(message: 'Message D', key: TestUnitEnum::Bat),
+            new Error(message: 'Message E', key: TestUnitEnum::Baz),
+            new Error(message: 'Message F'),
+        );
+
+        $actual = $errors->get($key);
+
+        $this->assertEquals($expected, $actual);
     }
 
     #[Test]
@@ -198,5 +231,108 @@ final class KeyedSetOfErrorsTest extends TestCase
         ], iterator_to_array($actual));
         $this->assertSame(['_base', 'bar', 'baz', 'foo'], $actual->keys());
         $this->assertCount($set1->count() + $set2->count(), $actual);
+    }
+
+    #[Test]
+    public function it_is_a_keyed_set(): void
+    {
+        $errors = new KeyedSetOfErrors();
+
+        $this->assertInstanceOf(KeyedSet::class, $errors);
+    }
+
+    #[Test]
+    public function it_sorts_keys_case_insensitively(): void
+    {
+        $errors = new KeyedSetOfErrors(
+            new Error(message: 'Message A', key: 'foo'),
+            new Error(message: 'Message B', key: 'Bar'),
+            new Error(message: 'Message C', key: 'baz'),
+            new Error(message: 'Message D'),
+        );
+
+        $actual = $errors->keys();
+
+        $this->assertSame(['_base', 'Bar', 'baz', 'foo'], $actual);
+    }
+
+    #[Test]
+    public function it_returns_an_empty_list_for_a_key_that_does_not_exist(): void
+    {
+        $errors = new KeyedSetOfErrors(new Error(message: 'Message A', key: 'foo'));
+
+        $actual = $errors->get('bar');
+
+        $this->assertEquals(new ListOfErrors(), $actual);
+    }
+
+    #[Test]
+    public function it_returns_no_keys_or_errors_when_empty(): void
+    {
+        $errors = new KeyedSetOfErrors();
+
+        $this->assertSame([], $errors->keys());
+        $this->assertSame([], $errors->all());
+        $this->assertEquals(new ListOfErrors(), $errors->toList());
+    }
+
+    #[Test]
+    public function it_returns_the_same_instance_when_created_from_a_keyed_set(): void
+    {
+        $errors = new KeyedSetOfErrors(new Error(message: 'Message A', key: 'foo'));
+
+        $actual = KeyedSetOfErrors::from($errors);
+
+        $this->assertSame($errors, $actual);
+    }
+
+    #[Test]
+    public function it_is_created_from_a_list_of_errors(): void
+    {
+        $errors = new ListOfErrors(
+            $a = new Error(message: 'Message A', key: 'foo'),
+            $b = new Error(message: 'Message B'),
+            $c = new Error(message: 'Message C', key: 'foo'),
+        );
+
+        $actual = KeyedSetOfErrors::from($errors);
+
+        $this->assertEquals(new KeyedSetOfErrors($a, $b, $c), $actual);
+    }
+
+    #[Test]
+    public function it_is_created_from_an_error(): void
+    {
+        $error = new Error(message: 'Message A', key: 'foo');
+
+        $actual = KeyedSetOfErrors::from($error);
+
+        $this->assertEquals(new KeyedSetOfErrors($error), $actual);
+    }
+
+    #[Test]
+    public function it_merges_a_list_of_errors(): void
+    {
+        $set = new KeyedSetOfErrors(
+            $a = new Error(message: 'Message A', key: 'foo'),
+            $b = new Error(message: 'Message B', key: 'bar'),
+        );
+
+        $actual = $set->merge(new ListOfErrors(
+            $c = new Error(message: 'Message C', key: 'foo'),
+            $d = new Error(message: 'Message D'),
+        ));
+
+        $this->assertNotSame($set, $actual);
+        $this->assertEquals([
+            'bar' => new ListOfErrors($b),
+            'foo' => new ListOfErrors($a),
+        ], $set->all());
+        $this->assertEquals([
+            '_base' => new ListOfErrors($d),
+            'bar' => new ListOfErrors($b),
+            'foo' => new ListOfErrors($a, $c),
+        ], $actual->all());
+        $this->assertSame(['_base', 'bar', 'foo'], $actual->keys());
     }
 }

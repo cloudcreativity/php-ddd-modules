@@ -22,27 +22,81 @@ use PHPUnit\Framework\TestCase;
 
 final class MathEventPublisherTest extends TestCase
 {
-    #[Test]
-    public function it_publishes_events(): void
-    {
-        $a = new NumbersAddedPublisher();
-        $b = new NumbersSubtractedPublisher();
-        $c = new TestDefaultPublisher();
+    private FakeContainer $container;
 
-        $container = new FakeContainer();
+    private NumbersAddedPublisher $addedPublisher;
+
+    private NumbersSubtractedPublisher $subtractedPublisher;
+
+    private TestDefaultPublisher $defaultPublisher;
+
+    private MathEventPublisher $publisher;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->addedPublisher = $a = new NumbersAddedPublisher();
+        $this->subtractedPublisher = $b = new NumbersSubtractedPublisher();
+        $this->defaultPublisher = $c = new TestDefaultPublisher();
+
+        $this->container = $container = new FakeContainer();
         $container->bind(NumbersAddedPublisher::class, fn () => $a);
         $container->bind(NumbersSubtractedPublisher::class, fn () => $b);
         $container->bind(TestDefaultPublisher::class, fn () => $c);
         $container->bind(LogOutboundEvent::class, fn () => new LogOutboundEvent($container->logger));
 
-        $publisher = new MathEventPublisher($container);
-        $publisher->publish($ev1 = new NumbersAdded(1, 2, 3));
-        $publisher->publish($ev2 = new NumbersSubtracted(10, 6, 4));
-        $publisher->publish($ev3 = new NumbersDivided(12, 3, 4));
+        $this->publisher = new MathEventPublisher($container);
+    }
 
-        $this->assertSame([$ev1], $a->published);
-        $this->assertSame([$ev2], $b->published);
-        $this->assertSame([$ev3], $c->published);
-        $this->assertCount(6, $container->logger);
+    protected function tearDown(): void
+    {
+        unset(
+            $this->container,
+            $this->addedPublisher,
+            $this->subtractedPublisher,
+            $this->defaultPublisher,
+            $this->publisher,
+        );
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function it_publishes_an_event_via_its_publisher(): void
+    {
+        $event = new NumbersAdded(1, 2, 3);
+
+        $this->publisher->publish($event);
+
+        $this->assertSame([$event], $this->addedPublisher->published);
+        $this->assertSame([], $this->subtractedPublisher->published);
+        $this->assertSame([], $this->defaultPublisher->published);
+        $this->assertCount(2, $this->container->logger);
+    }
+
+    #[Test]
+    public function it_publishes_another_event_via_its_publisher(): void
+    {
+        $event = new NumbersSubtracted(10, 6, 4);
+
+        $this->publisher->publish($event);
+
+        $this->assertSame([], $this->addedPublisher->published);
+        $this->assertSame([$event], $this->subtractedPublisher->published);
+        $this->assertSame([], $this->defaultPublisher->published);
+        $this->assertCount(2, $this->container->logger);
+    }
+
+    #[Test]
+    public function it_publishes_an_event_via_the_default_publisher(): void
+    {
+        $event = new NumbersDivided(12, 3, 4);
+
+        $this->publisher->publish($event);
+
+        $this->assertSame([], $this->addedPublisher->published);
+        $this->assertSame([], $this->subtractedPublisher->published);
+        $this->assertSame([$event], $this->defaultPublisher->published);
+        $this->assertCount(2, $this->container->logger);
     }
 }

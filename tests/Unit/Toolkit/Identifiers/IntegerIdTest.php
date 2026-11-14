@@ -18,10 +18,10 @@ use CloudCreativity\Modules\Toolkit\Identifiers\Guid;
 use CloudCreativity\Modules\Toolkit\Identifiers\IntegerId;
 use CloudCreativity\Modules\Toolkit\Identifiers\StringId;
 use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
-use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Ramsey\Uuid\Uuid as RamseyUuid;
 
 final class IntegerIdTest extends TestCase
 {
@@ -46,66 +46,62 @@ final class IntegerIdTest extends TestCase
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Identifier value must be greater than zero.');
+
         new IntegerId(0);
     }
 
+    // -------------------------------------------------------------------------
+    // from() and tryFrom()
+    // -------------------------------------------------------------------------
+
     #[Test]
-    public function it_is_equals(): void
+    public function it_is_created_from_an_integer(): void
     {
-        $this->assertObjectEquals($id = new IntegerId(99), $other = IntegerId::from(99));
-        $this->assertSame($id, IntegerId::from($id));
-        $this->assertTrue($id->is($other));
-        $this->assertTrue($id->any(new IntegerId(1), new IntegerId(2), $other));
-        $this->assertEquals($id, IntegerId::tryFrom(99) ?? throw new LogicException());
-        $this->assertSame($id, IntegerId::tryFrom($id));
+        $actual = IntegerId::from(99);
+
+        $this->assertObjectEquals(new IntegerId(99), $actual);
     }
 
     #[Test]
-    public function it_is_not_equal(): void
+    public function it_returns_the_same_instance_when_created_from_an_integer_id(): void
     {
         $id = new IntegerId(99);
-        $this->assertFalse($id->equals($other = new IntegerId(100)));
-        $this->assertFalse($id->is($other));
-        $this->assertFalse($id->any($other, new IntegerId(200), new IntegerId(300)));
-        $this->assertFalse($id->any());
+
+        $actual = IntegerId::from($id);
+
+        $this->assertSame($id, $actual);
+    }
+
+    #[Test]
+    public function it_tries_to_create_from_an_integer(): void
+    {
+        $actual = IntegerId::tryFrom(99);
+
+        $this->assertNotNull($actual);
+        $this->assertObjectEquals(new IntegerId(99), $actual);
+    }
+
+    #[Test]
+    public function it_returns_the_same_instance_when_trying_from_an_integer_id(): void
+    {
+        $id = new IntegerId(99);
+
+        $actual = IntegerId::tryFrom($id);
+
+        $this->assertSame($id, $actual);
     }
 
     /**
-     * @return array<int, array<Identifier|null>>
+     * @return array<string, array{0: Identifier|null}>
      */
     public static function notIntegerIdProvider(): array
     {
         return [
-            [null],
-            [new StringId('1')],
-            [new Guid('SomeType', new IntegerId(1))],
-            [new Uuid(\Ramsey\Uuid\Uuid::uuid4())],
+            'null' => [null],
+            'string id' => [new StringId('1')],
+            'guid' => [new Guid('SomeType', new IntegerId(1))],
+            'uuid' => [new Uuid(RamseyUuid::uuid4())],
         ];
-    }
-
-    #[DataProvider('notIntegerIdProvider')]
-    #[Test]
-    public function it_is_not_equal_to_other_identifier_types(?Identifier $other): void
-    {
-        $id = new IntegerId(1);
-
-        $this->assertFalse($id->is($other));
-        $this->assertFalse($id->any(new IntegerId(2), null, $other));
-    }
-
-    #[DataProvider('notIntegerIdProvider')]
-    #[Test]
-    public function it_returns_null_when_trying_from_other_identifier_types(?Identifier $other): void
-    {
-        $this->assertNull(IntegerId::tryFrom($other));
-    }
-
-    #[Test]
-    public function it_is_not_equal_to_null(): void
-    {
-        $id = new IntegerId(1);
-
-        $this->assertFalse($id->is(null));
     }
 
     #[DataProvider('notIntegerIdProvider')]
@@ -114,6 +110,108 @@ final class IntegerIdTest extends TestCase
     {
         $this->expectException(ContractException::class);
         $this->expectExceptionMessage('Unexpected identifier type, received: ' . get_debug_type($other));
+
         IntegerId::from($other);
+    }
+
+    #[DataProvider('notIntegerIdProvider')]
+    #[Test]
+    public function it_returns_null_when_trying_from_other_identifier_types(?Identifier $other): void
+    {
+        $actual = IntegerId::tryFrom($other);
+
+        $this->assertNull($actual);
+    }
+
+    // -------------------------------------------------------------------------
+    // is(), any() and equals()
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_equals_an_integer_id_with_the_same_value(): void
+    {
+        $id = new IntegerId(99);
+
+        $this->assertObjectEquals(new IntegerId(99), $id);
+    }
+
+    #[Test]
+    public function it_does_not_equal_an_integer_id_with_a_different_value(): void
+    {
+        $id = new IntegerId(99);
+
+        $this->assertObjectNotEquals(new IntegerId(100), $id);
+    }
+
+    #[Test]
+    public function it_is_an_integer_id_with_the_same_value(): void
+    {
+        $id = new IntegerId(99);
+
+        $actual = $id->is(new IntegerId(99));
+
+        $this->assertTrue($actual);
+    }
+
+    #[Test]
+    public function it_is_not_an_integer_id_with_a_different_value(): void
+    {
+        $id = new IntegerId(99);
+
+        $actual = $id->is(new IntegerId(100));
+
+        $this->assertFalse($actual);
+    }
+
+    #[DataProvider('notIntegerIdProvider')]
+    #[Test]
+    public function it_is_not_equal_to_other_identifier_types(?Identifier $other): void
+    {
+        $id = new IntegerId(1);
+
+        $actual = $id->is($other);
+
+        $this->assertFalse($actual);
+    }
+
+    #[Test]
+    public function it_is_any_of_the_provided_identifiers_when_one_matches(): void
+    {
+        $id = new IntegerId(99);
+
+        $actual = $id->any(new IntegerId(1), new IntegerId(2), new IntegerId(99));
+
+        $this->assertTrue($actual);
+    }
+
+    #[Test]
+    public function it_is_not_any_of_the_provided_identifiers_when_none_match(): void
+    {
+        $id = new IntegerId(99);
+
+        $actual = $id->any(new IntegerId(100), new IntegerId(200), new IntegerId(300));
+
+        $this->assertFalse($actual);
+    }
+
+    #[DataProvider('notIntegerIdProvider')]
+    #[Test]
+    public function it_is_not_any_of_other_identifier_types(?Identifier $other): void
+    {
+        $id = new IntegerId(1);
+
+        $actual = $id->any(new IntegerId(2), null, $other);
+
+        $this->assertFalse($actual);
+    }
+
+    #[Test]
+    public function it_is_not_any_when_no_identifiers_are_provided(): void
+    {
+        $id = new IntegerId(99);
+
+        $actual = $id->any();
+
+        $this->assertFalse($actual);
     }
 }
