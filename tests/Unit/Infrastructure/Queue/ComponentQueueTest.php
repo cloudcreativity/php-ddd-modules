@@ -25,8 +25,6 @@ final class ComponentQueueTest extends TestCase
 {
     private EnqueuerContainer&MockObject $enqueuers;
 
-    private MockObject&PipeContainer $middleware;
-
     private ComponentQueue $queue;
 
     /**
@@ -40,20 +38,20 @@ final class ComponentQueueTest extends TestCase
 
         $this->queue = new class (
             enqueuers: $this->enqueuers = $this->createMock(EnqueuerContainer::class),
-            middleware: $this->middleware = $this->createMock(PipeContainer::class),
+            middleware: $this->createStub(PipeContainer::class),
         ) extends ComponentQueue {};
     }
 
     protected function tearDown(): void
     {
-        unset($this->queue, $this->enqueuers, $this->middleware, $this->sequence);
+        unset($this->queue, $this->enqueuers, $this->sequence);
         parent::tearDown();
     }
 
     #[Test]
     public function it_queues_a_command(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
 
         $this->enqueuers
             ->expects($this->once())
@@ -72,9 +70,9 @@ final class ComponentQueueTest extends TestCase
     #[Test]
     public function it_queues_through_middleware(): void
     {
-        $command1 = $this->createMock(Command::class);
-        $command2 = $this->createMock(Command::class);
-        $command3 = $this->createMock(Command::class);
+        $command1 = $this->createStub(Command::class);
+        $command2 = $this->createStub(Command::class);
+        $command3 = $this->createStub(Command::class);
         $enqueuer = $this->createMock(Enqueuer::class);
 
         $middleware1 = function ($actual, \Closure $next) use ($command1, $command2): void {
@@ -105,11 +103,17 @@ final class ComponentQueueTest extends TestCase
             ->method('__invoke')
             ->with($this->identicalTo($command3));
 
-        $this->middleware
+        $middleware = $this->createMock(PipeContainer::class);
+        $middleware
             ->expects($this->once())
             ->method('get')
             ->with('MySecondMiddleware')
             ->willReturn($middleware2);
+
+        $this->queue = new class (
+            enqueuers: $this->enqueuers,
+            middleware: $middleware,
+        ) extends ComponentQueue {};
 
         $this->queue->through([$middleware1, 'MySecondMiddleware']);
         $this->queue->push($command1);

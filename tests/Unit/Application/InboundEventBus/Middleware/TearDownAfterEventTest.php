@@ -23,7 +23,7 @@ final class TearDownAfterEventTest extends TestCase
     #[Test]
     public function it_invokes_callback_after_success(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
         $sequence = [];
 
         $middleware = new TearDownAfterEvent(function () use (&$sequence): void {
@@ -41,7 +41,7 @@ final class TearDownAfterEventTest extends TestCase
     #[Test]
     public function it_invokes_callback_after_exception(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
         $exception = new RuntimeException('Something went wrong.');
         $actual = null;
         $sequence = [];

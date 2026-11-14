@@ -26,8 +26,6 @@ final class DispatcherTest extends TestCase
 {
     private ListenerContainer&MockObject $listeners;
 
-    private MockObject&PipeContainer $middleware;
-
     private Dispatcher $dispatcher;
 
     protected function setUp(): void
@@ -36,13 +34,13 @@ final class DispatcherTest extends TestCase
 
         $this->dispatcher = new class (
             listeners: $this->listeners = $this->createMock(ListenerContainer::class),
-            middleware: $this->middleware = $this->createMock(PipeContainer::class),
+            middleware: $this->createStub(PipeContainer::class),
         ) extends Dispatcher {};
     }
 
     protected function tearDown(): void
     {
-        unset($this->dispatcher, $this->listeners, $this->middleware);
+        unset($this->dispatcher, $this->listeners);
         parent::tearDown();
     }
 
@@ -101,7 +99,7 @@ final class DispatcherTest extends TestCase
 
         $this->dispatcher->listen($event1::class, ['Listener1', $listener2Closure]);
         $this->dispatcher->listen($event2::class, ['Listener3']);
-        $this->dispatcher->listen($this->createMock(TestDomainEvent::class)::class, 'Listener4');
+        $this->dispatcher->listen($this->createStub(TestDomainEvent::class)::class, 'Listener4');
 
         $this->dispatcher->dispatch($event1);
         $this->dispatcher->dispatch($event2);
@@ -113,7 +111,7 @@ final class DispatcherTest extends TestCase
     #[Test]
     public function it_does_nothing_when_there_are_no_listeners(): void
     {
-        $event = $this->createMock(DomainEvent::class);
+        $event = $this->createStub(DomainEvent::class);
         $this->listeners->expects($this->never())->method($this->anything());
         $this->dispatcher->dispatch($event);
     }
@@ -139,7 +137,13 @@ final class DispatcherTest extends TestCase
             return $next($event3);
         };
 
-        $this->middleware
+        $middleware = $this->createMock(PipeContainer::class);
+        $this->dispatcher = new class (
+            listeners: $this->listeners,
+            middleware: $middleware,
+        ) extends Dispatcher {};
+
+        $middleware
             ->expects($this->once())
             ->method('get')
             ->with('Middleware2')

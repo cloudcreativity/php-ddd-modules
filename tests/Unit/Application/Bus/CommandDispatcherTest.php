@@ -26,8 +26,6 @@ final class CommandDispatcherTest extends TestCase
 {
     private CommandHandlerContainer&MockObject $handlers;
 
-    private MockObject&PipeContainer $middleware;
-
     private CommandDispatcher $dispatcher;
 
     /**
@@ -41,20 +39,20 @@ final class CommandDispatcherTest extends TestCase
 
         $this->dispatcher = new class (
             handlers: $this->handlers = $this->createMock(CommandHandlerContainer::class),
-            middleware: $this->middleware = $this->createMock(PipeContainer::class),
+            middleware: $this->createStub(PipeContainer::class),
         ) extends CommandDispatcher {};
     }
 
     protected function tearDown(): void
     {
-        unset($this->handlers, $this->middleware, $this->dispatcher, $this->sequence);
+        unset($this->handlers, $this->dispatcher, $this->sequence);
         parent::tearDown();
     }
 
     #[Test]
     public function it_dispatches_a_command(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
 
         $this->handlers
             ->expects($this->once())
@@ -107,6 +105,7 @@ final class CommandDispatcherTest extends TestCase
         };
 
         $this->handlers
+            ->expects($this->once())
             ->method('get')
             ->with($command1::class)
             ->willReturnCallback(function () use ($handler) {
@@ -114,7 +113,13 @@ final class CommandDispatcherTest extends TestCase
                 return $handler;
             });
 
-        $this->middleware
+        $middleware = $this->createMock(PipeContainer::class);
+        $this->dispatcher = new class (
+            handlers: $this->handlers,
+            middleware: $middleware,
+        ) extends CommandDispatcher {};
+
+        $middleware
             ->expects($this->exactly(2))
             ->method('get')
             ->willReturnCallback(fn (string $name) => match ($name) {

@@ -69,7 +69,7 @@ without it is skipped with no error or warning, so **every `it_` method must hav
 ### Use PHPUnit Attributes
 
 Always use PHPUnit attributes (`#[Test]`, `#[DataProvider]`, etc.) and never docblock annotations such as `@test` or
-`@dataProvider`. Docblock metadata is deprecated in PHPUnit 11 and removed in PHPUnit 12.
+`@dataProvider`. PHPUnit 12+ no longer reads docblock metadata.
 
 Data providers must be `public static` and need a precise return type for PHPStan (level 10 also covers `tests/`):
 
@@ -200,7 +200,7 @@ Isolate the unit under test by replacing its collaborators with test doubles. In
 3. **Stubs** (`createStub()`) for interfaces that only need to exist or return values, e.g. a `Command`, `Query` or
    `IntegrationEvent` message passed through the code under test.
 4. **Mocks** (`createMock()`) only when the test asserts how a collaborator is called. Always configure them with
-   `expects(...)`. A mock with no expectations should be a stub: PHPUnit 12 raises a notice for it, and this repo fails
+   `expects(...)`. A mock with no expectations should be a stub: PHPUnit raises a notice for it, and this repo fails
    on notices.
 
 Mock and stub the interfaces in `src/Contracts/`, not the concrete classes. Type mock properties with a native

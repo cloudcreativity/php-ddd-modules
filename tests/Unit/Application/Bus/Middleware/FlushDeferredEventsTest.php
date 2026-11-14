@@ -49,7 +49,7 @@ final class FlushDeferredEventsTest extends TestCase
     #[Test]
     public function it_flushes_deferred_events(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $expected = Result::ok();
 
         $this->dispatcher
@@ -76,7 +76,7 @@ final class FlushDeferredEventsTest extends TestCase
     #[Test]
     public function it_forgets_deferred_events_on_failed_result(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $expected = Result::failed('Something went wrong.');
 
         $this->dispatcher
@@ -103,7 +103,7 @@ final class FlushDeferredEventsTest extends TestCase
     #[Test]
     public function it_forgets_deferred_events_on_exception(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $expected = new \LogicException('Boom!');
 
         $this->dispatcher

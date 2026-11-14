@@ -25,8 +25,6 @@ final class InboundEventDispatcherTest extends TestCase
 {
     private EventHandlerContainer&MockObject $handlers;
 
-    private MockObject&PipeContainer $middleware;
-
     private InboundEventDispatcher $dispatcher;
 
     /**
@@ -40,20 +38,20 @@ final class InboundEventDispatcherTest extends TestCase
 
         $this->dispatcher = new class (
             handlers: $this->handlers = $this->createMock(EventHandlerContainer::class),
-            middleware: $this->middleware = $this->createMock(PipeContainer::class),
+            middleware: $this->createStub(PipeContainer::class),
         ) extends InboundEventDispatcher {};
     }
 
     protected function tearDown(): void
     {
-        unset($this->handlers, $this->middleware, $this->dispatcher, $this->sequence);
+        unset($this->handlers, $this->dispatcher, $this->sequence);
         parent::tearDown();
     }
 
     #[Test]
     public function it_dispatches_an_event(): void
     {
-        $event = $this->createMock(IntegrationEvent::class);
+        $event = $this->createStub(IntegrationEvent::class);
 
         $this->handlers
             ->expects($this->once())
@@ -100,6 +98,7 @@ final class InboundEventDispatcherTest extends TestCase
         };
 
         $this->handlers
+            ->expects($this->once())
             ->method('get')
             ->with($event1::class)
             ->willReturnCallback(function () use ($handler) {
@@ -107,7 +106,13 @@ final class InboundEventDispatcherTest extends TestCase
                 return $handler;
             });
 
-        $this->middleware
+        $middleware = $this->createMock(PipeContainer::class);
+        $this->dispatcher = new class (
+            handlers: $this->handlers,
+            middleware: $middleware,
+        ) extends InboundEventDispatcher {};
+
+        $middleware
             ->expects($this->exactly(2))
             ->method('get')
             ->willReturnCallback(fn (string $name) => match ($name) {

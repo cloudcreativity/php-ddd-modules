@@ -22,7 +22,7 @@ final class EnqueuerTest extends TestCase
     #[Test]
     public function it_pushes_the_command_to_the_inner_enqueuer(): void
     {
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $innerEnqueuer = $this->createMock(TestEnqueuer::class);
 
         $innerEnqueuer

@@ -84,7 +84,7 @@ final class UuidFactoryTest extends TestCase
         $this->expectException(ContractException::class);
 
         $this->factory->from(
-            $this->createMock(Identifier::class),
+            $this->createStub(Identifier::class),
         );
     }
 
@@ -278,8 +278,12 @@ final class UuidFactoryTest extends TestCase
     #[Test]
     public function it_throws_if_uuid_v7_is_not_supported(): void
     {
+        $this->baseFactory
+            ->expects($this->never())
+            ->method($this->anything());
+
         $factory = new UuidFactory(
-            $this->createMock(BaseUuidFactoryInterface::class),
+            $this->createStub(BaseUuidFactoryInterface::class),
         );
 
         $this->expectException(\RuntimeException::class);
@@ -308,8 +312,12 @@ final class UuidFactoryTest extends TestCase
     #[Test]
     public function it_throws_if_uuid_v8_is_not_supported(): void
     {
+        $this->baseFactory
+            ->expects($this->never())
+            ->method($this->anything());
+
         $factory = new UuidFactory(
-            $this->createMock(BaseUuidFactoryInterface::class),
+            $this->createStub(BaseUuidFactoryInterface::class),
         );
 
         $this->expectException(\RuntimeException::class);

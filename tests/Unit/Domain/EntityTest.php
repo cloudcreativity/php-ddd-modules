@@ -41,7 +41,7 @@ final class EntityTest extends TestCase
         );
 
         $b = new TestEntity(
-            $id2 = $this->createMock(Identifier::class),
+            $id2 = $this->createStub(Identifier::class),
         );
 
         $id1
@@ -62,7 +62,7 @@ final class EntityTest extends TestCase
         );
 
         $b = new TestEntity(
-            $id2 = $this->createMock(Identifier::class),
+            $id2 = $this->createStub(Identifier::class),
         );
 
         $id1
@@ -82,8 +82,8 @@ final class EntityTest extends TestCase
             $id1 = $this->createMock(Identifier::class),
         );
 
-        $b = $this->createMock(Entity::class);
-        $b->method('getId')->willReturn($this->createMock(Identifier::class));
+        $b = $this->createStub(Entity::class);
+        $b->method('getId')->willReturn($this->createStub(Identifier::class));
 
         $id1
             ->expects($this->never())
