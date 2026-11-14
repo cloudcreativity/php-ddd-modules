@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file. This projec
   container, instead of failing later when the enqueuer is resolved.
 - `KeyedSetOfErrors::put()` and `merge()` now sort keys case-insensitively, matching the constructor.
 - `Meta::merge()` no longer renumbers numeric string keys.
+- `Error` now accepts a message of `'0'` and no longer converts a key of `'0'` to `null`.
 
 ## [6.1.0] - 2026-11-14
 
