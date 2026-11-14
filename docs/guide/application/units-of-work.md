@@ -171,8 +171,9 @@ interface UnitOfWork
     /**
      * Is a unit of work currently active?
      *
-     * Returns true while a callback passed to `execute()` is running, i.e. there is an open transaction that will be
-     * committed or rolled back once the callback completes.
+     * Returns true when there is an open transaction that work will be committed or rolled back with, e.g. while a
+     * callback passed to `execute()` is running. Implementations MAY also return true for a transaction that was not
+     * started by this unit of work, if they cannot distinguish it.
      */
     public function active(): bool;
 
