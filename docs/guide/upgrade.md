@@ -11,8 +11,10 @@ composer require cloudcreativity/ddd-modules:^7.0
 ### Unit of Work
 
 The `UnitOfWork` driven port now has `active()` and `inactive()` methods. These indicate whether a unit of work is
-currently in progress - i.e. whether the callback passed to `execute()` is running. You will need to add these methods
-to your unit of work adapter. For example, a Laravel adapter could implement them as follows:
+currently in progress - i.e. whether there is an open transaction that work will be committed or rolled back with,
+such as while the callback passed to `execute()` is running. Implementations may also report a transaction that was not
+started by the unit of work as active, if they cannot distinguish it. You will need to add these methods to your unit
+of work adapter. For example, a Laravel adapter could implement them as follows:
 
 ```php
 public function active(): bool
