@@ -47,6 +47,12 @@ final class EnqueuerContainer implements IEnqueuerContainer
      */
     public function bind(array|string $queueableName, Closure|string $binding): void
     {
+        if (is_string($binding) && $this->container === null) {
+            throw new InfrastructureException(
+                'Cannot bind enqueuer as a string without a PSR container.',
+            );
+        }
+
         if (is_string($queueableName)) {
             $queueableName = [$queueableName];
         }
