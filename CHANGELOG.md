@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [7.0.0] - 2026-11-16
+
+### Added
+
+- **BREAKING** The `UnitOfWork` port now has `active()` and `inactive()` methods, to determine whether a unit of work
+  is currently in progress. Implementations of this interface must add these methods. The `FakeUnitOfWork` implements
+  them, and now throws if `execute()` is called while it is already active.
+
+### Removed
+
+- **BREAKING** Removed the deprecated `Contracts\Bus\CommandQueuer` interface. Use `Contracts\Messaging\CommandQueuer`
+  instead.
+
 ## [6.1.2] - 2026-11-14
 
 ### Added
@@ -690,6 +703,8 @@ All notable changes to this project will be documented in this file. This projec
 ## [0.1.0] - 2023-11-18
 
 Initial release.
+
+[7.0.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.1.2...v7.0.0
 
 [6.1.2]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.1.1...v6.1.2
 

@@ -69,14 +69,33 @@ then the handler's own middleware, then the handler. Commands and queries return
 - PHPStan runs at level 10 including tests — use precise generics/phpdoc types (`class-string<T>`, `non-empty-string`,
   `Result<T>`, etc.).
 - Tests mirror `src/` under `tests/Unit` and `tests/Integration`; file names end in `Test.php`.
-- Record user-facing changes under `## Unreleased` in `CHANGELOG.md` (keepachangelog format; mark breaking changes
-  with **BREAKING**). Deprecations are kept for BC and removed in the next major — update `docs/guide/upgrade.md` for
-  breaking changes and the relevant `docs/guide/**` page for new features.
+- Record user-facing changes in `CHANGELOG.md` (keepachangelog format, grouped under `### Added`, `### Changed`,
+  `### Fixed`, `### Deprecated`, `### Removed`). Which heading depends on the branch — see Breaking Changes below.
+  Update the relevant `docs/guide/**` page for new features.
+- Deprecations are kept for BC and removed in the next major.
+
+## Breaking Changes
+
+A breaking change is anything that can break a consumer's code on upgrade. In this library that includes: adding a
+method to an interface (consumers implement the `Contracts` interfaces, e.g. the driven ports), changing a public or
+protected method signature, removing or renaming a class/method/constant, changing the constructor of a class
+consumers instantiate or extend, and changing documented behaviour.
+
+- Breaking changes **must** target the `next` branch, never `develop`: branch from `next`, rebase onto `next`, and open
+  the PR against `next`. If you are on `develop` and the change is
+  breaking, stop and tell the user rather than making it there. Where possible, offer a non-breaking alternative for
+  `develop` (e.g. a new interface, or deprecating the old API and keeping it working).
+- Use `!` in the commit type (e.g. `feat!: ...`).
+- On `next`, record changes under `## Unreleased Next Major` in `CHANGELOG.md`, which sits **above** `## Unreleased`.
+  Create that heading if it does not exist. Prefix each breaking entry with **BREAKING**. Leave `## Unreleased` alone —
+  it holds changes on `develop` that are merged into `next` and released in the next 6.x version.
+- On `develop`, record changes under `## Unreleased` only. `develop` never has an `Unreleased Next Major` section.
+- Document how to upgrade in `docs/guide/upgrade.md`, under the section for the next major (e.g. `## 6.x to 7.x`).
 
 ## Git Workflow
 
 This repo uses git-flow. `develop` is the 6.x line and the default target for branches and PRs. `next` is the 7.x line
-(breaking changes go here). `main` holds tagged releases, and the docs deploy from `main`. Never branch from or target
+(breaking changes go here — see Breaking Changes above). `main` holds tagged releases, and the docs deploy from `main`. Never branch from or target
 `main` directly: releases are cut by maintainers through `release/x.y.z` branches.
 
 Branch prefixes: `feature/`, `fix/`, `refactor/`, `build/`, `wip/` (never merged).

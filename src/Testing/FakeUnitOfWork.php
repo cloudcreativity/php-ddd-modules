@@ -31,8 +31,20 @@ final class FakeUnitOfWork implements UnitOfWork
      */
     public array $sequence = [];
 
+    private bool $active = false;
+
     public function __construct(public FakeExceptionReporter $exceptions = new FakeExceptionReporter())
     {
+    }
+
+    public function active(): bool
+    {
+        return $this->active;
+    }
+
+    public function inactive(): bool
+    {
+        return !$this->active;
     }
 
     public function execute(Closure $callback, int $attempts = 1): mixed
@@ -41,7 +53,12 @@ final class FakeUnitOfWork implements UnitOfWork
             throw new InvalidArgumentException('The number of attempts must be at least 1.');
         }
 
+        if ($this->active) {
+            throw new RuntimeException('Fake unit of work is already active.');
+        }
+
         for ($i = 1; $i <= $attempts; $i++) {
+            $this->active = true;
             try {
                 $this->sequence[] = 'attempt:' . $i;
                 $this->attempts++;
@@ -57,6 +74,8 @@ final class FakeUnitOfWork implements UnitOfWork
                 if ($i === $attempts) {
                     throw $ex;
                 }
+            } finally {
+                $this->active = false;
             }
         }
 

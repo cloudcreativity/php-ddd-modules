@@ -1,5 +1,35 @@
 # Upgrade Guide
 
+## 6.x to 7.x
+
+Upgrade using Composer:
+
+```bash
+composer require cloudcreativity/ddd-modules:^7.0
+```
+
+### Unit of Work
+
+The `UnitOfWork` driven port now has `active()` and `inactive()` methods. These indicate whether a unit of work is
+currently in progress - i.e. whether there is an open transaction that work will be committed or rolled back with,
+such as while the callback passed to `execute()` is running. Implementations may also report a transaction that was not
+started by the unit of work as active, if they cannot distinguish it. You will need to add these methods to your unit
+of work adapter. For example, a Laravel adapter could implement them as follows:
+
+```php
+public function active(): bool
+{
+    return $this->db->transactionLevel() > 0;
+}
+
+public function inactive(): bool
+{
+    return !$this->active();
+}
+```
+
+If you use the `FakeUnitOfWork` in your tests, it now throws if `execute()` is called while it is already active.
+
 ## 5.x to 6.x
 
 Upgrade using Composer:

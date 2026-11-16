@@ -24,7 +24,7 @@
         "php": "^8.4",
         "ext-json": "*",
         "psr/container": "^2.0",
-        "psr/log": "^2.0 || ^3.0",
+        "psr/log": "^3.0",
         "ramsey/uuid": "^4.7",
         "symfony/polyfill-php85": "^1.33"
     },
@@ -63,8 +63,8 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-develop": "6.x-dev",
-            "dev-next": "7.x-dev"
+            "dev-develop": "7.x-dev",
+            "dev-next": "8.x-dev"
         }
     },
     "minimum-stability": "stable",
