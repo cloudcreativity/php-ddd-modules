@@ -3,13 +3,14 @@
 Install the package into your application using Composer:
 
 ```bash
-composer require cloudcreativity/ddd-modules:^6.0
+composer require cloudcreativity/ddd-modules:^7.0
 ```
 
 ## Versions
 
 | DDD Modules | PHP    |
 |-------------|--------|
+| `7.x`       | `^8.4` |
 | `6.x`       | `^8.4` |
 | `5.x`       | `^8.2` |
 | `4.x`       | `^8.2` |
