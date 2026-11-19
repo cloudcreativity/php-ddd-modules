@@ -123,7 +123,8 @@ Alternatively, you can provide the `failed()` method with an error object or a l
 
 ### Error Properties
 
-The error object provided by this package has the following properties:
+The error object provided by this package has the following properties, which are accessed via the `code()`,
+`message()` and `key()` methods:
 
 - `code`: an enum that identifies the error and can be used to programmatically detect and handle specific errors. It
   is intentionally an enum, because to programmatically detect specific errors, the codes need to be a defined list of
@@ -186,6 +187,7 @@ key. Keys can be strings or enums.
 To create one, provide error objects to its constructor:
 
 ```php
+use CloudCreativity\Modules\Toolkit\Result\Error;
 use CloudCreativity\Modules\Toolkit\Result\KeyedSetOfErrors;
 
 $keyedErrors = new KeyedSetOfErrors(
@@ -216,12 +218,12 @@ $errors = $result->errors();
 On a successful result, the list of errors will be empty. On a failed result, there will always be at least one error.
 
 The result object also has a helper `error()` method. This returns the first error message in the list of errors, or
-`null` if there are no errors with messages. This is useful when you want to provide a default error message when
-handling a failed result:
+`null` if there are no errors with messages. You can provide a default to the `error()` method, which is used if
+there is no error message. This is useful when handling a failed result:
 
 ```php
 if ($result->didFail()) {
-    $message = $result->error() ?? 'unknown error';
+    $message = $result->error('unknown error');
     throw new \RuntimeException(
       'Not expecting command to fail: ' . $message,
     );
@@ -231,17 +233,20 @@ if ($result->didFail()) {
 ### Detecting Errors
 
 If calling code needs to programmatically detect specific errors, you should use an enum to define the error codes that
-a particular operation can return. Then you can use the `contains()` method on the list of errors to check whether a
+a particular operation can return. Then you can use the `any()` method on the list of errors to check whether a
 specific error is present:
 
 ```php
 $result = $bus->dispatch($command);
 $errors = $result->errors();
 
-if ($errors->contains(CancelAttendeeTicketError::AlreadyCancelled)) {
+if ($errors->any(CancelAttendeeTicketError::AlreadyCancelled)) {
     // handle the specific error
 }
 ```
+
+The list of errors also has `every()`, `find()`, `filter()` and `sole()` methods. These all accept either an enum
+error code, or a closure that receives each error object.
 
 If you only want to handle one error code at once, use the `code()` method on the errors list. This will return the first error code, or `null` if there are no error codes.
 

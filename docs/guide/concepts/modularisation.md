@@ -136,7 +136,7 @@ The application namespace can be structured as follows:
 ```
 - Application
     - Ports                       <- driven ports
-        - OutboundEvents
+        - OutboundEventBus
         - Queue
         - Persistence
         - ...
@@ -145,10 +145,10 @@ The application namespace can be structured as follows:
         - QueryBusAdapter
         - InboundEventBusAdapter
     - UseCases
-        - Internal              <- internal use cases, e.g. for asynchronous processing
-            - ...
         - FooCommandHandler     <- use cases
         - BarQueryHandler
+    - Internal                  <- internal use cases, e.g. for asynchronous processing
+        - ...
     - Orchestration             <- orchestration of domain and infrastructure layers
 ```
 
@@ -159,8 +159,9 @@ The namespaces shown here are as follows:
 - **Adapters** - contains the implementations of the driving ports. The concrete implementations are the command bus,
   query bus, and inbound event bus. Each bus ensures a message is dispatched to the correct handler.
 - **Use Cases** - the implementation of the business logic of the application layer, i.e. how the application layer
-  handles inbound commands, queries and integration events. Additionally we use an `Internal` namespace in here for
-  organising the use cases that are for internal use by the module only - i.e. asynchronous processing.
+  handles inbound commands, queries and integration events.
+- **Internal** - the use cases that are for internal use by the module only - i.e. asynchronous processing. This
+  includes the internal commands, their handlers and the internal command bus.
 - **Orchestration** - any classes required to help coordinate with the domain layer. For example, this is where the
   concrete implementation of the domain event dispatcher will go, along with domain event listeners.
 

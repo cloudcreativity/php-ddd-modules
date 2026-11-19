@@ -12,7 +12,7 @@ of your domain. However, this chapter provides some examples and guidance on bes
 ## Examples
 
 :::tip
-PHP 8 `readonly public` properties are great for the value object use-case. They ensure immutability, while removing
+PHP 8.1 `public readonly` properties are great for the value object use-case. They ensure immutability, while removing
 the need to write lots of boilerplate "getter" methods.
 :::
 
@@ -54,7 +54,7 @@ final readonly class Customer
     public function __construct(
         public string $firstName,
         public string $lastName,
-        public EmailAddress $this->value,
+        public EmailAddress $email,
     ) {
     }
 }
@@ -122,7 +122,7 @@ class ListOfTickets implements ListIterator
 
     public function allCancelled(): bool
     {
-        foreach ($this->tickets as $ticket) {
+        foreach ($this->stack as $ticket) {
             if ($ticket->isNotCancelled()) {
                 return false;
             }
@@ -296,7 +296,7 @@ final readonly class Customer
     {
         return $this->firstName === $other->firstName &&
             $this->lastName === $other->lastName &&
-            $this->email->equals($other->email);
+            $this->email->value === $other->email->value;
     }
 }
 ```
@@ -388,4 +388,4 @@ Value objects should not be mocked in tests. This is because they enforce invari
 incorrectly constructed. Mocking them breaks this rule, as a mock could be configured with invalid values.
 
 Luckily, if you write your value objects like the examples in this chapter, you'll find that you cannot mock them
-in unit tests. Declaring a class `final` and/or `readonly` both prevent a class from being mocked.
+in unit tests. Declaring a class `final` prevents it from being mocked.

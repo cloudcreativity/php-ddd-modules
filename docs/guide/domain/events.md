@@ -58,7 +58,7 @@ final readonly class AttendeeTicketWasCancelled implements
     ) {
     }
 
-    public function getOccurredAt(): DateTimeImmutable
+    public function getOccurredAt(): \DateTimeImmutable
     {
         return $this->cancelledAt;
     }
@@ -267,21 +267,21 @@ For this, we need a listener in the application layer that will queue a command 
 example:
 
 ```php
-namespace App\Modules\EventManagement\Application\Internal\DomainEvents\Listeners;
+namespace App\Modules\EventManagement\Application\Orchestration\Listeners;
 
-use App\Modules\EventManagement\Application\Ports\Driving\CommandBus\InternalCommandBus;
-use App\Modules\EventManagement\Application\Internal\Commands\RecalculateSalesAtEvent\RecalculateSalesAtEventCommand;
+use App\Modules\EventManagement\Application\Internal\RecalculateSalesAtEventCommand;
+use App\Modules\EventManagement\Application\Ports\Queue\InternalQueue;
 use App\Modules\EventManagement\Domain\Events\AttendeeTicketWasCancelled;
 
 final readonly class QueueTicketSalesReportRecalculation
 {
-    public function __construct(private InternalCommandBus $bus)
+    public function __construct(private InternalQueue $queue)
     {
     }
 
     public function handle(AttendeeTicketWasCancelled $event): void
     {
-        $this->bus->queue(new RecalculateSalesAtEventCommand(
+        $this->queue->push(new RecalculateSalesAtEventCommand(
             $event->eventId,
         ));
     }
@@ -311,12 +311,12 @@ of a domain event.
 Our listener to do this might look like this:
 
 ```php
-namespace App\Modules\EventManagement\Application\Internal\DomainEvents\Listeners;
+namespace App\Modules\EventManagement\Application\Orchestration\Listeners;
 
 use App\Modules\EventManagement\Application\Ports\OutboundEventBus\OutboundEventBus;
 use App\Modules\EventManagement\Domain\Events\AttendeeTicketWasCancelled;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\UuidFactory;
-use VendorName\EventManagement\Shared\IntegrationEvents\V1 as IntegrationEvents;
+use App\Modules\EventManagement\Api\Output\V1\Events as IntegrationEvents;
 
 final readonly class PublishAttendeeTicketWasCancelled
 {
@@ -331,7 +331,7 @@ final readonly class PublishAttendeeTicketWasCancelled
         $this->publisher->publish(
             new IntegrationEvents\AttendeeTicketWasCancelled(
                 uuid: $this->uuidFactory->uuid4(),
-                occurredAt: $event->occurredAt,
+                occurredAt: $event->getOccurredAt(),
                 eventId: $event->eventId,
                 attendeeId: $event->attendeeId,
                 ticketId: $event->ticketId,

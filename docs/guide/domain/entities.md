@@ -121,6 +121,31 @@ There are two different schools of thought on how to implement entity identifier
 2. Type-hint the expected identifier type, e.g. `Uuid` or even more specific like `UuidV7`. This is more explicit, and
    can be useful where you want to constrain the identifier type.
 
+If you use the second approach, use the `IsEntityWithTypedId` trait. This implements the entity interface methods
+without declaring the `$id` property, so that you can declare it with your expected type:
+
+```php
+namespace App\Modules\EventManagement\Domain;
+
+use CloudCreativity\Modules\Contracts\Domain\Entity;
+use CloudCreativity\Modules\Domain\IsEntityWithTypedId;
+use CloudCreativity\Modules\Toolkit\Identifiers\UuidV7;
+
+final class BookableEvent implements Entity
+{
+    use IsEntityWithTypedId;
+
+    public function __construct(
+        private readonly UuidV7 $id,
+        public readonly \DateTimeImmutable $startsAt,
+        public readonly \DateTimeImmutable $endsAt,
+    ) {
+    }
+
+    // ...methods
+}
+```
+
 Both approaches work. However, we'd generally recommend that if using the second approach, you use globally unique
 identifiers rather than something like an auto-incrementing integer. This is because globally unique identifiers are
 more flexible, and can be used across different persistence implementations without coupling the domain layer to a
@@ -148,6 +173,7 @@ namespace App\Modules\EventManagement\Domain;
 use CloudCreativity\Modules\Contracts\Domain\AggregateRoot;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 use CloudCreativity\Modules\Domain\IsEntity;
+use CloudCreativity\Modules\Toolkit\Contracts;
 
 final class Attendee implements AggregateRoot
 {
@@ -156,7 +182,7 @@ final class Attendee implements AggregateRoot
     public function __construct(
         Identifier $id,
         public readonly Customer $customer,
-        private(set) ListOfTickets $tickets,
+        private(set) readonly ListOfTickets $tickets,
     ) {
         Contracts::assert(
             $this->tickets->isNotEmpty(),
@@ -171,7 +197,7 @@ final class Attendee implements AggregateRoot
 ```
 
 :::tip
-See the [Assertions Chapter](../toolkit/assertions) for an explanation of the `Contract::assert()` helper.
+See the [Assertions Chapter](../toolkit/assertions) for an explanation of the `Contracts::assert()` helper.
 :::
 
 ### Mutating State
@@ -204,6 +230,7 @@ public function cancelTicket(
         $ticket->markAsCancelled($reason);
 
         Services::getEvents()->dispatch(new AttendeeTicketWasCancelled(
+            eventId: $this->eventId,
             attendeeId: $this->id,
             ticketId: $ticketId,
             reason: $reason,
