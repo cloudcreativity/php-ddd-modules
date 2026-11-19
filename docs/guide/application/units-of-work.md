@@ -15,7 +15,7 @@ your domain model has no concept of how it is persisted.
 
 Consider the following scenario. Our domain models the attendees at an in-person event as having one-to-many tickets.
 When we want to cancel a ticket, we do this via the attendee aggregate root that contains the ticket entities. This is
-because our domain logic says that state of the attendee may change when the ticket is cancelled.
+because our domain logic says that the state of the attendee may change when the ticket is cancelled.
 
 Our command handler might look like this:
 
@@ -24,7 +24,7 @@ namespace App\Modules\EventManagement\Application\UseCases;
 
 use App\Modules\EventManagement\Api\Input\CancelAttendeeTicketCommand;
 use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
-use CloudCreativity\Modules\Toolkit\Results\Result;
+use CloudCreativity\Modules\Toolkit\Result\Result;
 
 final readonly class CancelAttendeeTicketHandler
 {
@@ -33,7 +33,7 @@ final readonly class CancelAttendeeTicketHandler
     ) {
     }
 
-    public function handle(CancelAttendeeTicketCommand $command): Result
+    public function execute(CancelAttendeeTicketCommand $command): Result
     {
         $attendee = $this->attendees->findOrFail($command->attendeeId);
 
@@ -57,7 +57,7 @@ final readonly class CancelAttendeeTicketHandler
 
 This implementation poses a number of issues:
 
-1. When the business action - _cancel ticket_ - is performed, the aggregate root and the relevant ticket entity is
+1. When the business action - _cancel ticket_ - is performed, the aggregate root and the relevant ticket entity are
    updated to the new state (as defined by the business logic).
 2. As its state is settled, the aggregate root emits a domain event so that other parts of the domain can react to
    the change.
@@ -98,7 +98,7 @@ Given the above example, the correct order from the application perspective is:
    will be triggered later.
 4. The aggregate root is persisted via the repository port. Internally within the adapter this may result in multiple
    database writes, that are within the transaction.
-5. With the persistence changes successful made (but not yet committed), the deferred domain event is dispatched.
+5. With the persistence changes successfully made (but not yet committed), the deferred domain event is dispatched.
 6. Side effects of the domain event are triggered, within the transaction boundary. Any side effects that affect the
    persistence layer via driven ports now occur _after_ the aggregate changes were persisted.
 7. The transaction is committed by closing the unit of work. The state changes to the aggregate root and the side
@@ -112,11 +112,11 @@ All this is achieved by this package by combining the following:
 - **Unit of work manager** - an application concern that handles the lifecycle of the unit of work, e.g. deferring
   operations for later execution.
 - **Unit of work aware domain event dispatcher** - coordinates domain event dispatching with the unit of work manager.
-- **Unit of work middleware** - that ensure command handlers and integration event consumers are executed in a unit of
+- **Unit of work middleware** - ensures command handlers and integration event consumers are executed in a unit of
   work.
 
 :::info
-The manager is high-level abstraction (provided by this package and part of the application layer) that manages the
+The manager is a high-level abstraction (provided by this package and part of the application layer) that manages the
 lifecycle of the unit of work. The unit of work itself is a low-level abstraction (part of the infrastructure layer)
 that actually starts, commits and rolls back the transaction.
 :::
@@ -129,7 +129,7 @@ namespace App\Modules\EventManagement\Application\UseCases;
 use App\Modules\EventManagement\Api\Input\CancelAttendeeTicketCommand;
 use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
-use CloudCreativity\Modules\Toolkit\Results\Result;
+use CloudCreativity\Modules\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(ExecuteInUnitOfWork::class)]
@@ -140,7 +140,7 @@ final readonly class CancelAttendeeTicketHandler
     ) {
     }
 
-    public function handle(CancelAttendeeTicketCommand $command): Result
+    public function execute(CancelAttendeeTicketCommand $command): Result
     {
         $attendee = $this->attendees->findOrFail($command->attendeeId);
 
@@ -238,7 +238,7 @@ The unit of work manager is an application layer concern. It handles the complex
 When combined with the unit of work aware domain event dispatcher, it ensures domain event dispatching and side
 effects (via listeners) are coordinated within the unit of work.
 
-The adapter just requires your concrete unit of work implementation:
+The manager just requires your concrete unit of work implementation:
 
 ```php
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
@@ -246,7 +246,7 @@ use CloudCreativity\Modules\Contracts\Application\Ports\UnitOfWork;
 use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
 
 $manager = new UnitOfWorkManager(
-    db: $container->get(UnitOfWork::class),
+    unitOfWork: $container->get(UnitOfWork::class),
     reporter: $container->get(ExceptionReporter::class),
 );
 ```
@@ -296,9 +296,77 @@ $manager->afterCommit(function (): void {
 ```
 
 As the transaction has already been committed, a failing after commit callback does not prevent the remaining after
-commit callbacks from being executed. Once they have all been executed, if exactly one of them failed, its exception is
-thrown. If more than one failed, an `AfterCommitCallbacksFailed` exception is thrown instead. Its `exceptions()` method
-returns all the exceptions in the order they were thrown, and its previous exception is the first one.
+commit callbacks from being executed. Once they have all been executed, if any of them failed, an
+`AfterCommitCallbacksFailed` exception is thrown - even if only one of them failed. Its `exceptions()` method returns
+all the exceptions in the order they were thrown, and its previous exception is the first one.
+
+This exception implements the `AfterCommitFailure` interface. Catch this interface if your code needs to distinguish a
+unit of work that failed and was not committed, from one that was committed but where some of the after commit work
+failed:
+
+```php
+use CloudCreativity\Modules\Contracts\Application\UnitOfWork\AfterCommitFailure;
+
+try {
+    $manager->execute(function (): void {
+        // some work.
+    });
+} catch (AfterCommitFailure $ex) {
+    // the unit of work committed, but some after commit work failed.
+    foreach ($ex->exceptions() as $failure) {
+        // ...
+    }
+}
+```
+
+Any other exception thrown by `execute()` means the unit of work did not commit.
+
+#### After Commit Queue
+
+After commit callbacks are executed as a FIFO (first in, first out) queue. If an after commit callback registers
+another after commit callback, it is added to the end of the queue, rather than being executed immediately.
+
+An after commit callback can also start a new unit of work, as the previous unit of work has already committed. For
+example, it might dispatch a command whose handler executes in a unit of work. The new unit of work executes its before
+commit callbacks as normal. However, its after commit callbacks are added to the end of the same queue. So they are
+executed after the callback that started the new unit of work has returned.
+
+```php
+$manager->execute(function () use ($manager): void {
+    // executed first
+    $manager->afterCommit(function () use ($manager): void {
+        // starts and commits a new unit of work...
+        $manager->execute(function () use ($manager): void {
+            // ...whose after commit callback is added to the end of the queue: executed third.
+            $manager->afterCommit(function (): void {
+                // some deferred work.
+            });
+        });
+    });
+
+    // executed second
+    $manager->afterCommit(function (): void {
+        // some deferred work.
+    });
+});
+```
+
+As the new unit of work's after commit callbacks are queued, any failure in them is thrown by the outermost call to
+`execute()` along with any other after commit failures. It is not thrown by the call that started the new unit of work.
+Likewise, if the new unit of work fails and is not committed, its exception is thrown to the after commit callback that
+started it. If not caught, it becomes one of the after commit failures of the outermost unit of work - which did
+commit.
+
+:::warning
+While the queue is FIFO, your after commit callbacks should **never** rely on the order they are executed in, or on
+any knowledge of other after commit callbacks. Each callback should be an independent side effect of the committed
+work. If one piece of work depends on another, it should be coordinated explicitly - for example, by having one piece
+of work trigger the next, rather than relying on the order of the queue.
+:::
+
+Starting a unit of work while another is still executing (i.e. before it has committed) is not allowed, and will throw
+an exception. Likewise, an after commit callback cannot register a before commit callback, as the unit of work has
+already committed - unless it does so within a new unit of work.
 
 ## Deferring Domain Events
 
@@ -389,14 +457,14 @@ final readonly class QueueAttendeeCancellationEmail implements
 ```
 
 :::warning
-If any work pushed to after the unit of work has committed fails, it is not possible to rollback the transaction. This
+If any work pushed to after the unit of work has committed fails, it is not possible to roll back the transaction. This
 means that the domain's new state will be committed, but your side effect has not occurred. This could lead to data
 inconsistencies.
 
 Use an [Outbox pattern](../infrastructure/outbox) to ensure data consistency.
 :::
 
-## Using Unit of Works
+## Using Units of Work
 
 The unit of work pattern can be implemented on command handlers and integration event consumers.
 There is a consistent approach to all - use a middleware that wraps the execution in a unit of work.
@@ -413,11 +481,12 @@ This means you should implement it on the handler itself, rather than adding it 
 Use the `ExecuteInUnitOfWork` middleware to wrap command handlers in a unit of work:
 
 ```php
-namespace App\Modules\EventManagement\Api\Input\CancelAttendeeTicket;
+namespace App\Modules\EventManagement\Application\UseCases;
 
+use App\Modules\EventManagement\Api\Input\CancelAttendeeTicketCommand;
 use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
-use CloudCreativity\Modules\Toolkit\Results\Result;
+use CloudCreativity\Modules\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(ExecuteInUnitOfWork::class)]
@@ -428,7 +497,7 @@ final readonly class CancelAttendeeTicketHandler
     ) {
     }
 
-    public function handle(CancelAttendeeTicketCommand $command): Result
+    public function execute(CancelAttendeeTicketCommand $command): Result
     {
         $attendee = $this->attendees->findOrFail($command->attendeeId);
 
@@ -466,7 +535,6 @@ use App\Modules\EventManagement\Domain\Events\DomainEventDispatcher;
 use App\Modules\EventManagement\Domain\Events\SalesAtEventDidChange;
 use App\Modules\Ordering\Api\Output\V1\Events\OrderWasFulfilled;
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
-use CloudCreativity\Modules\Contracts\Bus\DispatchThroughMiddleware;
 use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(ExecuteInUnitOfWork::class)]
@@ -499,22 +567,40 @@ the fake unit of work. For example, if you wanted to check that the unit of work
 the second attempt:
 
 ```php
+use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Testing\FakeUnitOfWork;
 
 $unitOfWork = new FakeUnitOfWork();
+$manager = new UnitOfWorkManager($unitOfWork);
 
-// execute work that uses the unit of work
+// execute work that uses the unit of work manager, with two attempts
 
+$this->assertSame(2, $unitOfWork->executions);
 $this->assertSame(2, $unitOfWork->attempts);
 $this->assertSame(1, $unitOfWork->commits);
 $this->assertSame(1, $unitOfWork->rollbacks);
-$this->assertSame(
-    ['attempt:1', 'rollback:1', 'attempt:2', 'commit:2'],
-    $unitOfWork->sequence,
-);
+$this->assertSame([
+    'execute:1/attempt:1',
+    'execute:1/rollback:1',
+    'execute:2/attempt:1',
+    'execute:2/commit:1',
+], $unitOfWork->sequence);
 ```
+
+Each entry in the sequence is in the format `execute:<execution>/<event>:<attempt>`. The execution is the number of the
+call to the fake's `execute()` method, and the attempt is the number of the attempt within that call.
+
+Notice that the two attempts are recorded as two executions, each with a single attempt. This is because the unit of
+work manager handles re-attempts itself, executing the fake unit of work once per attempt. The attempt number will
+only be greater than one if you call the fake directly with more than one attempt. The `executions`, `attempts`,
+`commits` and `rollbacks` properties are all counted across every call to the fake.
+
+A new unit of work started by an after commit callback is also recorded as a separate execution. For example, if the
+work in the above example also started a new unit of work from an after commit callback, the sequence would continue
+with `execute:3/attempt:1` and `execute:3/commit:1`.
 
 The fake also implements the `active()` and `inactive()` methods. It is active while the callback passed to
 `execute()` is running, including on each retry, and inactive before and after. To match the unit of work manager,
 which does not support nested units of work, the fake throws a `RuntimeException` if `execute()` is called while it is
-already active.
+already active. As the fake is inactive once it has committed, an after commit callback can start a new unit of work,
+in the same way as with a real unit of work.

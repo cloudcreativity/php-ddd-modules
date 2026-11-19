@@ -11,8 +11,8 @@ hero:
       text: Read the Docs
       link: /guide/
     - theme: alt
-      text: View on Github
-      link: https://github.com/cloudcreativity/ddd-modules
+      text: View on GitHub
+      link: https://github.com/cloudcreativity/php-ddd-modules
 
 #features:
 #  - title: Feature A

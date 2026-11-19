@@ -17,7 +17,7 @@ allow command messages to be queued for asynchronous dispatch.
 There are two scenarios where a bounded context's work could be queued:
 
 - **Commands dispatched by the presentation and delivery layer** - but where the presentation layer does not need to
-  wait for the result of the command, i.e. prefers to return early. We refer to this as **external queueing**, as the
+  wait for the result of the command, i.e. prefers to return early. We refer to this as **external queuing**, as the
   request to queue the command comes from _outside_ your bounded context.
 - **Work executed as an internal implementation of your application layer.** A typical example is where a domain event
   listener queues work that needs to happen as a consequence of the domain event, but the execution of the work does not
@@ -117,7 +117,7 @@ We could push this internal work to a queue via a domain event listener:
 ```php
 namespace App\Modules\EventManagement\Application\Orchestration\Listeners;
 
-use App\Modules\EventManagement\Application\Ports\InternalQueue;
+use App\Modules\EventManagement\Application\Ports\Queue\InternalQueue;
 use App\Modules\EventManagement\Application\Internal\RecalculateSalesAtEventCommand;
 use App\Modules\EventManagement\Domain\Events\AttendeeTicketWasCancelled;
 
@@ -129,7 +129,7 @@ final readonly class QueueTicketSalesReportRecalculation
 
     public function handle(AttendeeTicketWasCancelled $event): void
     {
-        $this->queue->queue(new RecalculateSalesAtEventCommand(
+        $this->queue->push(new RecalculateSalesAtEventCommand(
             $event->eventId,
         ));
     }
@@ -175,7 +175,7 @@ Define the internal command bus as follows:
 ```php
 namespace App\Modules\EventManagement\Application\Internal;
 
-use CloudCreativity\Modules\Application\Ports\Driving\CommandBus\CommandDispatcher;
+use CloudCreativity\Modules\Contracts\Messaging\CommandDispatcher;
 
 interface InternalCommandBus extends CommandDispatcher
 {

@@ -34,7 +34,7 @@ So what happens if we move them outside the transaction boundary, i.e. ensuring 
 effects are executed after the commit?
 
 Now the problem is that we cannot guarantee _all_ the side-effects will occur. We might successfully publish to the
-event bus, but if we encounter a temporary Redis failure both the asynchronous recalculation and the emailing will not
+event bus, but if we encounter a temporary Redis failure neither the asynchronous recalculation nor the emailing will
 occur.
 
 ## Solution
@@ -60,7 +60,7 @@ bus.
 Our recommended approach is to first place these events into an outbox. This means we need a driven port for the outbox:
 
 ```php
-namespace App\Modules\EventManagement\Application\Ports\OutboundEvents;
+namespace App\Modules\EventManagement\Application\Ports\OutboundEventBus;
 
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 
@@ -81,7 +81,7 @@ Domain event listeners would then use this instead of publishing the event thems
 ```php
 namespace App\Modules\EventManagement\Application\Orchestration\Listeners;
 
-use App\Modules\EventManagement\Application\Ports\OutboundEvents\Outbox;
+use App\Modules\EventManagement\Application\Ports\OutboundEventBus\Outbox;
 use App\Modules\EventManagement\Domain\Events\AttendeeTicketWasCancelled;
 use App\Modules\EventManagement\Api\Output\V1\Events as IntegrationEvents;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\UuidFactory;
@@ -99,7 +99,7 @@ final readonly class PublishAttendeeTicketWasCancelled
         $this->outbox->push(
             new IntegrationEvents\AttendeeTicketWasCancelled(
                 uuid: $this->uuidFactory->uuid4(),
-                occurredAt: $event->occurredAt,
+                occurredAt: $event->getOccurredAt(),
                 eventId: $event->eventId,
                 attendeeId: $event->attendeeId,
                 ticketId: $event->ticketId,

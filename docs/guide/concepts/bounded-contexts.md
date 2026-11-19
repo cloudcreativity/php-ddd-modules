@@ -18,7 +18,7 @@ of the warehouse, an order might be a set of items that need to be picked, packe
 customer, an order might be a set of items that they have purchased.
 
 In a monolith, these two concepts would be mixed together, leading to confusion and complexity. Your _Order_ entity
-would end up being potentially thousands of lines long, with no clear clarity of whether it is being consumed in the
+would end up being potentially thousands of lines long, with no clarity over whether it is being consumed in the
 context of the warehouse or the customer.
 
 By splitting your domain into bounded contexts, you can create a clear separation of concerns. Each bounded context
@@ -40,7 +40,7 @@ package to implement a single module. However, it gives you the option of having
 a few bounded contexts - in which case you would have a few modules within that microservice.
 
 :::warning
-If your microservice encompasses too many bounded contexts, you loose some of the benefits of a microservices
+If your microservice encompasses too many bounded contexts, you lose some of the benefits of a microservices
 architecture. For example, it is important to keep your microservices small and focused, so they can be scaled
 independently.
 :::

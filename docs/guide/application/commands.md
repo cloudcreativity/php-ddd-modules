@@ -57,10 +57,11 @@ For example:
 ```php
 namespace App\Modules\EventManagement\Application\UseCases;
 
+use App\Modules\EventManagement\Api\Input\CancelAttendeeTicketCommand;
 use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
 use CloudCreativity\Modules\Toolkit\Pipeline\Through;
-use CloudCreativity\Modules\Toolkit\Results\Result;
+use CloudCreativity\Modules\Toolkit\Result\Result;
 
 #[Through(ExecuteInUnitOfWork::class)]
 final readonly class CancelAttendeeTicketHandler
@@ -70,7 +71,7 @@ final readonly class CancelAttendeeTicketHandler
     ) {
     }
 
-    public function handle(CancelAttendeeTicketCommand $command): Result
+    public function execute(CancelAttendeeTicketCommand $command): Result
     {
         $attendee = $this->attendees->findOrFail($command->attendeeId);
 
@@ -149,7 +150,7 @@ use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(LogMessageDispatch::class)]
 #[WithCommand(CancelAttendeeTicketCommand::class, CancelAttendeeTicketHandler::class)]
-final class CommandBus extends CommandDispatcher implements Port
+final class CommandBusAdapter extends CommandDispatcher implements Port
 {
 }
 ```
@@ -165,7 +166,7 @@ container. This container is then used to resolve any middleware and command han
 dispatcher via the `Through` and `WithCommand` attributes.
 
 ```php
-$dispatcher = new CommandBus($psrContainer);
+$dispatcher = new CommandBusAdapter($psrContainer);
 ```
 
 So, for example in a Laravel application, you would bind this to the interface as follows in your service provider:
@@ -184,7 +185,7 @@ $this->app->bind(
 ### Dispatching Commands
 
 You can now dispatch command messages to your bounded context from the _outside world_. For example, if we were using
-a single action controller to handle a HTTP request in a Laravel application, we might dispatch a command like this:
+a single action controller to handle an HTTP request in a Laravel application, we might dispatch a command like this:
 
 ```php
 namespace App\Http\Controllers\Api\Attendees;
@@ -273,7 +274,7 @@ And then our implementation is as follows:
 ```php
 namespace App\Modules\EventManagement\Application\Adapters;
 
-use App\Modules\EventManagement\Application\Ports\Queue;
+use App\Modules\EventManagement\Application\Ports\Queue\Queue;
 use App\Modules\EventManagement\Api\CommandQueuer as Port;
 use CloudCreativity\Modules\Application\Bus\CommandQueuer as Queuer;
 
@@ -368,7 +369,7 @@ Our `SetupBeforeDispatch` middleware allows setup work to be run before the comm
 teardown work when the command has completed.
 
 This allows you to set up any state and guarantee that the state is cleaned up, regardless of the outcome of the
-command. The primary use case for this is to boostrap [Domain Services](../domain/services) and to garbage collect any
+command. The primary use case for this is to bootstrap [Domain Services](../domain/services) and to garbage collect any
 singleton instances of dependencies.
 
 For example, bind an instance of the middleware into your service container:
@@ -397,15 +398,15 @@ Here our setup middleware takes a setup closure as its only constructor argument
 return a closure to do any teardown work. The teardown callback is guaranteed to always be executed, regardless of
 whether a command succeeded or failed - and it also runs if an exception is thrown.
 
-If you only need to do teardown work, use the `TeardownAfterDispatch` middleware instead. This takes a single teardown
+If you only need to do teardown work, use the `TearDownAfterDispatch` middleware instead. This takes a single teardown
 closure as its only constructor argument:
 
 ```php
-use CloudCreativity\Modules\Bus\Middleware\TeardownAfterDispatch;
+use CloudCreativity\Modules\Bus\Middleware\TearDownAfterDispatch;
 
 $container->bind(
-    'event:management:teardown',
-    fn () => new TeardownAfterDispatch(function (): Closure {
+    'event-management:teardown',
+    fn () => new TearDownAfterDispatch(function (): void {
         // clean up work goes here.
     }),
 );
@@ -578,27 +579,26 @@ namespace App\Modules\EventManagement\Application\Adapters\Middleware;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;
-use CloudCreativity\Modules\Contracts\Messaging\Command;
-use CloudCreativity\Modules\Contracts\Messaging\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 class MyBusMiddleware implements BusMiddleware
 {
     /**
-     * Handle the command or query.
+     * Handle the message.
      *
-     * @param Command|Query $message
-     * @param Closure(Command|Query): Result<mixed> $next
-     * @return Result<mixed>
+     * @param Message $message
+     * @param Closure(Message): ?Result<mixed> $next
+     * @return Result<mixed>|null
      */
     public function __invoke(
-        Command|Query $message,
+        Message $message,
         Closure $next,
-    ): Result
+    ): ?Result
     {
         // code here executes before the handler
 
-        $result = $next($command);
+        $result = $next($message);
 
         // code here executes after the handler
 

@@ -88,6 +88,7 @@ use App\Modules\EventManagement\Application\Ports\Queue\Queue;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Infrastructure\Queue\Middleware\LogPushedToQueue;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
+use Psr\Log\LoggerInterface;
 
 final class QueueAdapterProvider
 {
@@ -110,7 +111,7 @@ final class QueueAdapterProvider
             fn () => new LogPushedToQueue($this->logger),
         );
 
-        $queue->through([LogPushedToQueue::class]);
+        $adapter->through([LogPushedToQueue::class]);
 
         return $adapter;
     }
@@ -141,7 +142,7 @@ $queue->bind(
 
 ## Class-Based Queuing
 
-Our `ComponentQueue` allows you to use define queuing logic on classes. Each class is an _enqueuer_ - a component that
+Our `ComponentQueue` allows you to define queuing logic on classes. Each class is an _enqueuer_ - a component that
 handles pushing an item (in this case a command message) onto a queue.
 
 This is useful in scenarios where you want to use constructor dependency injection when integrating with your PHP
@@ -161,8 +162,8 @@ use CloudCreativity\Modules\Infrastructure\Queue\DefaultEnqueuer;
 use CloudCreativity\Modules\Infrastructure\Queue\Queues;
 
 #[DefaultEnqueuer(MyDefaultEnqueuer::class)]
-#[Queues(SomeCommand::class, SomeCommandEnqueuer::class)]
-#[Queues([SomeOtherCommand::class, YetAnotherCommand::class], SomeOtherCommandEnqueuer::class)]
+#[Queues(RecalculateSalesAtEventCommand::class, ReportingEnqueuer::class)]
+#[Queues([SomeCommand::class, SomeOtherCommand::class], SomeOtherEnqueuer::class)]
 #[Through(LogPushedToQueue::class)]
 final class QueueAdapter extends ComponentQueue
     implements Queue
@@ -180,7 +181,7 @@ namespace App\Modules\EventManagement\Infrastructure\Queue;
 
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 
-final class DefaultEnqueuer
+final class MyDefaultEnqueuer
 {
     public function push(Command $command): void
     {
@@ -203,7 +204,7 @@ If neither of these two queue adapters work for you, you can write your own queu
 implements the port interface that is extended in your application layer:
 
 ```php
-namespace CloudCreativity\Modules\Application\Ports\Queue;
+namespace CloudCreativity\Modules\Contracts\Application\Ports;
 
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 
@@ -240,7 +241,7 @@ For example, a default Laravel job for queuing and dispatching commands would be
 ```php
 namespace App\Modules\EventManagement\Infrastructure\Queue;
 
-use App\Modules\EventManagement\Application\Ports\Driving\CommandBus;
+use App\Modules\EventManagement\Api\CommandBus;
 use CloudCreativity\Modules\Contracts\Messaging\Command;
 use CloudCreativity\Modules\Toolkit\Result\FailedResultException;
 use Illuminate\Bus\Queueable;
@@ -281,7 +282,7 @@ An example of a queue job for a specific command might be:
 ```php
 namespace App\Modules\EventManagement\Infrastructure\Queue;
 
-use App\Modules\EventManagement\Application\Ports\Driving\CommandBus;
+use App\Modules\EventManagement\Api\CommandBus;
 use App\Modules\EventManagement\Application\UseCases\Commands\{
     RecalculateSalesAtEvent\ErrorCodeEnum,
     RecalculateSalesAtEvent\RecalculateSalesAtEventCommand,
@@ -309,7 +310,7 @@ class QueueRecalculateSalesAtEventJob implements ShouldQueue
         $result = $bus->dispatch($this->command);
         $errors = $result->errors();
 
-        if ($errors->contains(ErrorCodeEnum::TemporaryFailure)) {
+        if ($errors->any(ErrorCodeEnum::TemporaryFailure)) {
             $this->release(now()->addSeconds(30));
             return;
         }
@@ -342,7 +343,7 @@ on the Laravel queue, and what it should do if it receives a failure result.
 ### Creating the Queue
 
 We can now create our queue adapter. This will extend the closure queue adapter described earlier in this chapter. For
-example, to create the queue that is injected into our command bus:
+example, to create the queue that is injected into our command queuer:
 
 ```php
 // default command queuing
@@ -370,11 +371,11 @@ To apply middleware to the queue, use the `through()` method - as shown in the e
 the order it is added to the queue.
 
 ```php
-use CloudCreativity\Modules\Infrastructure\Queue\ClosureQueue;
+use App\Modules\EventManagement\Infrastructure\Queue\QueueAdapter;
 use CloudCreativity\Modules\Infrastructure\Queue\Middleware\LogPushedToQueue;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 
-$queue = new ClosureQueue(
+$queue = new QueueAdapter(
     fn: function (Command $command): void {
         DispatchCommandJob::dispatch($command);
     },
@@ -392,7 +393,7 @@ Use our `LogPushedToQueue` middleware to log a command being pushed into the que
 ```php
 use CloudCreativity\Modules\Infrastructure\Queue\Middleware\LogPushedToQueue;
 
-$queue = new ClosureQueue(
+$queue = new QueueAdapter(
     fn: function (Command $command): void {
         DispatchCommandJob::dispatch($command);
     },
@@ -450,7 +451,7 @@ final class MyQueueMiddleware implements QueueMiddleware
 
 :::tip
 If you're writing middleware that is only meant to be used for a specific command message or queue job, do not implement
-the `QueueMiddleware` interface. Instead, use the same signature but change the type-hint for to the specific command
+the `QueueMiddleware` interface. Instead, use the same signature but change the type-hint to the specific command
 message your middleware is designed for.
 :::
 

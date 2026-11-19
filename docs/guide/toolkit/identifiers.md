@@ -1,6 +1,6 @@
 # Identifiers
 
-As described in the [Entities and Aggregates](../domain/entities) chapter, our domain layer must
+As described in the [Entities and Aggregates](../domain/entities#identifiers) chapter, our domain layer can
 type-hint identifiers using an `Identifier` interface. This prevents coupling between the domain layer and the
 persistence layer.
 
@@ -26,12 +26,13 @@ received:
 
 - `IntegerId`
 - `StringId`
-- `Uuid`
+- `Uuid` - plus the version-specific `UuidV4` and `UuidV7`.
 - `Guid` - used for polymorphism.
 
 These are described in more detail below. However, the important thing to note is that all these concrete
 implementations have a static `from()` method. This can be used to ensure the supplied identifier is of the correct
-type. This is useful wherever you need to work with identifiers in a way the expects a specific type.
+type. There is also a static `tryFrom()` method, that returns `null` instead of throwing if the identifier is not of
+the expected type. This is useful wherever you need to work with identifiers in a way that expects a specific type.
 
 ## Integers
 
@@ -55,8 +56,6 @@ class MySqlUserRepository implements UserRepository
         $id = $this->store($this->mapper->toDatabaseRow($entity));
 
         $entity->setId(new IntegerId($id));
-
-        return $entity;
     }
 }
 ```
@@ -78,8 +77,6 @@ class MySqlUserRepository implements UserRepository
         $values['id'] = $id->value;
 
         $this->store($values);
-
-        return $entity;
     }
 }
 ```
@@ -98,7 +95,7 @@ Create a string id as follows:
 ```php
 use CloudCreativity\Modules\Toolkit\Identifiers\StringId;
 
-$id = new StringId(123);
+$id = new StringId('123');
 ```
 
 :::tip
@@ -117,8 +114,6 @@ class MySqlUserRepository implements UserRepository
         $id = $this->store($this->mapper->toDatabaseRow($entity));
 
         $entity->setId(new StringId($id));
-
-        return $entity;
     }
 }
 ```
@@ -140,15 +135,13 @@ class MySqlUserRepository implements UserRepository
         $values['id'] = $id->value;
 
         $this->store($values);
-
-        return $entity;
     }
 }
 ```
 
 :::tip
 There may be scenarios where you map data from multiple database tables to a single entity. If these tables all use
-string identifiers, there would be no way to distinguish which table the integer identifier belongs to.
+string identifiers, there would be no way to distinguish which table the string identifier belongs to.
 
 In this scenario, you should use a `Guid` instead.
 :::
@@ -164,8 +157,13 @@ use Ramsey\Uuid\Uuid as BaseUuid;
 $id = new Uuid(BaseUuid::uuid4());
 ```
 
+If you specifically need a version 4 or version 7 UUID, use the `UuidV4` or `UuidV7` classes. These can be created
+via their static `make()` methods, e.g. `UuidV7::make()`. The `Uuid` class also has a static `random()` method that
+returns a random `UuidV4`, and a `nil()` method that returns the nil UUID.
+
 We also provide a `UuidFactory` which is a wrapper around the one from the `ramsey/uuid` package. It has the
-same methods, but returns an instance of the `Uuid` class from this package instead.
+same methods, but returns UUID identifiers from this package instead. The `uuid4()` and `uuid7()` methods return
+`UuidV4` and `UuidV7` instances respectively, while the `from()` method returns the `Uuid` identifier interface.
 
 For example, in a repository you might use this as follows:
 
@@ -183,13 +181,11 @@ class MySqlUserRepository implements UserRepository
     {
         $id = $this->uuidFactory->uuid4();
         $data = $this->mapper->toDatabaseRow($entity);
-        $data['id'] = $id->value->toString();
+        $data['id'] = $id->toString();
 
         $this->store($data);
 
         $entity->setId($id);
-
-        return $entity;
     }
 }
 ```
@@ -213,21 +209,19 @@ class MySqlUserRepository implements UserRepository
         $id = Uuid::from($entity->getId());
 
         // or if we had injected the uuid factory:
-        $id = $this->factory->from($entity->getId());
+        $id = $this->uuidFactory->from($entity->getId());
 
         $values = $this->mapper->toDatabaseRow($entity);
-        $values['id'] = $id->value->toString();
+        $values['id'] = $id->toString();
 
         $this->store($values);
-
-        return $entity;
     }
 }
 ```
 
 :::tip
 There may be scenarios where you map data from multiple database tables to a single entity. If these tables all use
-UUIDs as there primary key, in theory the chance of collision is exceptionally low. However, you may want to guarantee
+UUIDs as their primary key, in theory the chance of collision is exceptionally low. However, you may want to guarantee
 that you can distinguish the origin of the identifier. In this case, you should use a `Guid` instead.
 :::
 
@@ -238,8 +232,8 @@ _type_ with the wrapped identifier. This is intended for scenarios where you are
 sources to a single entity class - and therefore using only an integer, string or UUID does not provide enough context
 to understand the source of the entity.
 
-The _type_ you provide to the GUID can be anything you like. Examples would be the fully-qualified class of an Eloquent
-model, or a database table name.
+The _type_ you provide to the GUID can be any string or enum you like. Examples would be the fully-qualified class of an
+Eloquent model, a database table name, or an enum case.
 
 GUIDs can be created using the static `fromInteger()`, `fromString()` and `fromUuid()` methods. For example:
 
@@ -247,9 +241,9 @@ GUIDs can be created using the static `fromInteger()`, `fromString()` and `fromU
 use CloudCreativity\Modules\Toolkit\Identifiers\Guid;
 
 // $model is an Eloquent model
-$guid = Guid::fromInteger($model::class, $model->geyKey());
-$guid = Guid::fromString($model::class, $model->geyKey());
-$guid = Guid::fromUuid($model::class, $model->geyKey()); // or provide a Ramsey UUID instance
+$guid = Guid::fromInteger($model::class, $model->getKey());
+$guid = Guid::fromString($model::class, $model->getKey());
+$guid = Guid::fromUuid($model::class, $model->getKey()); // or provide a Ramsey UUID instance
 
 $guid->type === $model::class; // true
 ```
@@ -272,8 +266,6 @@ class MySqlUserRepository implements UserRepository
             UserModel::class => $this->storeUser($values),
             LegacyUserModel::class => $this->storeLegacyUser($values),
         };
-
-        return $entity;
     }
 }
 ```

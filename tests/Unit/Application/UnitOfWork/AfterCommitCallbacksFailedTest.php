@@ -14,6 +14,7 @@ namespace CloudCreativity\Modules\Tests\Unit\Application\UnitOfWork;
 
 use CloudCreativity\Modules\Application\UnitOfWork\AfterCommitCallbacksFailed;
 use CloudCreativity\Modules\Contracts\Application\ApplicationException;
+use CloudCreativity\Modules\Contracts\Application\UnitOfWork\AfterCommitFailure;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,9 +33,23 @@ final class AfterCommitCallbacksFailedTest extends TestCase
 
         $actual = new AfterCommitCallbacksFailed($exceptions);
 
+        $this->assertInstanceOf(AfterCommitFailure::class, $actual);
         $this->assertInstanceOf(ApplicationException::class, $actual);
         $this->assertSame('3 after commit callbacks failed.', $actual->getMessage());
         $this->assertSame($exceptions, $actual->exceptions());
         $this->assertSame($ex1, $actual->getPrevious());
+    }
+
+    #[Test]
+    public function it_wraps_a_single_exception(): void
+    {
+        $ex = new LogicException('Boom!');
+
+        $actual = new AfterCommitCallbacksFailed([$ex]);
+
+        $this->assertInstanceOf(AfterCommitFailure::class, $actual);
+        $this->assertSame('1 after commit callback failed.', $actual->getMessage());
+        $this->assertSame([$ex], $actual->exceptions());
+        $this->assertSame($ex, $actual->getPrevious());
     }
 }

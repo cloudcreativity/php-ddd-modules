@@ -12,14 +12,14 @@ and any consuming bounded contexts.
 Integration events are bidirectional. They are both _published_ by a bounded context, and _consumed_ by other
 bounded contexts. This means we can refer to them in terms of their direction - specifically:
 
-- **Inbound** integration events, are those a bounded context _consumes_ via an inbound event bus driving port.
-- **Outbound** integration events, are those _published_ by a bounded context. Publishing occurs via a driven port, with
+- **Inbound** integration events are those a bounded context _consumes_ via an inbound event bus driving port.
+- **Outbound** integration events are those _published_ by a bounded context. Publishing occurs via a driven port, with
   the infrastructure layer implementing the adapter.
 
 ## Integration Event Messages
 
 Integration event messages are defined by writing a class that implements the `IntegrationEvent` interface. The class
-should be named according to event it represents, and should contain properties that represent the data being exchanged.
+should be named according to the event it represents, and should contain properties that represent the data being exchanged.
 
 The integration event interface is light-weight and defines only two methods:
 
@@ -33,12 +33,12 @@ The integration event interface is light-weight and defines only two methods:
 For example:
 
 ```php
-namespace App\Modules\EventManagement\Output\V1\Events;
+namespace App\Modules\EventManagement\Api\Output\V1\Events;
 
-use App\Modules\EventManagement\Output\V1\Enums\CancellationReasonEnum;
+use App\Modules\EventManagement\Api\Output\V1\Enums\CancellationReasonEnum;
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
-use CloudCreativity\Modules\Toolkit\Identifiers\Uuid;
+use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Uuid;
 
 final readonly class AttendeeTicketWasCancelled implements
     IntegrationEvent
@@ -92,7 +92,7 @@ deserialization, the result will always be an identical integration event messag
 This can be expressed via an interface. To illustrate the point, a JSON serializer might look like this:
 
 ```php
-namespace App\Modules\Ordering\Output\V1\Events\Serializers;
+namespace App\Modules\Ordering\Api\Output\V1\Events\Serializers;
 
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 
@@ -105,7 +105,7 @@ interface JsonSerializer
     public function serialize(IntegrationEvent $event): array;
 
     /**
-     * @param array<string, mixed>
+     * @param array<string, mixed> $input
      * @return IntegrationEvent
      */
     public function deserialize(array $input): IntegrationEvent;
@@ -169,7 +169,7 @@ For example:
 ```php
 namespace App\Modules\EventManagement\Application\Orchestration\Listeners;
 
-use App\Modules\EventManagement\Application\Ports\OutboundEvents\OutboundEventBus;
+use App\Modules\EventManagement\Application\Ports\OutboundEventBus\OutboundEventBus;
 use App\Modules\EventManagement\Domain\Events\AttendeeTicketWasCancelled;
 use App\Modules\EventManagement\Api\Output\V1\Events as IntegrationEvents;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\UuidFactory;
@@ -187,7 +187,7 @@ final readonly class PublishAttendeeTicketWasCancelled
         $this->eventBus->publish(
             new IntegrationEvents\AttendeeTicketWasCancelled(
                 uuid: $this->uuidFactory->uuid4(),
-                occurredAt: $event->occurredAt,
+                occurredAt: $event->getOccurredAt(),
                 eventId: $event->eventId,
                 attendeeId: $event->attendeeId,
                 ticketId: $event->ticketId,
@@ -212,7 +212,7 @@ In this scenario, the above listener would be changed to use the outbox instead:
 ```php
 namespace App\Modules\EventManagement\Application\Orchestration\Listeners;
 
-use App\Modules\EventManagement\Application\Ports\OutboundEvents\Outbox;
+use App\Modules\EventManagement\Application\Ports\OutboundEventBus\Outbox;
 use App\Modules\EventManagement\Domain\Events\AttendeeTicketWasCancelled;
 use App\Modules\EventManagement\Api\Output\V1\Events as IntegrationEvents;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\UuidFactory;
@@ -230,7 +230,7 @@ final readonly class PublishAttendeeTicketWasCancelled
         $this->outbox->push(
             new IntegrationEvents\AttendeeTicketWasCancelled(
                 uuid: $this->uuidFactory->uuid4(),
-                occurredAt: $event->occurredAt,
+                occurredAt: $event->getOccurredAt(),
                 eventId: $event->eventId,
                 attendeeId: $event->attendeeId,
                 ticketId: $event->ticketId,
@@ -279,7 +279,7 @@ An inbound event handler that dispatches a command that is a use case in your ap
 ```php
 namespace App\Modules\EventManagement\Application\UseCases\Events;
 
-use App\Modules\EventManagement\Api\CommandBus\CommandBus;
+use App\Modules\EventManagement\Api\CommandBus;
 use App\Modules\EventManagement\Api\Input\RecalculateSalesAtEventCommand;
 use App\Modules\Ordering\Api\Output\V1\Events\OrderWasFulfilled;
 
@@ -292,7 +292,7 @@ final readonly class OrderWasFulfilledHandler
 
     public function handle(OrderWasFulfilled $event): void
     {
-        // alternatively we could use `queue()` to process the command asynchronously
+        // alternatively we could inject the `CommandQueuer` and use `queue()` to process the command asynchronously
         $this->bus->dispatch(new RecalculateSalesAtEventCommand(
             eventId: $event->eventId,
         ));
@@ -310,7 +310,7 @@ command handler to do this.
 This is almost identical to the previous example. However, in this case the command is internal to the bounded context.
 I.e. it is not intended to be exposed as a use case that the outside world can dispatch.
 
-This means the command message and command bus are in the application layer's driven ports namespace. Otherwise, the
+This means the command message and command bus are in the application layer's `Internal` namespace. Otherwise, the
 approach is identical to the previous strategy.
 
 ```php
@@ -351,8 +351,9 @@ namespace App\Modules\EventManagement\Application\UseCases\Events;
 
 use App\Modules\EventManagement\Domain\Events\DomainEventDispatcher;
 use App\Modules\EventManagement\Domain\Events\SalesAtEventDidChange;
-use App\Modules\Ordering\Output\V1\Events\OrderWasFulfilled;
+use App\Modules\Ordering\Api\Output\V1\Events\OrderWasFulfilled;
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(ExecuteInUnitOfWork::class)]
 final readonly class OrderWasFulfilledHandler
@@ -372,7 +373,7 @@ final readonly class OrderWasFulfilledHandler
 ```
 
 :::warning
-If you are using this strategy and your bounded context uses unit of works, you must dispatch the event in a unit of
+If you are using this strategy and your bounded context uses units of work, you must dispatch the event in a unit of
 work. This ensures that all side effects are committed or rolled back together. The above example does this via
 middleware.
 :::
@@ -403,11 +404,12 @@ namespace App\Modules\EventManagement\Application\Adapters;
 use App\Modules\EventManagement\Api\InboundEventBus as Port;
 use App\Modules\EventManagement\Application\UseCases\Events\DefaultEventHandler;
 use App\Modules\EventManagement\Application\UseCases\Events\OrderWasFulfilledHandler;
-use App\Modules\Ordering\Output\V1\Events\OrderWasFulfilled;
+use App\Modules\Ordering\Api\Output\V1\Events\OrderWasFulfilled;
 use CloudCreativity\Modules\Bus\InboundEventDispatcher;
 use CloudCreativity\Modules\Bus\WithDefault;
 use CloudCreativity\Modules\Bus\WithEvent;
 use CloudCreativity\Modules\Bus\Middleware\LogMessageDispatch;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(LogMessageDispatch::class)]
 #[WithDefault(DefaultEventHandler::class)]
@@ -429,7 +431,7 @@ PSR container. This container is then used to resolve any middleware and event h
 dispatcher via the `Through`, `WithDefault` and `WithEvent` attributes.
 
 ```php
-$dispatcher = new InboundEventBus($psrContainer);
+$dispatcher = new InboundEventBusAdapter($psrContainer);
 ```
 
 So, for example in a Laravel application, you would bind this to the interface as follows in your service provider:
@@ -514,12 +516,13 @@ namespace App\Modules\EventManagement\Application\Adapters;
 
 use App\Modules\EventManagement\Api\InboundEventBus as Port;
 use App\Modules\EventManagement\Application\UseCases\Events\OrderWasFulfilledHandler;
-use App\Modules\Ordering\Output\V1\Events\OrderWasFulfilled;
+use App\Modules\Ordering\Api\Output\V1\Events\OrderWasFulfilled;
 use CloudCreativity\Modules\Bus\InboundEventDispatcher;
 use CloudCreativity\Modules\Bus\WithDefault;
 use CloudCreativity\Modules\Bus\WithEvent;
 use CloudCreativity\Modules\Bus\Middleware\LogMessageDispatch;
 use CloudCreativity\Modules\Bus\SwallowInboundEvent;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(LogMessageDispatch::class)]
 #[WithDefault(SwallowInboundEvent::class)]
@@ -574,7 +577,7 @@ inbox. For both these actions - checking whether it exists, and storing - the ad
 might look like this:
 
 ```php
-namespace App\Modules\EventManagement\Api\Ports\Inbox;
+namespace App\Modules\EventManagement\Application\Ports\Inbox;
 
 use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 
@@ -603,7 +606,7 @@ class InboundEventController extends Controller
 {
     public function __invoke(
         Request $request,
-        Inbox $inbox,
+        InboundEventInbox $inbox,
         JsonSerializer $serializer,
     ) {
         $validated = $request->validate([
@@ -658,11 +661,11 @@ middleware to suit your specific needs.
 
 ### Setup and Teardown
 
-Our `SetupBeforeEvent` middleware allows your to run setup work before the event is published or notified, and
+Our `SetupBeforeEvent` middleware allows you to run setup work before the event is dispatched, and
 optionally teardown work after.
 
 This allows you to set up any state, services or singletons - and guarantee that these are cleaned up, regardless of
-whether the notifying or publishing completes or throws an exception.
+whether handling the event completes or throws an exception.
 
 For example:
 
@@ -685,7 +688,7 @@ Here our setup middleware takes a setup closure as its only constructor argument
 return a closure to do any teardown work. The teardown callback is guaranteed to always be executed - i.e. it will run
 even if an exception is thrown.
 
-If you only need to do any teardown work, use the `TeardownAfterEvent` middleware instead. This takes a single teardown
+If you only need to do teardown work, use the `TearDownAfterEvent` middleware instead. This takes a single teardown
 closure as its only constructor argument:
 
 ```php
@@ -693,7 +696,7 @@ use CloudCreativity\Modules\Bus\Middleware\TearDownAfterEvent;
 
 $container->bind(
     'event-management:teardown-events',
-    fn () => new TearDownAfterEvent(function (): Closure {
+    fn () => new TearDownAfterEvent(function (): void {
         // teardown here
     }),
 );
@@ -777,7 +780,7 @@ final class MyMiddleware implements IntegrationEventMiddleware
     {
         // code here executes before the event handler
 
-        $next($command);
+        $next($event);
 
         // code here executes after the event handler
     }
@@ -786,6 +789,6 @@ final class MyMiddleware implements IntegrationEventMiddleware
 
 :::tip
 If you're writing middleware that is only meant to be used for a specific integration event, do not use the
-`InboundEventMiddleware` interface. Instead, use the same signature but change the event type-hint to the event class
+`IntegrationEventMiddleware` interface. Instead, use the same signature but change the event type-hint to the event class
 your middleware is designed to be used with.
 :::

@@ -6,11 +6,11 @@ retrieved across different runs of the program, or even across different program
 
 This package does not provide any specific persistence concerns. This is because persistence is highly dependent on the
 specific use case and the infrastructure of the application. Instead, this chapter provides some guidance and best
-practices on how to implement persistence in domain-driven way.
+practices on how to implement persistence in a domain-driven way.
 
 ## Read vs Write Models
 
-In the context of Domain Driven Design, persistence is the mechanisms by which:
+In the context of Domain Driven Design, persistence refers to the mechanisms by which:
 
 - aggregate roots and entities are stored, updated and retrieved; and
 - current state is questioned (queried) and answered via [read models.](../application/queries#read-models)
@@ -75,9 +75,8 @@ The first port would need to be used by our "cancel ticket" command to retrieve 
 state back:
 
 ```php
-namespace App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
+namespace App\Modules\EventManagement\Application\Ports\Persistence;
 
-use App\Modules\EventManagement\Domain\Attendee;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
 interface AttendeeRepository
@@ -90,7 +89,7 @@ interface AttendeeRepository
 The second port would be used by our "get all tickets" query:
 
 ```php
-namespace App\Modules\EventManagement\Application\Ports\Persistence\ReadModels\V1\TicketModelRepository;
+namespace App\Modules\EventManagement\Application\Ports\Persistence\ReadModels\V1;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
@@ -120,9 +119,8 @@ To return to our example of an attendee aggregate root that contains ticket enti
 store and retrieve the ticket entities. This means we only need one port:
 
 ```php
-namespace App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
+namespace App\Modules\EventManagement\Application\Ports\Persistence;
 
-use App\Modules\EventManagement\Domain\Attendee;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
 interface AttendeeRepository
@@ -209,7 +207,7 @@ use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeState;
 use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeUpdateState;
 use App\Modules\EventManagement\Application\Ports\Persistence\TicketState;
 use App\Models\Attendee as AttendeeModel;
-use App\Models\Attendee as TicketModel;
+use App\Models\Ticket as TicketModel;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 use CloudCreativity\Modules\Toolkit\Identifiers\IntegerId;
 
@@ -256,12 +254,12 @@ ticket read model.
 Whether this mapping is efficient enough for your use case, only you can decide.
 
 When first implementing your bounded context, you might find it easy to start with Eloquent. For example, loading an
-attendee Eloquent model with ticket models eager loaded is straight forward.
+attendee Eloquent model with ticket models eager loaded is straightforward.
 
 However, under the hood this is potentially inefficient. Eloquent is loading a row from a database, then hydrating an
 Eloquent model - for you to then immediately map that to an aggregate root.
 
 As your application scales, you might find that the performance of this approach is not sufficient. At that point, you
-can choose to implement a repository that directly uses the database row. The good thing hexagonal architecture is that
+can choose to implement a repository that directly uses the database row. The good thing about hexagonal architecture is that
 you can do this without changing your domain model, logic or application layer.
 :::

@@ -22,7 +22,7 @@ try {
     $this->someService->doSomething();
     return true;
 } catch (\Throwable $e) {
-    $this->logger->error('An error occurred: ', $e->getMessage());
+    $this->logger->error('An error occurred: ' . $e->getMessage());
     return false;
 }
 ```
@@ -80,7 +80,7 @@ layer to any logging service you are using.
 If all you need to do is log a reported exception as an error, we provide a default implementation that uses a PSR
 logger. The implementation is: `CloudCreativity\Modules\Infrastructure\ExceptionReporter\PsrLogExceptionReporter`
 
-Provide an instance of the PSR Log as the only constructor argument.
+Provide an instance of a PSR logger as the only constructor argument.
 
 ### Laravel Example
 
@@ -111,7 +111,7 @@ final readonly class ExceptionReporterAdapter implements
 ## Testing
 
 We provide a fake exception reporter that you can use in tests. This is the
-`CloudCreativity\Modules\Testing\FakeUnitOfWork` class.
+`CloudCreativity\Modules\Testing\FakeExceptionReporter` class.
 
 You can access any exceptions that were reported via the `$reported` property:
 

@@ -107,20 +107,20 @@ final readonly class CanTransferFundsHandler
      * @param CanTransferFundsQuery $query
      * @return Result<list<CannotTransferFundsModel>>
      */
-    public function execute(TransferFundsCommand $command): Result
+    public function execute(CanTransferFundsQuery $query): Result
     {
         $sourceAccount = $this->bankAccountRepository->findOrFail(
-            $command->sourceId,
+            $query->sourceId,
         );
 
         $destinationAccount = $this->bankAccountRepository->findOrFail(
-            $command->destinationId,
+            $query->destinationId,
         );
 
         $reasons = $this->transferFundsService->canTransfer(
             source: $sourceAccount,
             destination: $destinationAccount,
-            amount: $command->amount,
+            amount: $query->amount,
         );
 
         $models = [];
@@ -164,6 +164,11 @@ injected via a setter.
 Ok, that's a bit wordy! This example illustrates what we mean:
 
 ```php
+namespace App\Modules\BankAccounts\Domain;
+
+use App\Modules\BankAccounts\Domain\Services\TransferFundsService;
+use Closure;
+
 final class Services
 {
     /**

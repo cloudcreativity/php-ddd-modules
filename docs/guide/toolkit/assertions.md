@@ -19,7 +19,7 @@ final readonly class Age
     {
         if ($this->value < 18) {
             throw new \InvalidArgumentException(
-              'Age must be greater than or equal to 0',
+              'Age must be greater than or equal to 18',
             );
         }
     }
@@ -64,11 +64,14 @@ There are some situations where it is ok to use the `assert()` function. Here's 
 ```php
 class Ticket implements Entity
 {
+    use IsEntity;
+
     public function __construct(
-        private readonly Identifier $id,
+        Identifier $id,
         private ?TicketStatusEnum $status = null
         // ...other properties
     ) {
+        $this->id = $id;
     }
 
     public function getStatus(): TicketStatusEnum

@@ -30,6 +30,11 @@ public function inactive(): bool
 
 If you use the `FakeUnitOfWork` in your tests, it now throws if `execute()` is called while it is already active.
 
+### Command Queuer
+
+The deprecated `Contracts\Bus\CommandQueuer` interface has been removed. Use `Contracts\Messaging\CommandQueuer`
+instead.
+
 ## 5.x to 6.x
 
 Upgrade using Composer:
@@ -38,8 +43,10 @@ Upgrade using Composer:
 composer require cloudcreativity/ddd-modules:^6.0
 ```
 
-This refactor finalises our approach to structing modules, and makes some final alterations to the namespacing of
+This refactor finalises our approach to structuring modules, and makes some final alterations to the namespacing of
 classes provided by this package.
+
+The minimum supported PHP version is now 8.4.
 
 ### PSR Container Usage and PHP Attributes
 
@@ -56,9 +63,18 @@ approach. However, we recommend this approach going forward, and the documentati
 We've moved bus contracts and implementations to the `Contracts\Bus` and `Bus` namespaces respectively. This is to make
 it clearer that these are part of the bus implementation, not the application layer. While the application layer makes
 heavy use of these buses, messaging via buses is not an approach that needs to be confined to the application layer. For
-instance, you could have an infrastructure component that uses message.
+instance, you could have an infrastructure component that uses messaging.
 
 Moving these classes to their own `Bus` namespace makes this clearer.
+
+### Messaging Namespace
+
+The message interfaces - `Message`, `Command`, `Query` and `IntegrationEvent` - have moved from the
+`Contracts\Toolkit\Messages` namespace to the `Contracts\Messaging` namespace.
+
+The dispatcher interfaces that were previously in the `Contracts\Application\Ports\Driving` namespace - i.e.
+`CommandDispatcher`, `CommandQueuer`, `QueryDispatcher` and `InboundEventDispatcher` - have also moved to the
+`Contracts\Messaging` namespace.
 
 ### Driven Ports
 
@@ -68,13 +84,19 @@ that are defined in the application namespace are these driven ports; hence tidy
 
 ### Event Buses
 
-Separate middleware interfaces for the inbound and event buses, like `InboundEventMiddleware`, `OutboundEventMiddleware`
+Separate middleware interfaces for the inbound and outbound event buses, like `InboundEventMiddleware`, `OutboundEventMiddleware`
 and `EventBusMiddleware` have been removed. These are now consolidated in an `IntegrationEventMiddleware` interface.
 
 Also, some middleware `HandleInUnitOfWork` and `LogInboundEvent` have been removed. Instead you should use the existing
 generic message middleware alternatives, e.g. `ExecuteInUnitOfWork` and `LogMessageDispatch`.
 
 This removes duplication and simplifies some of the middleware to work with any type of message.
+
+### List of Errors
+
+The deprecated `contains()` method has been removed from the `ListOfErrors` interface. Use `any()` instead.
+Additionally, the `first()` method no longer accepts arguments. Use `find()` instead if you need to find the first error
+that matches a code or closure.
 
 ### Other Changes
 
@@ -166,7 +188,7 @@ majority of changes.
 The docs have been updated to reflect all the changes in this release. If you're unsure how to upgrade something, refer
 to the relevant chapter in these guides for examples.
 
-If you get stuck upgrading something, create an issue in Github so we can help.
+If you get stuck upgrading something, create an issue in GitHub so we can help.
 :::
 
 #### Hexagonal Architecture
@@ -186,7 +208,7 @@ ports:
 
 - **Driving Ports** (aka _primary_ or _input_ ports) - interfaces that define the use cases of the bounded context.
   These are implemented by application services, and are used by adapters in the outside world to initiate interactions
-  with the application. For example, an adapter could be a HTTP controller that takes input from a request and passes it
+  with the application. For example, an adapter could be an HTTP controller that takes input from a request and passes it
   to the application via a driving port.
 - **Driven Ports** (aka _secondary_ or _output_ ports) - interfaces that define the dependencies of the application
   layer. The adapters that implement these interfaces are in the infrastructure layer. For example, a persistence port
@@ -201,7 +223,7 @@ in the infrastructure layer.
 
 #### Interface Changes
 
-The result of implementing a hexagonal infrastructure is that we've moved around interfaces to reflect this new
+The result of implementing a hexagonal architecture is that we've moved around interfaces to reflect this new
 approach.
 
 Any interface that is a driving or driven port has been moved to the `Contracts\Application\Ports` namespace, which has
@@ -254,10 +276,10 @@ The previous event bus implementation has been split in two. This is due to the 
 inbound events is now a _driving port_, whereas publishing outbound events occurs via a _driven port_.
 
 The new inbound implementation (previously referred to as a _notifier_) is now in the `Application\InboundEventBus`
-namespace. The driving port is `Contracts\Application\Ports\Driving\EventDispatcher`.
+namespace. The driving port is `Contracts\Application\Ports\Driving\InboundEventDispatcher`.
 
 The new outbound implementation (referred to as a _publisher_) is now in the `Infrastructure\OutboundEventBus`
-namespace. The driven port is `Contracts\Application\Ports\Driven\OutboundEvents\EventPublisher`.
+namespace. The driven port is `Contracts\Application\Ports\Driven\OutboundEventPublisher`.
 
 :::tip
 The best approach to upgrading your event bus is to refer to the
@@ -272,14 +294,14 @@ Likewise, for entities the interface is now `Contracts\Domain\Entity`. The trait
 - `Domain\EntityTrait` is now `Domain\IsEntity`
 - `Domain\EntityWithNullableIdTrait` is now `Domain\IsEntityWithNullableId`.
 
-The identifier interface is now  `Contracts\Toolkit\Identifiers\Identifier`.
+The identifier interface is now `Contracts\Toolkit\Identifiers\Identifier`.
 
 ### Domain Events
 
 Domain events must now implement the `Contracts\Domain\Events\DomainEvent` interface. The method this interface defines
 is now `getOccurredAt()`.
 
-The domain event dispatcher interface is now `Contracts\Events\DomainEventDispatcher`.
+The domain event dispatcher interface is now `Contracts\Domain\Events\DomainEventDispatcher`.
 
 The concrete implementations of domain event dispatchers are now in the `Application\DomainEventDispatching` namespace.
 The application layer is the correct namespace for these dispatchers, as the domain event dispatcher interface uses the
@@ -297,7 +319,7 @@ the [Domain Events chapter in the Application layer.](./application/domain-event
 Units of work were not previously documented. If you were using them, the best way to upgrade is to refer to the full
 documentation in the [Units of Work chapter.](./application/units-of-work)
 
-This includes examples which shows the new location for the relevant interfaces.
+This includes examples which show the new location for the relevant interfaces.
 
 ### Queues
 

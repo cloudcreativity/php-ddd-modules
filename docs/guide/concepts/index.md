@@ -1,6 +1,6 @@
 # Core Concepts
 
-This section of the guide provides the core conceptual concepts that underpin the design of this package.
+This section of the guide provides the core concepts that underpin the design of this package.
 
 ## Bounded Contexts
 
