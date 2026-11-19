@@ -9,8 +9,16 @@ All notable changes to this project will be documented in this file. This projec
 
 - `FakeUnitOfWork` now has an `executions` property, counting the number of times its `execute()` method has been
   called.
+- New `AfterCommitFailure` interface, implemented by the `AfterCommitCallbacksFailed` exception. Calling code can catch
+  this interface to know that the unit of work committed, but one or more after commit callbacks failed. Its
+  `exceptions()` method returns the exceptions thrown by the after commit callbacks.
 
 ### Changed
+
+- `UnitOfWorkManager` now throws an `AfterCommitCallbacksFailed` exception if any after commit callback fails,
+  including when only one fails. Previously a single failure was rethrown as-is, which meant calling code could not
+  distinguish it from a unit of work that failed and did not commit. The original exception is available via the
+  `exceptions()` method, and is the previous exception.
 
 - `FakeUnitOfWork` now records which execution each entry in its `sequence` belongs to, in the format
   `execute:<execution>/<event>:<attempt>`, e.g. `execute:2/commit:1`. Previously entries were in the format

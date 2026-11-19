@@ -16,6 +16,7 @@ use Closure;
 use CloudCreativity\Modules\Application\ApplicationException;
 use CloudCreativity\Modules\Application\UnitOfWork\AfterCommitCallbacksFailed;
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
+use CloudCreativity\Modules\Contracts\Application\UnitOfWork\AfterCommitFailure;
 use CloudCreativity\Modules\Testing\FakeExceptionReporter;
 use CloudCreativity\Modules\Testing\FakeUnitOfWork;
 use LogicException;
@@ -162,14 +163,15 @@ final class FakeUnitOfWorkManagerTest extends TestCase
             $this->manager->execute(function (): void {
                 $this->manager->afterCommit(fn () => $this->manager->beforeCommit($this->record('before')));
             });
-        } catch (ApplicationException $ex) {
+        } catch (AfterCommitCallbacksFailed $ex) {
             $actual = $ex;
         }
 
-        $this->assertInstanceOf(ApplicationException::class, $actual);
+        $previous = $this->assertSoleAfterCommitFailure($actual);
+        $this->assertInstanceOf(ApplicationException::class, $previous);
         $this->assertSame(
             'Cannot queue a before commit callback when not executing a unit of work.',
-            $actual->getMessage(),
+            $previous->getMessage(),
         );
         $this->assertSame([], $this->log);
         $this->assertSame(['execute:1/attempt:1', 'execute:1/commit:1'], $this->unitOfWork->sequence);
@@ -327,11 +329,11 @@ final class FakeUnitOfWorkManagerTest extends TestCase
                 });
                 $this->manager->afterCommit($this->record('after2'));
             }, 3);
-        } catch (LogicException $e) {
+        } catch (AfterCommitCallbacksFailed $e) {
             $actual = $e;
         }
 
-        $this->assertSame($ex, $actual);
+        $this->assertSame($ex, $this->assertSoleAfterCommitFailure($actual));
         $this->assertSame(['after1', 'after2'], $this->log);
         $this->assertSame(['execute:1/attempt:1', 'execute:1/commit:1'], $this->unitOfWork->sequence);
         $this->assertSame(1, $this->unitOfWork->attempts);
@@ -409,11 +411,11 @@ final class FakeUnitOfWorkManagerTest extends TestCase
                     $this->manager->afterCommit($this->record('after4'));
                 });
             });
-        } catch (LogicException $e) {
+        } catch (AfterCommitCallbacksFailed $e) {
             $actual = $e;
         }
 
-        $this->assertSame($ex, $actual);
+        $this->assertSame($ex, $this->assertSoleAfterCommitFailure($actual));
         $this->assertSame(['after1', 'after2', 'after3', 'after4'], $this->log);
         $this->assertSame(['execute:1/attempt:1', 'execute:1/commit:1'], $this->unitOfWork->sequence);
         $this->assertSame([], $this->unitOfWork->exceptions->reported);
@@ -701,11 +703,11 @@ final class FakeUnitOfWorkManagerTest extends TestCase
                 });
                 $this->manager->afterCommit($this->record('outer:after'));
             });
-        } catch (LogicException $e) {
+        } catch (AfterCommitCallbacksFailed $e) {
             $actual = $e;
         }
 
-        $this->assertSame($ex, $actual);
+        $this->assertSame($ex, $this->assertSoleAfterCommitFailure($actual));
         $this->assertSame(['outer:after'], $this->log);
         $this->assertSame([
             'execute:1/attempt:1',
@@ -741,11 +743,11 @@ final class FakeUnitOfWorkManagerTest extends TestCase
                 });
                 $this->manager->afterCommit($this->record('outer:after'));
             });
-        } catch (LogicException $e) {
+        } catch (AfterCommitCallbacksFailed $e) {
             $actual = $e;
         }
 
-        $this->assertSame($ex, $actual);
+        $this->assertSame($ex, $this->assertSoleAfterCommitFailure($actual));
         $this->assertSame(['nested:result', 'outer:after', 'nested:after'], $this->log);
         $this->assertSame([
             'execute:1/attempt:1',
@@ -770,14 +772,15 @@ final class FakeUnitOfWorkManagerTest extends TestCase
                 });
                 $this->manager->afterCommit($this->record('outer:after'));
             });
-        } catch (ApplicationException $ex) {
+        } catch (AfterCommitCallbacksFailed $ex) {
             $actual = $ex;
         }
 
-        $this->assertInstanceOf(ApplicationException::class, $actual);
+        $previous = $this->assertSoleAfterCommitFailure($actual);
+        $this->assertInstanceOf(ApplicationException::class, $previous);
         $this->assertSame(
             'Not expecting unit of work manager to start a unit of work within an existing one.',
-            $actual->getMessage(),
+            $previous->getMessage(),
         );
         $this->assertSame(['outer:after'], $this->log);
         $this->assertSame([
@@ -786,7 +789,7 @@ final class FakeUnitOfWorkManagerTest extends TestCase
             'execute:2/attempt:1',
             'execute:2/rollback:1',
         ], $this->unitOfWork->sequence);
-        $this->assertSame([$actual], $this->unitOfWork->exceptions->reported);
+        $this->assertSame([$previous], $this->unitOfWork->exceptions->reported);
     }
 
     #[Test]
@@ -801,14 +804,15 @@ final class FakeUnitOfWorkManagerTest extends TestCase
                     $this->manager->beforeCommit($this->record('before'));
                 });
             });
-        } catch (ApplicationException $ex) {
+        } catch (AfterCommitCallbacksFailed $ex) {
             $actual = $ex;
         }
 
-        $this->assertInstanceOf(ApplicationException::class, $actual);
+        $previous = $this->assertSoleAfterCommitFailure($actual);
+        $this->assertInstanceOf(ApplicationException::class, $previous);
         $this->assertSame(
             'Cannot queue a before commit callback when not executing a unit of work.',
-            $actual->getMessage(),
+            $previous->getMessage(),
         );
         $this->assertSame([], $this->log);
         $this->assertSame([
@@ -862,7 +866,7 @@ final class FakeUnitOfWorkManagerTest extends TestCase
                     $this->manager->execute(fn () => throw new LogicException('Boom!'));
                 });
             });
-        } catch (LogicException) {
+        } catch (AfterCommitCallbacksFailed) {
             // expected
         }
 
@@ -907,6 +911,23 @@ final class FakeUnitOfWorkManagerTest extends TestCase
         $this->expectExceptionMessage('Cannot queue a before commit callback when not executing a unit of work.');
 
         $this->manager->beforeCommit($this->record('before'));
+    }
+
+    /**
+     * Assert that the after commit callbacks failed with exactly one exception, and return that exception.
+     */
+    private function assertSoleAfterCommitFailure(?AfterCommitCallbacksFailed $actual): Throwable
+    {
+        $this->assertInstanceOf(AfterCommitCallbacksFailed::class, $actual);
+        $this->assertInstanceOf(AfterCommitFailure::class, $actual);
+        $this->assertSame('1 after commit callback failed.', $actual->getMessage());
+
+        $exceptions = $actual->exceptions();
+
+        $this->assertCount(1, $exceptions);
+        $this->assertSame($exceptions[0], $actual->getPrevious());
+
+        return $exceptions[0];
     }
 
     /**
