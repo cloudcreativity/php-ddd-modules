@@ -29,6 +29,9 @@ use Throwable;
  * callback, or that starts (and commits) a new unit of work, adds to the end of that queue. The queue is drained by
  * the outermost call to `execute()`, so a unit of work started by an after commit callback returns before its own
  * after commit callbacks are executed.
+ *
+ * If any after commit callbacks fail, the outermost call to `execute()` throws an `AfterCommitFailure` once the
+ * queue has been drained. This indicates that the unit of work did commit, even though it threw.
  */
 final class UnitOfWorkManager implements IUnitOfWorkManager
 {
@@ -78,7 +81,8 @@ final class UnitOfWorkManager implements IUnitOfWorkManager
      * A unit of work cannot be started while another is executing. It can however be started by an after commit
      * callback, as the previous unit of work has committed at that point. In this scenario, the after commit
      * callbacks of the new unit of work are added to the end of the queue that is already being drained, rather
-     * than being executed before this method returns.
+     * than being executed before this method returns. Any failures of those callbacks are therefore thrown by the
+     * outermost call to this method.
      */
     public function execute(Closure $callback, int $attempts = 1): mixed
     {
@@ -208,9 +212,11 @@ final class UnitOfWorkManager implements IUnitOfWorkManager
      * Callbacks are executed in FIFO order, including any that are added to the queue while it is being drained.
      *
      * As the unit of work has been committed, a failing callback must not prevent the remaining callbacks from being
-     * executed. If exactly one callback fails, its exception is rethrown. If multiple fail, they are wrapped in a
-     * single exception. This includes failures of after commit callbacks belonging to a unit of work started while
-     * draining.
+     * executed. Once the queue is drained, any failures are wrapped in a single `AfterCommitCallbacksFailed`
+     * exception - even if only one callback failed. This allows calling code to know that the unit of work did
+     * commit. This includes failures of after commit callbacks belonging to a unit of work started while draining.
+     *
+     * @throws AfterCommitCallbacksFailed
      */
     private function drain(): void
     {
@@ -227,11 +233,7 @@ final class UnitOfWorkManager implements IUnitOfWorkManager
 
         $this->draining = false;
 
-        if (count($exceptions) === 1) {
-            throw $exceptions[0];
-        }
-
-        if (count($exceptions) > 1) {
+        if ($exceptions !== []) {
             throw new AfterCommitCallbacksFailed($exceptions);
         }
     }

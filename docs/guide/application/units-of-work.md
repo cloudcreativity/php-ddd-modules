@@ -296,9 +296,30 @@ $manager->afterCommit(function (): void {
 ```
 
 As the transaction has already been committed, a failing after commit callback does not prevent the remaining after
-commit callbacks from being executed. Once they have all been executed, if exactly one of them failed, its exception is
-thrown. If more than one failed, an `AfterCommitCallbacksFailed` exception is thrown instead. Its `exceptions()` method
-returns all the exceptions in the order they were thrown, and its previous exception is the first one.
+commit callbacks from being executed. Once they have all been executed, if any of them failed, an
+`AfterCommitCallbacksFailed` exception is thrown - even if only one of them failed. Its `exceptions()` method returns
+all the exceptions in the order they were thrown, and its previous exception is the first one.
+
+This exception implements the `AfterCommitFailure` interface. Catch this interface if your code needs to distinguish a
+unit of work that failed and was not committed, from one that was committed but where some of the after commit work
+failed:
+
+```php
+use CloudCreativity\Modules\Contracts\Application\UnitOfWork\AfterCommitFailure;
+
+try {
+    $manager->execute(function (): void {
+        // some work.
+    });
+} catch (AfterCommitFailure $ex) {
+    // the unit of work committed, but some after commit work failed.
+    foreach ($ex->exceptions() as $failure) {
+        // ...
+    }
+}
+```
+
+Any other exception thrown by `execute()` means the unit of work did not commit.
 
 #### After Commit Queue
 
@@ -332,6 +353,9 @@ $manager->execute(function () use ($manager): void {
 
 As the new unit of work's after commit callbacks are queued, any failure in them is thrown by the outermost call to
 `execute()` along with any other after commit failures. It is not thrown by the call that started the new unit of work.
+Likewise, if the new unit of work fails and is not committed, its exception is thrown to the after commit callback that
+started it. If not caught, it becomes one of the after commit failures of the outermost unit of work - which did
+commit.
 
 :::warning
 While the queue is FIFO, your after commit callbacks should **never** rely on the order they are executed in, or on

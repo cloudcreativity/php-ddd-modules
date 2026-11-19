@@ -12,31 +12,28 @@ declare(strict_types=1);
 
 namespace CloudCreativity\Modules\Application\UnitOfWork;
 
-use CloudCreativity\Modules\Contracts\Application\ApplicationException;
+use CloudCreativity\Modules\Contracts\Application\UnitOfWork\AfterCommitFailure;
 use RuntimeException;
 use Throwable;
 
-final class AfterCommitCallbacksFailed extends RuntimeException implements ApplicationException
+final class AfterCommitCallbacksFailed extends RuntimeException implements AfterCommitFailure
 {
     /**
      * @param non-empty-list<Throwable> $exceptions
      */
     public function __construct(private readonly array $exceptions)
     {
-        assert(count($exceptions) > 1, 'Expecting more than one exception.');
+        assert(count($exceptions) > 0, 'Expecting at least one exception.');
+
+        $count = count($exceptions);
 
         parent::__construct(
-            sprintf('%d after commit callbacks failed.', count($exceptions)),
+            $count === 1 ? '1 after commit callback failed.' : sprintf('%d after commit callbacks failed.', $count),
             0,
-            $exceptions[0],
+            array_first($exceptions),
         );
     }
 
-    /**
-     * Get the exceptions thrown by the after commit callbacks, in the order they were thrown.
-     *
-     * @return non-empty-list<Throwable>
-     */
     public function exceptions(): array
     {
         return $this->exceptions;
