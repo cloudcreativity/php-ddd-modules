@@ -58,13 +58,14 @@ layer defines how the bounded context reacts to these events.
 Integration events are bi-directional. They are both _published_ by the bounded context, and _consumed_ by the
 bounded context. This means we can refer to them in terms of their direction - specifically:
 
-- **Outbound** integration events, are those _published_ by the bounded context.
-- **Inbound** integration events, are those the bounded context _consumes_.
-  :::
+- **Outbound** integration events are those _published_ by the bounded context.
+- **Inbound** integration events are those the bounded context _consumes_.
+
+:::
 
 ## Application Interface
 
-The application layer of a bounded context defines its uses cases. These are the _commands_ and _queries_ that can be
+The application layer of a bounded context defines its use cases. These are the _commands_ and _queries_ that can be
 dispatched to the bounded context, and the _integration events_ that the bounded context consumes.
 
 We follow a hexagonal architecture, where the application layer defines the _driving ports_ that it exposes to the
@@ -86,7 +87,7 @@ interface Ticketing
 This is for illustrative purposes - you may not want to define an application interface like this as each driving port
 can be consumed separately.
 
-However, it illustrates how the bounded context is fully encapsulated and described by the three messages types it can
+However, it illustrates how the bounded context is fully encapsulated and described by the three message types it can
 handle. Everything else - e.g. domain entities containing business logic, coordination with the infrastructure layer,
 etc - is hidden as an internal implementation detail of your bounded context.
 
@@ -148,7 +149,7 @@ bounded context:
 
 - A `GET` request would result in a query message being dispatched to the bounded context _within_ the microservice -
   with the resulting state being returned in the HTTP response.
-- A `POST` request would result in a command message being dispatched to the bounded context _within_ in the
+- A `POST` request would result in a command message being dispatched to the bounded context _within_ the
   microservice. It may also result in a query message if the API is returning the current state of the context in the
   HTTP response.
 :::

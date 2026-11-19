@@ -12,14 +12,14 @@ and any consuming bounded contexts.
 Integration events are bidirectional. They are both _published_ by a bounded context, and _consumed_ by other
 bounded contexts. This means we can refer to them in terms of their direction - specifically:
 
-- **Inbound** integration events, are those a bounded context _consumes_ via an inbound event bus driving port.
-- **Outbound** integration events, are those _published_ by a bounded context. Publishing occurs via a driven port, with
+- **Inbound** integration events are those a bounded context _consumes_ via an inbound event bus driving port.
+- **Outbound** integration events are those _published_ by a bounded context. Publishing occurs via a driven port, with
   the infrastructure layer implementing the adapter.
 
 ## Integration Event Messages
 
 Integration event messages are defined by writing a class that implements the `IntegrationEvent` interface. The class
-should be named according to event it represents, and should contain properties that represent the data being exchanged.
+should be named according to the event it represents, and should contain properties that represent the data being exchanged.
 
 The integration event interface is light-weight and defines only two methods:
 
@@ -372,7 +372,7 @@ final readonly class OrderWasFulfilledHandler
 ```
 
 :::warning
-If you are using this strategy and your bounded context uses unit of works, you must dispatch the event in a unit of
+If you are using this strategy and your bounded context uses units of work, you must dispatch the event in a unit of
 work. This ensures that all side effects are committed or rolled back together. The above example does this via
 middleware.
 :::
@@ -658,11 +658,11 @@ middleware to suit your specific needs.
 
 ### Setup and Teardown
 
-Our `SetupBeforeEvent` middleware allows your to run setup work before the event is published or notified, and
+Our `SetupBeforeEvent` middleware allows you to run setup work before the event is dispatched, and
 optionally teardown work after.
 
 This allows you to set up any state, services or singletons - and guarantee that these are cleaned up, regardless of
-whether the notifying or publishing completes or throws an exception.
+whether handling the event completes or throws an exception.
 
 For example:
 
@@ -685,7 +685,7 @@ Here our setup middleware takes a setup closure as its only constructor argument
 return a closure to do any teardown work. The teardown callback is guaranteed to always be executed - i.e. it will run
 even if an exception is thrown.
 
-If you only need to do any teardown work, use the `TeardownAfterEvent` middleware instead. This takes a single teardown
+If you only need to do teardown work, use the `TeardownAfterEvent` middleware instead. This takes a single teardown
 closure as its only constructor argument:
 
 ```php

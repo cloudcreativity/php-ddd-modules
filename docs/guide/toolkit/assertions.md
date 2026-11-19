@@ -19,7 +19,7 @@ final readonly class Age
     {
         if ($this->value < 18) {
             throw new \InvalidArgumentException(
-              'Age must be greater than or equal to 0',
+              'Age must be greater than or equal to 18',
             );
         }
     }

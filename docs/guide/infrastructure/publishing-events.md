@@ -236,7 +236,7 @@ how that works.
 
 ## Middleware
 
-Our inbound event bus implementation gives you complete control over how to compose the handling of integration events,
+Our outbound event bus implementations gives you complete control over how to compose the handling of integration events,
 via middleware. Middleware is a powerful way to add cross-cutting concerns to your event handling, such as logging.
 
 To apply middleware to the outbound event bus, use the `through()` method - as shown in the earlier examples.

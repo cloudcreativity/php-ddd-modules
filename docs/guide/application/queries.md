@@ -95,7 +95,7 @@ handler executing business logic and returning a result representing the outcome
 
 ### Results
 
-Just like commands, queries handlers return a result object - which contains the resulting data as its value.
+Just like commands, query handlers return a result object - which contains the resulting data as its value.
 See the [Results chapter for information on using this object.](../toolkit/results)
 
 Unlike command results, query results can contain complex data structures as their return value. It is best to define
@@ -168,7 +168,7 @@ $this->app->bind(
 ### Dispatching Queries
 
 You can now dispatch query messages to your bounded context from the _outside world_. For example, if we were using
-a single action controller to handle a HTTP request in a Laravel application, we might dispatch a query like this:
+a single action controller to handle an HTTP request in a Laravel application, we might dispatch a query like this:
 
 ```php
 namespace App\Http\Controllers\Api\Attendees;
@@ -258,7 +258,7 @@ we wanted to display a list of all tickets. The ticket model can therefore exist
 attendee via an attendee identifier property.
 
 :::info
-This is one of the big advantages of using the Command Query Responsibility Separation (CQRS) pattern. It allows you
+This is one of the big advantages of using the Command Query Responsibility Segregation (CQRS) pattern. It allows you
 to structure the data required for write operations (commands) in a completely separate way to the data required to
 represent the current state of the system in response to read operations (queries). Each is modelled for their specific
 purpose.
@@ -273,7 +273,7 @@ significantly. This is why it is important to start with a clear separation of c
 Read models may be consumed by other bounded contexts. For example, by a client that returns the read model it receives
 by calling your bounded context's microservice.
 
-This mean you cannot make breaking changes to the data contract without updating every single consumer to use the new
+This means you cannot make breaking changes to the data contract without updating every single consumer to use the new
 contract.
 
 In large systems, this can be a significant challenge. To mitigate this, you can version your read models. This
@@ -293,7 +293,7 @@ version, and then remove the old version.
 ## Middleware
 
 Our query bus implementation gives you complete control over how to compose the handling of your queries, via
-middleware. Middleware is a powerful way to add cross-cutting concerns to your command handling, such as logging.
+middleware. Middleware is a powerful way to add cross-cutting concerns to your query handling, such as logging.
 
 Middleware can be added either to the query bus (so it runs for every query) or to individual query handlers.
 

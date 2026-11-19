@@ -18,11 +18,11 @@ composer require cloudcreativity/ddd-modules:^7.0
 | `2.x`       | `^8.1` |
 | `1.x`       | `^8.1` |
 
-> Most major upgrades are extremely easy to upgrade, as the breaking changes tend to relate to classes implemented by
+> Most major version upgrades are extremely easy, as the breaking changes tend to relate to classes implemented by
 > the package that you are unlikely to be implementing yourself. See the [upgrade guide](./upgrade.md) for more
 > information.
 
 ## License
 
-DDD Modules is licensed under the MIT license. See the
+DDD Modules is licensed under the MIT licence. See the
 [licence file](https://github.com/cloudcreativity/php-ddd-modules/blob/main/LICENSE) for more information.
