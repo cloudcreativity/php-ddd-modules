@@ -24,7 +24,7 @@ namespace App\Modules\EventManagement\Application\UseCases;
 
 use App\Modules\EventManagement\Api\Input\CancelAttendeeTicketCommand;
 use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
-use CloudCreativity\Modules\Toolkit\Results\Result;
+use CloudCreativity\Modules\Toolkit\Result\Result;
 
 final readonly class CancelAttendeeTicketHandler
 {
@@ -33,7 +33,7 @@ final readonly class CancelAttendeeTicketHandler
     ) {
     }
 
-    public function handle(CancelAttendeeTicketCommand $command): Result
+    public function execute(CancelAttendeeTicketCommand $command): Result
     {
         $attendee = $this->attendees->findOrFail($command->attendeeId);
 
@@ -129,7 +129,7 @@ namespace App\Modules\EventManagement\Application\UseCases;
 use App\Modules\EventManagement\Api\Input\CancelAttendeeTicketCommand;
 use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
-use CloudCreativity\Modules\Toolkit\Results\Result;
+use CloudCreativity\Modules\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(ExecuteInUnitOfWork::class)]
@@ -140,7 +140,7 @@ final readonly class CancelAttendeeTicketHandler
     ) {
     }
 
-    public function handle(CancelAttendeeTicketCommand $command): Result
+    public function execute(CancelAttendeeTicketCommand $command): Result
     {
         $attendee = $this->attendees->findOrFail($command->attendeeId);
 
@@ -246,7 +246,7 @@ use CloudCreativity\Modules\Contracts\Application\Ports\UnitOfWork;
 use CloudCreativity\Modules\Contracts\Application\Ports\ExceptionReporter;
 
 $manager = new UnitOfWorkManager(
-    db: $container->get(UnitOfWork::class),
+    unitOfWork: $container->get(UnitOfWork::class),
     reporter: $container->get(ExceptionReporter::class),
 );
 ```
@@ -481,11 +481,12 @@ This means you should implement it on the handler itself, rather than adding it 
 Use the `ExecuteInUnitOfWork` middleware to wrap command handlers in a unit of work:
 
 ```php
-namespace App\Modules\EventManagement\Api\Input\CancelAttendeeTicket;
+namespace App\Modules\EventManagement\Application\UseCases;
 
+use App\Modules\EventManagement\Api\Input\CancelAttendeeTicketCommand;
 use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
-use CloudCreativity\Modules\Toolkit\Results\Result;
+use CloudCreativity\Modules\Toolkit\Result\Result;
 use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(ExecuteInUnitOfWork::class)]
@@ -496,7 +497,7 @@ final readonly class CancelAttendeeTicketHandler
     ) {
     }
 
-    public function handle(CancelAttendeeTicketCommand $command): Result
+    public function execute(CancelAttendeeTicketCommand $command): Result
     {
         $attendee = $this->attendees->findOrFail($command->attendeeId);
 
@@ -534,7 +535,6 @@ use App\Modules\EventManagement\Domain\Events\DomainEventDispatcher;
 use App\Modules\EventManagement\Domain\Events\SalesAtEventDidChange;
 use App\Modules\Ordering\Api\Output\V1\Events\OrderWasFulfilled;
 use CloudCreativity\Modules\Application\Bus\Middleware\ExecuteInUnitOfWork;
-use CloudCreativity\Modules\Contracts\Bus\DispatchThroughMiddleware;
 use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(ExecuteInUnitOfWork::class)]

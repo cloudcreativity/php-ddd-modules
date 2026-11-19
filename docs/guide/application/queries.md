@@ -16,7 +16,7 @@ I.e. it defines the data contract for the request.
 For example:
 
 ```php
-namespace App\Modules\EventManagement\Api\Input\GetAttendeeTickets;
+namespace App\Modules\EventManagement\Api\Input;
 
 use CloudCreativity\Modules\Contracts\Messaging\Query;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
@@ -41,10 +41,11 @@ Your query handler defines the use case - by type-hinting the query input and th
 ```php
 namespace App\Modules\EventManagement\Application\UseCases;
 
+use App\Modules\EventManagement\Api\Input\GetAttendeeTicketsQuery;
 use App\Modules\EventManagement\Api\Output\V1\Models\TicketModel;
 use App\Modules\EventManagement\Application\Ports\Persistence\ReadModels\V1\TicketModelRepository;
 use App\Modules\EventManagement\Application\Factories\ReadModels\V1\TicketModelFactory;
-use CloudCreativity\Modules\Toolkit\Results\Result;
+use CloudCreativity\Modules\Toolkit\Result\Result;
 
 final readonly class GetAttendeeTicketsHandler
 {
@@ -60,7 +61,7 @@ final readonly class GetAttendeeTicketsHandler
      * @param GetAttendeeTicketsQuery $query
      * @return Result<list<TicketModel>>
      */
-    public function handle(GetAttendeeTicketsQuery $query): Result
+    public function execute(GetAttendeeTicketsQuery $query): Result
     {
         $state = $this->repository->findByAttendeeId($query->attendeeId);
 
@@ -130,10 +131,11 @@ use App\Modules\EventManagement\Application\UseCases\GetAttendeeTicketsHandler;
 use CloudCreativity\Modules\Bus\QueryDispatcher;
 use CloudCreativity\Modules\Bus\Middleware\LogMessageDispatch;
 use CloudCreativity\Modules\Bus\WithQuery;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(LogMessageDispatch::class)]
 #[WithQuery(GetAttendeeTicketsQuery::class, GetAttendeeTicketsHandler::class)]
-final class QueryBus extends QueryDispatcher implements Port
+final class QueryBusAdapter extends QueryDispatcher implements Port
 {
 }
 ```
@@ -149,7 +151,7 @@ container. This container is then used to resolve any middleware and query handl
 dispatcher via the `Through` and `WithQuery` attributes.
 
 ```php
-$dispatcher = new QueryBus($psrContainer);
+$dispatcher = new QueryBusAdapter($psrContainer);
 ```
 
 So, for example in a Laravel application, you would bind this to the interface as follows in your service provider:
@@ -216,7 +218,7 @@ represents some current state of the bounded context. They are _read-only_ i.e. 
 For example, our model returned by our "get attendee tickets" query might look like this:
 
 ```php
-namespace App\Modules\EventManagement\Output\V1\Models;
+namespace App\Modules\EventManagement\Api\Output\V1\Models;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
@@ -310,8 +312,8 @@ middleware to suit your specific needs.
 
 ### Setup and Teardown
 
-If you need to do any setup and/or teardown work around dispatching a query, use our `SetupAndTeardown` or
-`TeardownAfterDispatch` middleware. These are described [here in the Commands chapter.](./commands#setup-and-teardown)
+If you need to do any setup and/or teardown work around dispatching a query, use our `SetupBeforeDispatch` or
+`TearDownAfterDispatch` middleware. These are described [here in the Commands chapter.](./commands#setup-and-teardown)
 Their use is identical for queries.
 
 ### Logging
@@ -355,7 +357,7 @@ final class MyMiddleware implements QueryMiddleware
     {
         // code here executes before the handler
 
-        $result = $next($command);
+        $result = $next($query);
 
         // code here executes after the handler
 
@@ -378,27 +380,26 @@ namespace App\Modules\EventManagement\Application\Adapters\Middleware;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\BusMiddleware;
-use CloudCreativity\Modules\Contracts\Messaging\Command;
-use CloudCreativity\Modules\Contracts\Messaging\Query;
+use CloudCreativity\Modules\Contracts\Messaging\Message;
 use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 class MyBusMiddleware implements BusMiddleware
 {
     /**
-     * Handle the command or query.
+     * Handle the message.
      *
-     * @param Command|Query $message
-     * @param Closure(Command|Query): Result<mixed> $next
-     * @return Result<mixed>
+     * @param Message $message
+     * @param Closure(Message): ?Result<mixed> $next
+     * @return Result<mixed>|null
      */
     public function __invoke(
-        Command|Query $message,
+        Message $message,
         Closure $next,
-    ): Result
+    ): ?Result
     {
         // code here executes before the handler
 
-        $result = $next($command);
+        $result = $next($message);
 
         // code here executes after the handler
 
