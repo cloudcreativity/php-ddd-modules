@@ -85,7 +85,7 @@ export default defineConfig({
         socialLinks: [
             {
                 icon: 'github',
-                link: 'https://github.com/cloudcreativity/ddd-modules',
+                link: 'https://github.com/cloudcreativity/php-ddd-modules',
             },
         ],
 

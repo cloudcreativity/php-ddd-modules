@@ -12,7 +12,7 @@ hero:
       link: /guide/
     - theme: alt
       text: View on GitHub
-      link: https://github.com/cloudcreativity/ddd-modules
+      link: https://github.com/cloudcreativity/php-ddd-modules
 
 #features:
 #  - title: Feature A
