@@ -30,6 +30,11 @@ public function inactive(): bool
 
 If you use the `FakeUnitOfWork` in your tests, it now throws if `execute()` is called while it is already active.
 
+### Command Queuer
+
+The deprecated `Contracts\Bus\CommandQueuer` interface has been removed. Use `Contracts\Messaging\CommandQueuer`
+instead.
+
 ## 5.x to 6.x
 
 Upgrade using Composer:
@@ -40,6 +45,8 @@ composer require cloudcreativity/ddd-modules:^6.0
 
 This refactor finalises our approach to structuring modules, and makes some final alterations to the namespacing of
 classes provided by this package.
+
+The minimum supported PHP version is now 8.4.
 
 ### PSR Container Usage and PHP Attributes
 
@@ -60,6 +67,15 @@ instance, you could have an infrastructure component that uses messaging.
 
 Moving these classes to their own `Bus` namespace makes this clearer.
 
+### Messaging Namespace
+
+The message interfaces - `Message`, `Command`, `Query` and `IntegrationEvent` - have moved from the
+`Contracts\Toolkit\Messages` namespace to the `Contracts\Messaging` namespace.
+
+The dispatcher interfaces that were previously in the `Contracts\Application\Ports\Driving` namespace - i.e.
+`CommandDispatcher`, `CommandQueuer`, `QueryDispatcher` and `InboundEventDispatcher` - have also moved to the
+`Contracts\Messaging` namespace.
+
 ### Driven Ports
 
 All driven ports are now in the `Contracts\Application\Ports` namespace, i.e. no longer have a `Driven` sub-namespace.
@@ -75,6 +91,12 @@ Also, some middleware `HandleInUnitOfWork` and `LogInboundEvent` have been remov
 generic message middleware alternatives, e.g. `ExecuteInUnitOfWork` and `LogMessageDispatch`.
 
 This removes duplication and simplifies some of the middleware to work with any type of message.
+
+### List of Errors
+
+The deprecated `contains()` method has been removed from the `ListOfErrors` interface. Use `any()` instead.
+Additionally, the `first()` method no longer accepts arguments. Use `find()` instead if you need to find the first error
+that matches a code or closure.
 
 ### Other Changes
 
@@ -254,10 +276,10 @@ The previous event bus implementation has been split in two. This is due to the 
 inbound events is now a _driving port_, whereas publishing outbound events occurs via a _driven port_.
 
 The new inbound implementation (previously referred to as a _notifier_) is now in the `Application\InboundEventBus`
-namespace. The driving port is `Contracts\Application\Ports\Driving\EventDispatcher`.
+namespace. The driving port is `Contracts\Application\Ports\Driving\InboundEventDispatcher`.
 
 The new outbound implementation (referred to as a _publisher_) is now in the `Infrastructure\OutboundEventBus`
-namespace. The driven port is `Contracts\Application\Ports\Driven\OutboundEvents\EventPublisher`.
+namespace. The driven port is `Contracts\Application\Ports\Driven\OutboundEventPublisher`.
 
 :::tip
 The best approach to upgrading your event bus is to refer to the
@@ -279,7 +301,7 @@ The identifier interface is now `Contracts\Toolkit\Identifiers\Identifier`.
 Domain events must now implement the `Contracts\Domain\Events\DomainEvent` interface. The method this interface defines
 is now `getOccurredAt()`.
 
-The domain event dispatcher interface is now `Contracts\Events\DomainEventDispatcher`.
+The domain event dispatcher interface is now `Contracts\Domain\Events\DomainEventDispatcher`.
 
 The concrete implementations of domain event dispatchers are now in the `Application\DomainEventDispatching` namespace.
 The application layer is the correct namespace for these dispatchers, as the domain event dispatcher interface uses the
