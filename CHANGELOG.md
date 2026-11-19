@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Added
+
+- `FakeUnitOfWork` now has an `executions` property, counting the number of times its `execute()` method has been
+  called.
+
+### Changed
+
+- `FakeUnitOfWork` now records which execution each entry in its `sequence` belongs to, in the format
+  `execute:<execution>/<event>:<attempt>`, e.g. `execute:2/commit:1`. Previously entries were in the format
+  `<event>:<attempt>`, e.g. `commit:1`. As the unit of work manager handles re-attempts itself by executing the unit of
+  work once per attempt, this makes it possible to distinguish each attempt made by the manager. Tests that assert the
+  sequence will need updating to the new format.
+
+### Fixed
+
+- [#48](https://github.com/cloudcreativity/php-ddd-modules/issues/48) `UnitOfWorkManager` now allows an after commit
+  callback to start (and commit) a new unit of work, e.g. by dispatching a command that executes in a unit of work.
+  Previously this threw an exception, as the manager still considered the committed unit of work to be active. After
+  commit callbacks are now executed as a single FIFO queue: the after commit callbacks of a unit of work started this
+  way are added to the end of the queue, and are executed after the callback that started it has returned. Starting a
+  unit of work while another is executing (i.e. before it has committed) is still not allowed.
+- `UnitOfWorkManager` now throws with the message "Cannot queue a before commit callback when not executing a unit of
+  work." if an after commit callback registers a before commit callback outside of a new unit of work. Previously the
+  message stated that the unit of work had been committed.
+
 ## [7.0.0] - 2026-11-16
 
 ### Added

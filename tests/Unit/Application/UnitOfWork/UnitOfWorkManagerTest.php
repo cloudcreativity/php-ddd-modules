@@ -23,6 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Throwable;
 
 final class UnitOfWorkManagerTest extends TestCase
 {
@@ -652,7 +653,7 @@ final class UnitOfWorkManagerTest extends TestCase
             ->willReturnCallback(fn (Closure $callback) => $callback());
 
         $this->expectException(ApplicationException::class);
-        $this->expectExceptionMessage('Cannot queue a before commit callback as unit of work has been committed.');
+        $this->expectExceptionMessage('Cannot queue a before commit callback when not executing a unit of work.');
 
         $this->manager->execute(function () {
             $this->manager->afterCommit(function () {
@@ -677,5 +678,627 @@ final class UnitOfWorkManagerTest extends TestCase
 
         /** @phpstan-ignore-next-line */
         $this->manager->execute(fn () => throw new LogicException('Boom!'), 0);
+    }
+
+    // -------------------------------------------------------------------------
+    // After commit callbacks that are queued while draining
+    //
+    // Once committed, the after commit callbacks are drained as a FIFO queue.
+    // Any after commit callback registered while draining is added to the end
+    // of the queue.
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_queues_an_after_commit_callback_registered_while_draining(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(1, $sequence);
+
+        $this->manager->execute(function () use (&$sequence): void {
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'after1:start';
+                $this->manager->afterCommit(function () use (&$sequence): void {
+                    $sequence[] = 'after3';
+                });
+                $sequence[] = 'after1:end';
+            });
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'after2';
+            });
+        });
+
+        $this->assertSame(['begin', 'commit', 'after1:start', 'after1:end', 'after2', 'after3'], $sequence);
+    }
+
+    #[Test]
+    public function it_queues_an_after_commit_callback_registered_by_a_queued_callback(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(1, $sequence);
+
+        $this->manager->execute(function () use (&$sequence): void {
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'after1:start';
+                $this->manager->afterCommit(function () use (&$sequence): void {
+                    $sequence[] = 'after2:start';
+                    $this->manager->afterCommit(function () use (&$sequence): void {
+                        $sequence[] = 'after3';
+                    });
+                    $sequence[] = 'after2:end';
+                });
+                $sequence[] = 'after1:end';
+            });
+        });
+
+        $this->assertSame([
+            'begin',
+            'commit',
+            'after1:start',
+            'after1:end',
+            'after2:start',
+            'after2:end',
+            'after3',
+        ], $sequence);
+    }
+
+    #[Test]
+    public function it_executes_remaining_callbacks_when_a_queued_callback_fails(): void
+    {
+        $ex = new LogicException('Boom!');
+        $sequence = [];
+        $actual = null;
+        $this->willExecuteUnitOfWork(1, $sequence);
+
+        try {
+            $this->manager->execute(function () use ($ex, &$sequence): void {
+                $this->manager->afterCommit(function () use ($ex, &$sequence): void {
+                    $sequence[] = 'after1';
+                    $this->manager->afterCommit(function () use ($ex, &$sequence): void {
+                        $sequence[] = 'after3';
+                        throw $ex;
+                    });
+                });
+                $this->manager->afterCommit(function () use (&$sequence): void {
+                    $sequence[] = 'after2';
+                    $this->manager->afterCommit(function () use (&$sequence): void {
+                        $sequence[] = 'after4';
+                    });
+                });
+            }, 3);
+        } catch (LogicException $e) {
+            $actual = $e;
+        }
+
+        $this->assertSame($ex, $actual);
+        $this->assertSame(['begin', 'commit', 'after1', 'after2', 'after3', 'after4'], $sequence);
+        $this->assertSame([], $this->reporter->reported);
+    }
+
+    #[Test]
+    public function it_collects_the_failure_of_a_queued_callback_with_other_failures(): void
+    {
+        $ex1 = new LogicException('Boom 1!');
+        $ex2 = new RuntimeException('Boom 2!');
+        $sequence = [];
+        $actual = null;
+        $this->willExecuteUnitOfWork(1, $sequence);
+
+        try {
+            $this->manager->execute(function () use ($ex1, $ex2, &$sequence): void {
+                $this->manager->afterCommit(function () use ($ex2, &$sequence): void {
+                    $sequence[] = 'after1';
+                    $this->manager->afterCommit(function () use ($ex2, &$sequence): void {
+                        $sequence[] = 'after3';
+                        throw $ex2;
+                    });
+                });
+                $this->manager->afterCommit(function () use ($ex1, &$sequence): void {
+                    $sequence[] = 'after2';
+                    throw $ex1;
+                });
+            });
+        } catch (AfterCommitCallbacksFailed $e) {
+            $actual = $e;
+        }
+
+        $this->assertInstanceOf(AfterCommitCallbacksFailed::class, $actual);
+        $this->assertSame([$ex1, $ex2], $actual->exceptions());
+        $this->assertSame(['begin', 'commit', 'after1', 'after2', 'after3'], $sequence);
+    }
+
+    // -------------------------------------------------------------------------
+    // Starting a unit of work from an after commit callback
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_allows_an_after_commit_callback_to_start_a_new_unit_of_work(): void
+    {
+        $sequence = [];
+        $nested = null;
+        $this->willExecuteUnitOfWork(2, $sequence);
+
+        $actual = $this->manager->execute(function () use (&$sequence, &$nested): string {
+            $sequence[] = 'outer';
+            $this->manager->afterCommit(function () use (&$sequence, &$nested): void {
+                $sequence[] = 'after:start';
+                $nested = $this->manager->execute(function () use (&$sequence): string {
+                    $sequence[] = 'nested';
+                    return 'nested-result';
+                });
+                $sequence[] = 'after:end';
+            });
+            return 'outer-result';
+        });
+
+        $this->assertSame('outer-result', $actual);
+        $this->assertSame('nested-result', $nested);
+        $this->assertSame([
+            'begin',
+            'outer',
+            'commit',
+            'after:start',
+            'begin',
+            'nested',
+            'commit',
+            'after:end',
+        ], $sequence);
+    }
+
+    /**
+     * Regression for the nested unit of work resetting the outer after commit queue.
+     */
+    #[Test]
+    public function it_executes_remaining_after_commit_callbacks_after_a_nested_unit_of_work(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(2, $sequence);
+
+        $this->manager->execute(function () use (&$sequence): void {
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'after1';
+                $this->manager->execute(function () use (&$sequence): void {
+                    $sequence[] = 'nested';
+                });
+            });
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'after2';
+            });
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'after3';
+            });
+        });
+
+        $this->assertSame([
+            'begin',
+            'commit',
+            'after1',
+            'begin',
+            'nested',
+            'commit',
+            'after2',
+            'after3',
+        ], $sequence);
+    }
+
+    /**
+     * The nested unit of work executes its own before commit callbacks, but its after commit callbacks
+     * are added to the end of the queue being drained. So the nested unit of work returns before they
+     * are executed.
+     */
+    #[Test]
+    public function it_executes_the_commit_callbacks_of_a_nested_unit_of_work(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(2, $sequence);
+
+        $this->manager->execute(function () use (&$sequence): void {
+            $sequence[] = 'outer';
+            $this->manager->beforeCommit(function () use (&$sequence): void {
+                $sequence[] = 'outer:before';
+            });
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'outer:after1:start';
+                $this->manager->execute(function () use (&$sequence): void {
+                    $sequence[] = 'nested';
+                    $this->manager->afterCommit(function () use (&$sequence): void {
+                        $sequence[] = 'nested:after';
+                    });
+                    $this->manager->beforeCommit(function () use (&$sequence): void {
+                        $sequence[] = 'nested:before';
+                    });
+                });
+                $sequence[] = 'outer:after1:end';
+            });
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'outer:after2';
+            });
+        });
+
+        $this->assertSame([
+            'begin',
+            'outer',
+            'outer:before',
+            'commit',
+            'outer:after1:start',
+            'begin',
+            'nested',
+            'nested:before',
+            'commit',
+            'outer:after1:end',
+            'outer:after2',
+            'nested:after',
+        ], $sequence);
+    }
+
+    #[Test]
+    public function it_queues_an_after_commit_callback_registered_after_a_nested_unit_of_work(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(2, $sequence);
+
+        $this->manager->execute(function () use (&$sequence): void {
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'after1:start';
+                $this->manager->execute(function () use (&$sequence): void {
+                    $sequence[] = 'nested';
+                    $this->manager->afterCommit(function () use (&$sequence): void {
+                        $sequence[] = 'nested:after';
+                    });
+                });
+                $this->manager->afterCommit(function () use (&$sequence): void {
+                    $sequence[] = 'after3';
+                });
+                $sequence[] = 'after1:end';
+            });
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'after2';
+            });
+        });
+
+        $this->assertSame([
+            'begin',
+            'commit',
+            'after1:start',
+            'begin',
+            'nested',
+            'commit',
+            'after1:end',
+            'after2',
+            'nested:after',
+            'after3',
+        ], $sequence);
+    }
+
+    #[Test]
+    public function it_allows_a_nested_after_commit_callback_to_start_another_unit_of_work(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(3, $sequence);
+
+        $this->manager->execute(function () use (&$sequence): void {
+            $sequence[] = 'outer';
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $this->manager->execute(function () use (&$sequence): void {
+                    $sequence[] = 'nested1';
+                    $this->manager->afterCommit(function () use (&$sequence): void {
+                        $this->manager->execute(function () use (&$sequence): void {
+                            $sequence[] = 'nested2';
+                        });
+                    });
+                    $this->manager->afterCommit(function () use (&$sequence): void {
+                        $sequence[] = 'nested1:after';
+                    });
+                });
+            });
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'outer:after';
+            });
+        });
+
+        $this->assertSame([
+            'begin',
+            'outer',
+            'commit',
+            'begin',
+            'nested1',
+            'commit',
+            'outer:after',
+            'begin',
+            'nested2',
+            'commit',
+            'nested1:after',
+        ], $sequence);
+    }
+
+    #[Test]
+    public function it_allows_a_nested_unit_of_work_to_be_retried(): void
+    {
+        $ex = new LogicException('Boom!');
+        $sequence = [];
+        $count = 0;
+        $this->willExecuteUnitOfWork(3, $sequence);
+
+        $this->manager->execute(function () use ($ex, &$sequence, &$count): void {
+            $this->manager->afterCommit(function () use ($ex, &$sequence, &$count): void {
+                $this->manager->execute(function () use ($ex, &$sequence, &$count): void {
+                    $count++;
+                    $sequence[] = 'nested:' . $count;
+                    $this->manager->beforeCommit(function () use (&$sequence, $count): void {
+                        $sequence[] = 'nested:before:' . $count;
+                    });
+                    $this->manager->afterCommit(function () use (&$sequence, $count): void {
+                        $sequence[] = 'nested:after:' . $count;
+                    });
+                    if ($count === 1) {
+                        throw $ex;
+                    }
+                }, 2);
+            });
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'outer:after';
+            });
+        });
+
+        $this->assertSame([
+            'begin',
+            'commit',
+            'begin',
+            'nested:1',
+            'rollback',
+            'begin',
+            'nested:2',
+            'nested:before:2',
+            'commit',
+            'outer:after',
+            'nested:after:2',
+        ], $sequence);
+        $this->assertSame([$ex], $this->reporter->reported);
+    }
+
+    #[Test]
+    public function it_executes_remaining_after_commit_callbacks_when_a_nested_unit_of_work_fails(): void
+    {
+        $ex = new LogicException('Boom!');
+        $sequence = [];
+        $actual = null;
+        $this->willExecuteUnitOfWork(2, $sequence);
+
+        try {
+            $this->manager->execute(function () use ($ex, &$sequence): void {
+                $this->manager->afterCommit(function () use ($ex, &$sequence): void {
+                    $sequence[] = 'after1';
+                    $this->manager->execute(function () use ($ex, &$sequence): void {
+                        $sequence[] = 'nested';
+                        $this->manager->beforeCommit(function () use (&$sequence): void {
+                            $sequence[] = 'nested:before';
+                        });
+                        $this->manager->afterCommit(function () use (&$sequence): void {
+                            $sequence[] = 'nested:after';
+                        });
+                        throw $ex;
+                    });
+                });
+                $this->manager->afterCommit(function () use (&$sequence): void {
+                    $sequence[] = 'after2';
+                });
+            });
+        } catch (LogicException $e) {
+            $actual = $e;
+        }
+
+        $this->assertSame($ex, $actual);
+        $this->assertSame(['begin', 'commit', 'after1', 'begin', 'nested', 'rollback', 'after2'], $sequence);
+        $this->assertSame([], $this->reporter->reported);
+    }
+
+    /**
+     * As the nested after commit callbacks are queued, their failure is thrown by the outer unit of work,
+     * not the nested one.
+     */
+    #[Test]
+    public function it_executes_remaining_after_commit_callbacks_when_a_nested_after_commit_callback_fails(): void
+    {
+        $ex = new LogicException('Boom!');
+        $sequence = [];
+        $actual = null;
+        $this->willExecuteUnitOfWork(2, $sequence);
+
+        try {
+            $this->manager->execute(function () use ($ex, &$sequence): void {
+                $this->manager->afterCommit(function () use ($ex, &$sequence): void {
+                    $sequence[] = $this->manager->execute(function () use ($ex, &$sequence): string {
+                        $sequence[] = 'nested';
+                        $this->manager->afterCommit(function () use ($ex, &$sequence): void {
+                            $sequence[] = 'nested:after1';
+                            throw $ex;
+                        });
+                        $this->manager->afterCommit(function () use (&$sequence): void {
+                            $sequence[] = 'nested:after2';
+                        });
+                        return 'nested:result';
+                    });
+                });
+                $this->manager->afterCommit(function () use (&$sequence): void {
+                    $sequence[] = 'outer:after';
+                });
+            });
+        } catch (LogicException $e) {
+            $actual = $e;
+        }
+
+        $this->assertSame($ex, $actual);
+        $this->assertSame([
+            'begin',
+            'commit',
+            'begin',
+            'nested',
+            'commit',
+            'nested:result',
+            'outer:after',
+            'nested:after1',
+            'nested:after2',
+        ], $sequence);
+        $this->assertSame([], $this->reporter->reported);
+    }
+
+    #[Test]
+    public function it_cannot_start_a_unit_of_work_within_a_nested_unit_of_work(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(2, $sequence);
+
+        $this->expectException(ApplicationException::class);
+        $this->expectExceptionMessage(
+            'Not expecting unit of work manager to start a unit of work within an existing one.',
+        );
+
+        $this->manager->execute(function (): void {
+            $this->manager->afterCommit(function (): void {
+                $this->manager->execute(function (): void {
+                    $this->manager->execute(fn () => null);
+                });
+            });
+        });
+    }
+
+    #[Test]
+    public function it_fails_if_after_commit_callback_registers_before_commit_callback_after_a_nested_unit_of_work(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(2, $sequence);
+
+        $this->expectException(ApplicationException::class);
+        $this->expectExceptionMessage('Cannot queue a before commit callback when not executing a unit of work.');
+
+        $this->manager->execute(function (): void {
+            $this->manager->afterCommit(function (): void {
+                $this->manager->execute(fn () => null);
+                $this->manager->beforeCommit(fn () => null);
+            });
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Resetting state once the unit of work is complete
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function it_is_reset_after_a_nested_unit_of_work(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(3, $sequence);
+
+        $this->manager->execute(function () use (&$sequence): void {
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $this->manager->execute(function () use (&$sequence): void {
+                    $this->manager->afterCommit(function () use (&$sequence): void {
+                        $sequence[] = 'nested:after';
+                    });
+                });
+            });
+        });
+
+        $actual = $this->manager->execute(function () use (&$sequence): int {
+            $this->manager->beforeCommit(function () use (&$sequence): void {
+                $sequence[] = 'second:before';
+            });
+            $this->manager->afterCommit(function () use (&$sequence): void {
+                $sequence[] = 'second:after';
+            });
+            return 2;
+        });
+
+        $this->assertSame(2, $actual);
+        $this->assertSame([
+            'begin',
+            'commit',
+            'begin',
+            'commit',
+            'nested:after',
+            'begin',
+            'second:before',
+            'commit',
+            'second:after',
+        ], $sequence);
+    }
+
+    #[Test]
+    public function it_cannot_queue_after_commit_callback_once_the_unit_of_work_has_completed(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(1, $sequence);
+
+        $this->manager->execute(function (): void {
+            $this->manager->afterCommit(fn () => null);
+        });
+
+        $this->expectException(ApplicationException::class);
+        $this->expectExceptionMessage('Cannot queue an after commit callback when not executing a unit of work.');
+
+        $this->manager->afterCommit(fn () => null);
+    }
+
+    #[Test]
+    public function it_cannot_queue_after_commit_callback_once_after_commit_callbacks_have_failed(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(1, $sequence);
+
+        try {
+            $this->manager->execute(function (): void {
+                $this->manager->afterCommit(fn () => throw new LogicException('Boom!'));
+            });
+        } catch (LogicException) {
+            // expected
+        }
+
+        $this->expectException(ApplicationException::class);
+        $this->expectExceptionMessage('Cannot queue an after commit callback when not executing a unit of work.');
+
+        $this->manager->afterCommit(fn () => null);
+    }
+
+    #[Test]
+    public function it_cannot_queue_before_commit_callback_once_the_unit_of_work_has_completed(): void
+    {
+        $sequence = [];
+        $this->willExecuteUnitOfWork(1, $sequence);
+
+        $this->manager->execute(function (): void {
+            $this->manager->afterCommit(fn () => null);
+        });
+
+        $this->expectException(ApplicationException::class);
+        $this->expectExceptionMessage('Cannot queue a before commit callback when not executing a unit of work.');
+
+        $this->manager->beforeCommit(fn () => null);
+    }
+
+    /**
+     * Expect the unit of work to be executed the given number of times, recording each execution in the sequence.
+     *
+     * @param list<string> $sequence
+     * @param-out list<string> $sequence
+     */
+    private function willExecuteUnitOfWork(int $times, array &$sequence): void
+    {
+        $this->unitOfWork
+            ->expects($this->exactly($times))
+            ->method('execute')
+            ->willReturnCallback(function (Closure $callback, int $attempts) use (&$sequence): mixed {
+                $this->assertSame(1, $attempts);
+                $sequence[] = 'begin';
+
+                try {
+                    $result = $callback();
+                } catch (Throwable $ex) {
+                    $sequence[] = 'rollback';
+                    throw $ex;
+                }
+
+                $sequence[] = 'commit';
+
+                return $result;
+            });
     }
 }
