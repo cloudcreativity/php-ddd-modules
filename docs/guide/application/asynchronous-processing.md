@@ -117,7 +117,7 @@ We could push this internal work to a queue via a domain event listener:
 ```php
 namespace App\Modules\EventManagement\Application\Orchestration\Listeners;
 
-use App\Modules\EventManagement\Application\Ports\InternalQueue;
+use App\Modules\EventManagement\Application\Ports\Queue\InternalQueue;
 use App\Modules\EventManagement\Application\Internal\RecalculateSalesAtEventCommand;
 use App\Modules\EventManagement\Domain\Events\AttendeeTicketWasCancelled;
 
@@ -129,7 +129,7 @@ final readonly class QueueTicketSalesReportRecalculation
 
     public function handle(AttendeeTicketWasCancelled $event): void
     {
-        $this->queue->queue(new RecalculateSalesAtEventCommand(
+        $this->queue->push(new RecalculateSalesAtEventCommand(
             $event->eventId,
         ));
     }
@@ -175,7 +175,7 @@ Define the internal command bus as follows:
 ```php
 namespace App\Modules\EventManagement\Application\Internal;
 
-use CloudCreativity\Modules\Application\Ports\Driving\CommandBus\CommandDispatcher;
+use CloudCreativity\Modules\Contracts\Messaging\CommandDispatcher;
 
 interface InternalCommandBus extends CommandDispatcher
 {

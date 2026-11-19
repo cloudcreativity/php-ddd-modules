@@ -52,8 +52,9 @@ To use this dispatcher, create a concrete implementation of your domain layer's 
 namespace App\Modules\EventManagement\Application\Orchestration;
 
 use App\Modules\EventManagement\Domain\Events\DomainEventDispatcher as IDomainEventDispatcher;
-use CloudCreativity\Modules\Application\DomainEventDispatching\UnitOfWorkAwareDispatcher;
 use CloudCreativity\Modules\Application\DomainEventDispatching\ListenTo;
+use CloudCreativity\Modules\Application\DomainEventDispatching\Middleware\LogDomainEventDispatch;
+use CloudCreativity\Modules\Application\DomainEventDispatching\UnitOfWorkAwareDispatcher;
 use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[Through(LogDomainEventDispatch::class)]
@@ -148,8 +149,7 @@ listeners and middleware.
 For example:
 
 ```php
-
-$dispatcher = new DomainEventDispatcher($container);
+$dispatcher = new DomainEventDispatcherAdapter($container);
 ```
 
 The main thing you need to ensure is that your instance of this domain event dispatcher is a singleton. This ensures
@@ -270,7 +270,6 @@ namespace App\Modules\EventManagement\Application\Orchestration\Middleware;
 use Closure;
 use CloudCreativity\Modules\Contracts\Application\DomainEventDispatching\DomainEventMiddleware;
 use CloudCreativity\Modules\Contracts\Domain\Events\DomainEvent;
-use CloudCreativity\Modules\Contracts\Toolkit\Result\Result;
 
 final class MyMiddleware implements DomainEventMiddleware
 {
@@ -284,11 +283,11 @@ final class MyMiddleware implements DomainEventMiddleware
     public function __invoke(
         DomainEvent $event,
         Closure $next,
-    ): Result
+    ): void
     {
         // code here executes before the event is emitted.
 
-        $next($command);
+        $next($event);
 
         // code here executes after it is emitted.
     }
