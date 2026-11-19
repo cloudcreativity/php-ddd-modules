@@ -22,7 +22,7 @@ try {
     $this->someService->doSomething();
     return true;
 } catch (\Throwable $e) {
-    $this->logger->error('An error occurred: ', $e->getMessage());
+    $this->logger->error('An error occurred: ' . $e->getMessage());
     return false;
 }
 ```
@@ -111,7 +111,7 @@ final readonly class ExceptionReporterAdapter implements
 ## Testing
 
 We provide a fake exception reporter that you can use in tests. This is the
-`CloudCreativity\Modules\Testing\FakeUnitOfWork` class.
+`CloudCreativity\Modules\Testing\FakeExceptionReporter` class.
 
 You can access any exceptions that were reported via the `$reported` property:
 
