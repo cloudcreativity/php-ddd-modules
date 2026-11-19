@@ -61,6 +61,7 @@ specific closures to specific events, and add middleware to the publisher. Here'
 ```php
 namespace App\Modules\EventManagement\Infrastructure\OutboundEventBus;
 
+use App\Modules\EventManagement\Api\Output\V1\Events\AttendeeTicketWasCancelled;
 use App\Modules\EventManagement\Application\Ports\OutboundEventBus\OutboundEventBus;
 use App\Modules\EventManagement\Infrastructure\GooglePubSub\EventSerializer;
 use App\Modules\EventManagement\Infrastructure\GooglePubSub\SecureTopicFactory;
@@ -68,7 +69,6 @@ use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Middleware\LogOutboundEvent;
 use CloudCreativity\Modules\Toolkit\Pipeline\PipeContainer;
 use Psr\Log\LoggerInterface;
-use VendorName\EventManagement\Shared\IntegrationEvents\V1\AttendeeTicketWasCancelled;
 
 final readonly class OutboundEventBusAdapterProvider
 {
@@ -110,7 +110,7 @@ final readonly class OutboundEventBusAdapterProvider
         );
 
         /** Attach middleware that runs for all events */
-        $bus->through([
+        $publisher->through([
             LogOutboundEvent::class,
         ]);
 
@@ -133,12 +133,12 @@ use App\Modules\EventManagement\Application\Ports\OutboundEventBus\OutboundEvent
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\ComponentPublisher;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\DefaultPublisher;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Publishes;
-use CloudCreativity\Modules\Toolkit\Pipeline\Through;
+use App\Modules\EventManagement\Api\Output\V1\Events\AttendeeTicketWasCancelled;
 use CloudCreativity\Modules\Infrastructure\OutboundEventBus\Middleware\LogOutboundEvent;
+use CloudCreativity\Modules\Toolkit\Pipeline\Through;
 
 #[DefaultPublisher(MyDefaultPublisher::class)]
-#[Publishes(FooIntegrationEvent::class, FoobarPublisher::class)]
-#[Publishes(BarIntegrationEvent::class, BazbatPublisher::class)]
+#[Publishes(AttendeeTicketWasCancelled::class, AttendeeTicketWasCancelledPublisher::class)]
 #[Through(LogOutboundEvent::class)]
 final class OutboundEventBusAdapter extends ComponentPublisher
     implements OutboundEventBus
@@ -158,7 +158,11 @@ follows:
 ```php
 namespace App\Modules\EventManagement\Infrastructure\OutboundEventBus;
 
-final class DefaultPublisher
+use App\Modules\EventManagement\Infrastructure\GooglePubSub\EventSerializer;
+use App\Modules\EventManagement\Infrastructure\GooglePubSub\SecureTopicFactory;
+use CloudCreativity\Modules\Contracts\Messaging\IntegrationEvent;
+
+final class MyDefaultPublisher
 {
     public function __construct(
         private SecureTopicFactory $topicFactory,
@@ -181,6 +185,8 @@ And then we could also define a handler for a specific event:
 namespace App\Modules\EventManagement\Infrastructure\OutboundEventBus;
 
 use App\Modules\EventManagement\Api\Output\V1\Events\AttendeeTicketWasCancelled;
+use App\Modules\EventManagement\Infrastructure\GooglePubSub\EventSerializer;
+use App\Modules\EventManagement\Infrastructure\GooglePubSub\SecureTopicFactory;
 
 final class AttendeeTicketWasCancelledPublisher
 {
@@ -260,7 +266,7 @@ You can write your own middleware to suit your specific needs. Middleware is a s
 following signature:
 
 ```php
-namespace App\Modules\EventManagement\Application\Adapters\Middleware;
+namespace App\Modules\EventManagement\Infrastructure\OutboundEventBus\Middleware;
 
 use Closure;
 use CloudCreativity\Modules\Contracts\Bus\Middleware\IntegrationEventMiddleware;
@@ -280,11 +286,11 @@ final class MyMiddleware implements IntegrationEventMiddleware
         Closure $next,
     ): void
     {
-        // code here executes before the event handler
+        // code here executes before the event is published
 
-        $next($command);
+        $next($event);
 
-        // code here executes after the event handler
+        // code here executes after the event is published
     }
 }
 ```

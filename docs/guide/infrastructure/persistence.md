@@ -75,9 +75,8 @@ The first port would need to be used by our "cancel ticket" command to retrieve 
 state back:
 
 ```php
-namespace App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
+namespace App\Modules\EventManagement\Application\Ports\Persistence;
 
-use App\Modules\EventManagement\Domain\Attendee;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
 interface AttendeeRepository
@@ -90,7 +89,7 @@ interface AttendeeRepository
 The second port would be used by our "get all tickets" query:
 
 ```php
-namespace App\Modules\EventManagement\Application\Ports\Persistence\ReadModels\V1\TicketModelRepository;
+namespace App\Modules\EventManagement\Application\Ports\Persistence\ReadModels\V1;
 
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
@@ -120,9 +119,8 @@ To return to our example of an attendee aggregate root that contains ticket enti
 store and retrieve the ticket entities. This means we only need one port:
 
 ```php
-namespace App\Modules\EventManagement\Application\Ports\Persistence\AttendeeRepository;
+namespace App\Modules\EventManagement\Application\Ports\Persistence;
 
-use App\Modules\EventManagement\Domain\Attendee;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 
 interface AttendeeRepository
@@ -209,7 +207,7 @@ use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeState;
 use App\Modules\EventManagement\Application\Ports\Persistence\AttendeeUpdateState;
 use App\Modules\EventManagement\Application\Ports\Persistence\TicketState;
 use App\Models\Attendee as AttendeeModel;
-use App\Models\Attendee as TicketModel;
+use App\Models\Ticket as TicketModel;
 use CloudCreativity\Modules\Contracts\Toolkit\Identifiers\Identifier;
 use CloudCreativity\Modules\Toolkit\Identifiers\IntegerId;
 
