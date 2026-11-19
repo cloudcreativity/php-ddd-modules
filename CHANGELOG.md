@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [7.0.1] - 2026-11-19
+
 ### Added
 
 - `FakeUnitOfWork` now has an `executions` property, counting the number of times its `execute()` method has been
@@ -736,6 +738,8 @@ All notable changes to this project will be documented in this file. This projec
 ## [0.1.0] - 2023-11-18
 
 Initial release.
+
+[7.0.1]: https://github.com/cloudcreativity/php-ddd-modules/compare/v7.0.0...v7.0.1
 
 [7.0.0]: https://github.com/cloudcreativity/php-ddd-modules/compare/v6.1.2...v7.0.0
 
