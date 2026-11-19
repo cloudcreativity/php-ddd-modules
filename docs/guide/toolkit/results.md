@@ -168,7 +168,7 @@ Use the `push()` method to return a new error list with an additional error adde
 $errors = $errors->push(new Error(message: 'Problem 3'));
 ```
 
-You can also merge two list of errors into a new list of errors:
+You can also merge two lists of errors into a new list of errors:
 
 ```php
 $errors3 = $errors1->merge($errors2);
@@ -202,7 +202,7 @@ $keyedErrors = KeyedSetOfErrors::from($errors);
 ```
 
 :::tip
-There's a number of helper methods on the keyed set class - see the class for more details.
+There are a number of helper methods on the keyed set class - see the class for more details.
 :::
 
 ### Result Errors

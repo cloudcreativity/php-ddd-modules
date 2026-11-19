@@ -184,7 +184,7 @@ $this->app->bind(
 ### Dispatching Commands
 
 You can now dispatch command messages to your bounded context from the _outside world_. For example, if we were using
-a single action controller to handle a HTTP request in a Laravel application, we might dispatch a command like this:
+a single action controller to handle an HTTP request in a Laravel application, we might dispatch a command like this:
 
 ```php
 namespace App\Http\Controllers\Api\Attendees;
@@ -368,7 +368,7 @@ Our `SetupBeforeDispatch` middleware allows setup work to be run before the comm
 teardown work when the command has completed.
 
 This allows you to set up any state and guarantee that the state is cleaned up, regardless of the outcome of the
-command. The primary use case for this is to boostrap [Domain Services](../domain/services) and to garbage collect any
+command. The primary use case for this is to bootstrap [Domain Services](../domain/services) and to garbage collect any
 singleton instances of dependencies.
 
 For example, bind an instance of the middleware into your service container:

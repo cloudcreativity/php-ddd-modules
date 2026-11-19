@@ -290,7 +290,7 @@ final readonly class QueueTicketSalesReportRecalculation
 
 :::tip
 The pattern of queuing work internal to a bounded context is described in our
-[Asynchronous Processing chapter](../application/asynchronous-processing) in the infrastructure layer.
+[Asynchronous Processing chapter](../application/asynchronous-processing) in the application layer.
 :::
 
 ### Publishing Integration Events

@@ -31,7 +31,7 @@ received:
 
 These are described in more detail below. However, the important thing to note is that all these concrete
 implementations have a static `from()` method. This can be used to ensure the supplied identifier is of the correct
-type. This is useful wherever you need to work with identifiers in a way the expects a specific type.
+type. This is useful wherever you need to work with identifiers in a way that expects a specific type.
 
 ## Integers
 
@@ -148,7 +148,7 @@ class MySqlUserRepository implements UserRepository
 
 :::tip
 There may be scenarios where you map data from multiple database tables to a single entity. If these tables all use
-string identifiers, there would be no way to distinguish which table the integer identifier belongs to.
+string identifiers, there would be no way to distinguish which table the string identifier belongs to.
 
 In this scenario, you should use a `Guid` instead.
 :::
@@ -227,7 +227,7 @@ class MySqlUserRepository implements UserRepository
 
 :::tip
 There may be scenarios where you map data from multiple database tables to a single entity. If these tables all use
-UUIDs as there primary key, in theory the chance of collision is exceptionally low. However, you may want to guarantee
+UUIDs as their primary key, in theory the chance of collision is exceptionally low. However, you may want to guarantee
 that you can distinguish the origin of the identifier. In this case, you should use a `Guid` instead.
 :::
 

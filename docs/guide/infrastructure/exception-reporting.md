@@ -80,7 +80,7 @@ layer to any logging service you are using.
 If all you need to do is log a reported exception as an error, we provide a default implementation that uses a PSR
 logger. The implementation is: `CloudCreativity\Modules\Infrastructure\ExceptionReporter\PsrLogExceptionReporter`
 
-Provide an instance of the PSR Log as the only constructor argument.
+Provide an instance of a PSR logger as the only constructor argument.
 
 ### Laravel Example
 

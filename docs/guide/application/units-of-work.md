@@ -15,7 +15,7 @@ your domain model has no concept of how it is persisted.
 
 Consider the following scenario. Our domain models the attendees at an in-person event as having one-to-many tickets.
 When we want to cancel a ticket, we do this via the attendee aggregate root that contains the ticket entities. This is
-because our domain logic says that state of the attendee may change when the ticket is cancelled.
+because our domain logic says that the state of the attendee may change when the ticket is cancelled.
 
 Our command handler might look like this:
 
@@ -57,7 +57,7 @@ final readonly class CancelAttendeeTicketHandler
 
 This implementation poses a number of issues:
 
-1. When the business action - _cancel ticket_ - is performed, the aggregate root and the relevant ticket entity is
+1. When the business action - _cancel ticket_ - is performed, the aggregate root and the relevant ticket entity are
    updated to the new state (as defined by the business logic).
 2. As its state is settled, the aggregate root emits a domain event so that other parts of the domain can react to
    the change.
@@ -98,7 +98,7 @@ Given the above example, the correct order from the application perspective is:
    will be triggered later.
 4. The aggregate root is persisted via the repository port. Internally within the adapter this may result in multiple
    database writes, that are within the transaction.
-5. With the persistence changes successful made (but not yet committed), the deferred domain event is dispatched.
+5. With the persistence changes successfully made (but not yet committed), the deferred domain event is dispatched.
 6. Side effects of the domain event are triggered, within the transaction boundary. Any side effects that affect the
    persistence layer via driven ports now occur _after_ the aggregate changes were persisted.
 7. The transaction is committed by closing the unit of work. The state changes to the aggregate root and the side
@@ -112,11 +112,11 @@ All this is achieved by this package by combining the following:
 - **Unit of work manager** - an application concern that handles the lifecycle of the unit of work, e.g. deferring
   operations for later execution.
 - **Unit of work aware domain event dispatcher** - coordinates domain event dispatching with the unit of work manager.
-- **Unit of work middleware** - that ensure command handlers and integration event consumers are executed in a unit of
+- **Unit of work middleware** - ensures command handlers and integration event consumers are executed in a unit of
   work.
 
 :::info
-The manager is high-level abstraction (provided by this package and part of the application layer) that manages the
+The manager is a high-level abstraction (provided by this package and part of the application layer) that manages the
 lifecycle of the unit of work. The unit of work itself is a low-level abstraction (part of the infrastructure layer)
 that actually starts, commits and rolls back the transaction.
 :::
@@ -238,7 +238,7 @@ The unit of work manager is an application layer concern. It handles the complex
 When combined with the unit of work aware domain event dispatcher, it ensures domain event dispatching and side
 effects (via listeners) are coordinated within the unit of work.
 
-The adapter just requires your concrete unit of work implementation:
+The manager just requires your concrete unit of work implementation:
 
 ```php
 use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
@@ -457,14 +457,14 @@ final readonly class QueueAttendeeCancellationEmail implements
 ```
 
 :::warning
-If any work pushed to after the unit of work has committed fails, it is not possible to rollback the transaction. This
+If any work pushed to after the unit of work has committed fails, it is not possible to roll back the transaction. This
 means that the domain's new state will be committed, but your side effect has not occurred. This could lead to data
 inconsistencies.
 
 Use an [Outbox pattern](../infrastructure/outbox) to ensure data consistency.
 :::
 
-## Using Unit of Works
+## Using Units of Work
 
 The unit of work pattern can be implemented on command handlers and integration event consumers.
 There is a consistent approach to all - use a middleware that wraps the execution in a unit of work.

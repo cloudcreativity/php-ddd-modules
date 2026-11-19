@@ -236,7 +236,7 @@ make your codebase predictable and easier to understand.
 ### DateTimes
 
 PHP provides a `DateTime` class, but it is not immutable. You should **never** use this, because it breaks the
-immutability principal of value objects.
+immutability principle of value objects.
 
 Instead, use PHP's `DateTimeImmutable` class, which does guarantee immutability.
 
@@ -277,7 +277,7 @@ Value objects must always have object equality. This means that two value object
 same values, even if they are different instances.
 
 In PHP, a good tip is to put the equality logic in an `equals()` method. This gives you a fluent interface for checking
-whether two values are equally. Additionally, you can then use PHPUnit's `assertObjectEquals()` assertion to ensure
+whether two values are equal. Additionally, you can then use PHPUnit's `assertObjectEquals()` assertion to ensure
 two value objects are equal in tests - which is a nice benefit.
 
 For example, we can improve the example customer value object as follows:

@@ -141,7 +141,7 @@ $queue->bind(
 
 ## Class-Based Queuing
 
-Our `ComponentQueue` allows you to use define queuing logic on classes. Each class is an _enqueuer_ - a component that
+Our `ComponentQueue` allows you to define queuing logic on classes. Each class is an _enqueuer_ - a component that
 handles pushing an item (in this case a command message) onto a queue.
 
 This is useful in scenarios where you want to use constructor dependency injection when integrating with your PHP
@@ -342,7 +342,7 @@ on the Laravel queue, and what it should do if it receives a failure result.
 ### Creating the Queue
 
 We can now create our queue adapter. This will extend the closure queue adapter described earlier in this chapter. For
-example, to create the queue that is injected into our command bus:
+example, to create the queue that is injected into our command queuer:
 
 ```php
 // default command queuing
@@ -450,7 +450,7 @@ final class MyQueueMiddleware implements QueueMiddleware
 
 :::tip
 If you're writing middleware that is only meant to be used for a specific command message or queue job, do not implement
-the `QueueMiddleware` interface. Instead, use the same signature but change the type-hint for to the specific command
+the `QueueMiddleware` interface. Instead, use the same signature but change the type-hint to the specific command
 message your middleware is designed for.
 :::
 

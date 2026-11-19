@@ -190,7 +190,7 @@ final readonly class AttendeeTicketCancelled implements
 ```
 
 :::warning
-Doing this risks means side effects of the domain event will occur, even if something about the command handling
+Doing this means side effects of the domain event will occur, even if something about the command handling
 subsequently fails. For example, if there is an error in your infrastructure layer when persisting state changes. This
 can compromise the consistency of your domain state.
 :::

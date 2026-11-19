@@ -14,7 +14,7 @@ The layers within this architecture are as follows - starting from the inner-mos
 
 The domain layer contains the domain entities, aggregate roots and business logic. It is the core of the module and
 should be entirely encapsulated - i.e. it must not depend on any other layer. This allows you to structure your domain
-entities and aggregate roots in a way that cleanly encapsulate business logic, ensuring the logic is easy to reason
+entities and aggregate roots in a way that cleanly encapsulates business logic, ensuring the logic is easy to reason
 about and test.
 
 :::tip
@@ -41,7 +41,7 @@ interfaces. There are two types of ports:
 
 - **Driving Ports** (aka _primary_ or _input_ ports) - interfaces that define the use cases of the bounded context.
   These are implemented by application services, and are used by adapters in the outside world to initiate interactions
-  with the application. For example, an adapter could be a HTTP controller that takes input from a request and passes it
+  with the application. For example, an adapter could be an HTTP controller that takes input from a request and passes it
   to the application via a driving port.
 - **Driven Ports** (aka _secondary_ or _output_ ports) - interfaces that define the dependencies of the application
   layer. The adapters that implement these interfaces are in the infrastructure layer. For example, a persistence port
@@ -70,7 +70,7 @@ This means that there are three types of _messages_ that define the use cases of
 
 This layer contains adapters that implement the driven ports defined in the application layer.
 
-This is an _dependency inversion_ principle. The application defines what it needs from the infrastructure layer, and
+This is the _dependency inversion_ principle. The application defines what it needs from the infrastructure layer, and
 the infrastructure layer provides the implementations. This means that the application layer never depends on the
 infrastructure layer. Anything it needs to interact with must be defined as a driven port.
 
@@ -106,7 +106,7 @@ are provided by that layer. This means it can only:
 2. Execute queries to read the state of the domain.
 3. Notify the application layer of an integration event inbound from another module.
 
-Which you may notice is the three message types described in the application layer above. :tada:
+Which you may notice are the three message types described in the application layer above. :tada:
 
 ## Frameworks
 
@@ -134,7 +134,7 @@ The _presentation and delivery_ components it provides include:
 2. HTML generation via Blade templates.
 3. JSON resource responses.
 4. Console command handling and scheduling.
-4. Etc.
+5. Etc.
 
 :::info
 This package is framework agnostic, so you can use it with any framework - or even any legacy application that does not

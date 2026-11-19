@@ -2,7 +2,7 @@
 
 Modularisation is an approach to splitting up a monolith, particularly one that is considered _legacy_ code, into
 smaller, more manageable pieces. By adopting a domain-centric approach, this package provides the tooling needed to
-modularise a monolith - and how these modules can be transitioned to a microservices architecture over time.
+modularise a monolith - and shows how these modules can be transitioned to a microservices architecture over time.
 
 ## Why Modularise?
 
@@ -27,7 +27,7 @@ immediately as a microservice while using this package to ensure they are implem
 modules.
 
 :::tip
-This chapters shows how we choose to structure our modules. There is nothing about the package's implementation that
+This chapter shows how we choose to structure our modules. There is nothing about the package's implementation that
 forces you to use this structure. However, we've described our preferred structure as we believe that it provides a good
 starting point for most projects.
 :::
@@ -67,8 +67,8 @@ As a top-level summary, the namespaces in each module are:
    cases of the module are implemented (e.g. via command and query handlers).
 3. **Infrastructure** - the adapters that implement the application's driven ports.
 4. **Api** - the public interface for interacting with the module, i.e. by the presentation and delivery layer. This
-   holds the _input_ contracts and value objects that can be used externally (including the driving ports) and the _
-   output) values that are received as a result of interacting with the module.
+   holds the _input_ contracts and value objects that can be used externally (including the driving ports) and the
+   _output_ values that are received as a result of interacting with the module.
 
 :::tip
 Note that there is no _presentation layer_ here. Presentation and delivery is _outside_ the `Modules` namespace. This is
@@ -126,7 +126,7 @@ For example:
 The `Api` namespace makes it extremely easy to enforce your architectural layers in the presentation and delivery layer.
 If you're using a tool like [Deptrac](https://github.com/deptrac/deptrac) you can specify that the presentation and
 delivery layer can only consume classes from the API namespace of the module. This ensures that there is no incorrect
-use of the application, domain and infrastrucute layers - enforcing encapsulation.
+use of the application, domain and infrastructure layers - enforcing encapsulation.
 :::
 
 ### Application Namespace
@@ -147,7 +147,7 @@ The application namespace can be structured as follows:
     - UseCases
         - Internal              <- internal use cases, e.g. for asynchronous processing
             - ...
-        - FooCommandHandler     <- uses cases
+        - FooCommandHandler     <- use cases
         - BarQueryHandler
     - Orchestration             <- orchestration of domain and infrastructure layers
 ```
@@ -156,7 +156,7 @@ The namespaces shown here are as follows:
 
 - **Ports** - the driven ports of the application layer expressed as interfaces. The driven ports are the interfaces
   that the application layer expects to be implemented by the infrastructure layer.
-- **Adapter** - contains the implementations of the driving ports. The concrete implementations are the command bus,
+- **Adapters** - contains the implementations of the driving ports. The concrete implementations are the command bus,
   query bus, and inbound event bus. Each bus ensures a message is dispatched to the correct handler.
 - **Use Cases** - the implementation of the business logic of the application layer, i.e. how the application layer
   handles inbound commands, queries and integration events. Additionally we use an `Internal` namespace in here for

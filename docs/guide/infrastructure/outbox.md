@@ -34,7 +34,7 @@ So what happens if we move them outside the transaction boundary, i.e. ensuring 
 effects are executed after the commit?
 
 Now the problem is that we cannot guarantee _all_ the side-effects will occur. We might successfully publish to the
-event bus, but if we encounter a temporary Redis failure both the asynchronous recalculation and the emailing will not
+event bus, but if we encounter a temporary Redis failure neither the asynchronous recalculation nor the emailing will
 occur.
 
 ## Solution
