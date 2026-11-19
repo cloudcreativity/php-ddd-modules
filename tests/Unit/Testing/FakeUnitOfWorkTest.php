@@ -139,8 +139,9 @@ final class FakeUnitOfWorkTest extends TestCase
         $result = $unitOfWork->execute(fn () => 'result');
 
         $this->assertSame('result', $result);
-        $this->assertSame(['attempt:1', 'commit:1'], $unitOfWork->sequence);
+        $this->assertSame(['execute:1/attempt:1', 'execute:1/commit:1'], $unitOfWork->sequence);
         $this->assertSame([], $unitOfWork->exceptions->reported);
+        $this->assertSame(1, $unitOfWork->executions);
         $this->assertSame(1, $unitOfWork->attempts);
         $this->assertSame(1, $unitOfWork->commits);
         $this->assertSame(0, $unitOfWork->rollbacks);
@@ -172,14 +173,15 @@ final class FakeUnitOfWorkTest extends TestCase
 
         $this->assertSame('result', $result);
         $this->assertSame([
-            'attempt:1',
-            'rollback:1',
-            'attempt:2',
-            'rollback:2',
-            'attempt:3',
-            'commit:3',
+            'execute:1/attempt:1',
+            'execute:1/rollback:1',
+            'execute:1/attempt:2',
+            'execute:1/rollback:2',
+            'execute:1/attempt:3',
+            'execute:1/commit:3',
         ], $unitOfWork->sequence);
         $this->assertSame([$ex1, $ex2], $unitOfWork->exceptions->reported);
+        $this->assertSame(1, $unitOfWork->executions);
         $this->assertSame(3, $unitOfWork->attempts);
         $this->assertSame(1, $unitOfWork->commits);
         $this->assertSame(2, $unitOfWork->rollbacks);
@@ -211,12 +213,13 @@ final class FakeUnitOfWorkTest extends TestCase
         }
 
         $this->assertSame([
-            'attempt:1',
-            'rollback:1',
-            'attempt:2',
-            'rollback:2',
+            'execute:1/attempt:1',
+            'execute:1/rollback:1',
+            'execute:1/attempt:2',
+            'execute:1/rollback:2',
         ], $unitOfWork->sequence);
         $this->assertSame([$ex1, $ex2], $unitOfWork->exceptions->reported);
+        $this->assertSame(1, $unitOfWork->executions);
         $this->assertSame(2, $unitOfWork->attempts);
         $this->assertSame(0, $unitOfWork->commits);
         $this->assertSame(2, $unitOfWork->rollbacks);
@@ -250,11 +253,50 @@ final class FakeUnitOfWorkTest extends TestCase
         }
 
         $this->assertSame($ex, $actual);
-        $this->assertSame(['attempt:1', 'rollback:1'], $unitOfWork->sequence);
+        $this->assertSame(['execute:1/attempt:1', 'execute:1/rollback:1'], $unitOfWork->sequence);
+        $this->assertSame(1, $unitOfWork->executions);
         $this->assertSame(1, $unitOfWork->attempts);
         $this->assertSame(0, $unitOfWork->commits);
         $this->assertSame(1, $unitOfWork->rollbacks);
         $this->assertSame([], $reporter->reported);
+    }
+
+    #[Test]
+    public function it_records_each_execution_separately(): void
+    {
+        $ex = new RuntimeException('An error occurred.');
+        $unitOfWork = new FakeUnitOfWork();
+        $unitOfWork->execute(fn () => 'result');
+
+        $unitOfWork->execute($this->failThenSucceed([$ex]), 2);
+
+        $this->assertSame([
+            'execute:1/attempt:1',
+            'execute:1/commit:1',
+            'execute:2/attempt:1',
+            'execute:2/rollback:1',
+            'execute:2/attempt:2',
+            'execute:2/commit:2',
+        ], $unitOfWork->sequence);
+        $this->assertSame(2, $unitOfWork->executions);
+        $this->assertSame(3, $unitOfWork->attempts);
+        $this->assertSame(2, $unitOfWork->commits);
+        $this->assertSame(1, $unitOfWork->rollbacks);
+    }
+
+    #[Test]
+    public function it_does_not_count_an_execution_that_is_rejected_because_it_is_already_active(): void
+    {
+        $unitOfWork = new FakeUnitOfWork();
+
+        try {
+            $unitOfWork->execute(fn () => $unitOfWork->execute(fn () => 'result'));
+        } catch (RuntimeException) {
+            // expected
+        }
+
+        $this->assertSame(['execute:1/attempt:1', 'execute:1/rollback:1'], $unitOfWork->sequence);
+        $this->assertSame(1, $unitOfWork->executions);
     }
 
     /**
@@ -279,6 +321,23 @@ final class FakeUnitOfWorkTest extends TestCase
 
         // @phpstan-ignore argument.type (deliberately violates the int<1, max> contract)
         $unitOfWork->execute(fn () => 'result', $attempts);
+    }
+
+    #[DataProvider('invalidAttemptsProvider')]
+    #[Test]
+    public function it_does_not_count_an_execution_with_invalid_attempts(int $attempts): void
+    {
+        $unitOfWork = new FakeUnitOfWork();
+
+        try {
+            // @phpstan-ignore argument.type (deliberately violates the int<1, max> contract)
+            $unitOfWork->execute(fn () => 'result', $attempts);
+        } catch (InvalidArgumentException) {
+            // expected
+        }
+
+        $this->assertSame([], $unitOfWork->sequence);
+        $this->assertSame(0, $unitOfWork->executions);
     }
 
     /**

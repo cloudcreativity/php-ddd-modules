@@ -20,13 +20,32 @@ use Throwable;
 
 final class FakeUnitOfWork implements UnitOfWork
 {
+    /**
+     * The number of times `execute()` has been called, excluding calls that were rejected.
+     */
+    public int $executions = 0;
+
+    /**
+     * The number of attempts, across every execution.
+     */
     public int $attempts = 0;
 
+    /**
+     * The number of commits, across every execution.
+     */
     public int $commits = 0;
 
+    /**
+     * The number of rollbacks, across every execution.
+     */
     public int $rollbacks = 0;
 
     /**
+     * The sequence of what happened, across every execution.
+     *
+     * Each entry is in the format `execute:<execution>/<event>:<attempt>`, where the event is `attempt`, `commit` or
+     * `rollback`, and the attempt is the attempt number within that execution.
+     *
      * @var list<string>
      */
     public array $sequence = [];
@@ -57,17 +76,19 @@ final class FakeUnitOfWork implements UnitOfWork
             throw new RuntimeException('Fake unit of work is already active.');
         }
 
+        $this->executions++;
+
         for ($i = 1; $i <= $attempts; $i++) {
             $this->active = true;
             try {
-                $this->sequence[] = 'attempt:' . $i;
+                $this->sequence[] = sprintf('execute:%d/attempt:%d', $this->executions, $i);
                 $this->attempts++;
                 $result = $callback();
-                $this->sequence[] = 'commit:' . $i;
+                $this->sequence[] = sprintf('execute:%d/commit:%d', $this->executions, $i);
                 $this->commits++;
                 return $result;
             } catch (Throwable $ex) {
-                $this->sequence[] = 'rollback:' . $i;
+                $this->sequence[] = sprintf('execute:%d/rollback:%d', $this->executions, $i);
                 $this->rollbacks++;
                 $this->exceptions->report($ex);
 

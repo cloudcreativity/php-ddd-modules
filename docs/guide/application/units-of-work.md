@@ -300,6 +300,50 @@ commit callbacks from being executed. Once they have all been executed, if exact
 thrown. If more than one failed, an `AfterCommitCallbacksFailed` exception is thrown instead. Its `exceptions()` method
 returns all the exceptions in the order they were thrown, and its previous exception is the first one.
 
+#### After Commit Queue
+
+After commit callbacks are executed as a FIFO (first in, first out) queue. If an after commit callback registers
+another after commit callback, it is added to the end of the queue, rather than being executed immediately.
+
+An after commit callback can also start a new unit of work, as the previous unit of work has already committed. For
+example, it might dispatch a command whose handler executes in a unit of work. The new unit of work executes its before
+commit callbacks as normal. However, its after commit callbacks are added to the end of the same queue. So they are
+executed after the callback that started the new unit of work has returned.
+
+```php
+$manager->execute(function () use ($manager): void {
+    // executed first
+    $manager->afterCommit(function () use ($manager): void {
+        // starts and commits a new unit of work...
+        $manager->execute(function () use ($manager): void {
+            // ...whose after commit callback is added to the end of the queue: executed third.
+            $manager->afterCommit(function (): void {
+                // some deferred work.
+            });
+        });
+    });
+
+    // executed second
+    $manager->afterCommit(function (): void {
+        // some deferred work.
+    });
+});
+```
+
+As the new unit of work's after commit callbacks are queued, any failure in them is thrown by the outermost call to
+`execute()` along with any other after commit failures. It is not thrown by the call that started the new unit of work.
+
+:::warning
+While the queue is FIFO, your after commit callbacks should **never** rely on the order they are executed in, or on
+any knowledge of other after commit callbacks. Each callback should be an independent side effect of the committed
+work. If one piece of work depends on another, it should be coordinated explicitly - for example, by having one piece
+of work trigger the next, rather than relying on the order of the queue.
+:::
+
+Starting a unit of work while another is still executing (i.e. before it has committed) is not allowed, and will throw
+an exception. Likewise, an after commit callback cannot register a before commit callback, as the unit of work has
+already committed - unless it does so within a new unit of work.
+
 ## Deferring Domain Events
 
 When using the unit of work pattern, you **must** use the unit of work aware domain event dispatcher. This coordinates
@@ -499,22 +543,40 @@ the fake unit of work. For example, if you wanted to check that the unit of work
 the second attempt:
 
 ```php
+use CloudCreativity\Modules\Application\UnitOfWork\UnitOfWorkManager;
 use CloudCreativity\Modules\Testing\FakeUnitOfWork;
 
 $unitOfWork = new FakeUnitOfWork();
+$manager = new UnitOfWorkManager($unitOfWork);
 
-// execute work that uses the unit of work
+// execute work that uses the unit of work manager, with two attempts
 
+$this->assertSame(2, $unitOfWork->executions);
 $this->assertSame(2, $unitOfWork->attempts);
 $this->assertSame(1, $unitOfWork->commits);
 $this->assertSame(1, $unitOfWork->rollbacks);
-$this->assertSame(
-    ['attempt:1', 'rollback:1', 'attempt:2', 'commit:2'],
-    $unitOfWork->sequence,
-);
+$this->assertSame([
+    'execute:1/attempt:1',
+    'execute:1/rollback:1',
+    'execute:2/attempt:1',
+    'execute:2/commit:1',
+], $unitOfWork->sequence);
 ```
+
+Each entry in the sequence is in the format `execute:<execution>/<event>:<attempt>`. The execution is the number of the
+call to the fake's `execute()` method, and the attempt is the number of the attempt within that call.
+
+Notice that the two attempts are recorded as two executions, each with a single attempt. This is because the unit of
+work manager handles re-attempts itself, executing the fake unit of work once per attempt. The attempt number will
+only be greater than one if you call the fake directly with more than one attempt. The `executions`, `attempts`,
+`commits` and `rollbacks` properties are all counted across every call to the fake.
+
+A new unit of work started by an after commit callback is also recorded as a separate execution. For example, if the
+work in the above example also started a new unit of work from an after commit callback, the sequence would continue
+with `execute:3/attempt:1` and `execute:3/commit:1`.
 
 The fake also implements the `active()` and `inactive()` methods. It is active while the callback passed to
 `execute()` is running, including on each retry, and inactive before and after. To match the unit of work manager,
 which does not support nested units of work, the fake throws a `RuntimeException` if `execute()` is called while it is
-already active.
+already active. As the fake is inactive once it has committed, an after commit callback can start a new unit of work,
+in the same way as with a real unit of work.
